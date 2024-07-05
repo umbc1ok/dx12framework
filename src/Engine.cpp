@@ -30,8 +30,10 @@ void Engine::run()
             }
         }
     }
+}
 
-    Window::get_instance()->cleanup();
+void Engine::cleanup()
+{
     Editor::get_instance()->cleanup();
-
+    Window::get_instance()->cleanup();
 }
