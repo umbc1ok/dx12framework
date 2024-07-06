@@ -1,4 +1,7 @@
+#pragma once
+
 #include "Transform.h"
+
 #include <ranges>
 #include <cassert>
 
@@ -25,7 +28,7 @@ void Transform::set_parent(Transform* const& new_parent)
         parent->remove_child(this);
     }
 
-    new_parent->add_child(this));
+    new_parent->add_child(this);
     m_local_dirty = true;
 }
 

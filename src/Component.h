@@ -10,7 +10,6 @@ public:
 
     virtual void initialize();
     virtual void uninitialize();
-
     virtual void reprepare();
 
     virtual void awake();
@@ -36,7 +35,6 @@ public:
     bool enabled() const;
 
     std::string guid = "";
-
     std::string custom_name = "";
 
 private:
