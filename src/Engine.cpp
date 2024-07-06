@@ -2,6 +2,7 @@
 
 #include "Window.h"
 #include "Editor.h"
+#include "Entity.h"
 #include "MainScene.h"
 
 
@@ -49,4 +50,5 @@ void Engine::create_game()
 {
     auto const main_scene = new Scene();
     MainScene::set_instance(main_scene);
+    auto entity = Entity::create("Entity");
 }

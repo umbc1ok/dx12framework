@@ -13,6 +13,11 @@ Window* Window::m_instance;
 HWND Window::hwnd;
 WNDCLASSEXW Window::wc;
 
+void Window::update_window_name(std::string const& name)
+{
+    SetWindowText(hwnd, _T(name.c_str()));
+}
+
 LRESULT Window::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     Window* window = Window::get_instance();

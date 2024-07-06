@@ -1,6 +1,7 @@
 #pragma once
 #include <d3d12.h>
 #include <dxgi1_4.h>
+#include <string>
 
 struct FrameContext
 {
@@ -28,6 +29,7 @@ public:
     static int const NUM_FRAMES_IN_FLIGHT = 3;
     static HWND get_hwnd() { return hwnd; }
     ID3D12DescriptorHeap* get_srv_desc_heap() { return g_pd3dSrvDescHeap; }
+    static void update_window_name(std::string const& name);
 
 private:
     static LRESULT WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);

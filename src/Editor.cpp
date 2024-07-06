@@ -50,6 +50,17 @@ Editor::Editor()
 
 void Editor::update()
 {
+    m_current_time = ImGui::GetTime();
+    m_frame_count += 1;
+
+    if (m_current_time - m_last_second >= 1.0)
+    {
+        m_average_ms_per_frame = 1000.0 / static_cast<double>(m_frame_count);
+        m_frame_count = 0;
+        m_last_second = ImGui::GetTime();
+    }
+    Window::get_instance()->update_window_name("DX12Framework by Hubert Olejnik @" + std::to_string(1000.0f / m_average_ms_per_frame) + "fps");
+
     ImGui_ImplDX12_NewFrame();
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
@@ -427,16 +438,6 @@ void Editor::draw_content_browser(EditorWindow* const& window)
 }
 void Editor::draw_debug_window(EditorWindow* const& window)
 {
-    m_current_time = clock();
-    m_frame_count += 1;
-
-    if (m_current_time - m_last_second >= 1.0)
-    {
-        m_average_ms_per_frame = 1000.0 / static_cast<double>(m_frame_count);
-        m_frame_count = 0;
-        m_last_second = clock();
-    }
-
     bool is_still_open = true;
     bool const open = ImGui::Begin(window->get_name().c_str(), &is_still_open, window->flags);
 
