@@ -4,6 +4,7 @@
 
 #include <imgui.h>
 
+#include "MainScene.h"
 #include "utils/Utils.h"
 
 Component::Component()
@@ -53,12 +54,12 @@ void Component::destroy_immediate()
 
     if (!has_been_awaken)
     {
-        //MainScene::get_instance()->remove_component_to_awake(shared);
+        MainScene::get_instance()->remove_component_to_awake(this);
     }
 
     if (!has_been_started)
     {
-        //MainScene::get_instance()->remove_component_to_start(shared);
+        MainScene::get_instance()->remove_component_to_start(this);
     }
 
     set_can_tick(false);
@@ -81,12 +82,12 @@ void Component::set_can_tick(bool const value)
 {
     if (m_can_tick != value)
     {
-        /*
+
         if (value)
-            MainScene::get_instance()->tickable_components.emplace_back(shared_from_this());
+            MainScene::get_instance()->tickable_components.emplace_back(this);
         else
-            AK::swap_and_erase(MainScene::get_instance()->tickable_components, shared_from_this());
-        */
+            olej_utils::swap_and_erase(MainScene::get_instance()->tickable_components, this);
+
     }
 
     m_can_tick = value;

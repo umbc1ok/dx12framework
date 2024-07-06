@@ -19,7 +19,7 @@ Entity* Entity::create(std::string const& name)
     std::hash<std::string> constexpr hasher;
     entity->hashed_guid = hasher(entity->guid);
     entity->transform = new Transform(entity);
-    //MainScene::get_instance()->add_child(entity);
+    MainScene::get_instance()->add_child(entity);
     return entity;
 }
 
@@ -30,7 +30,7 @@ Entity* Entity::create(std::string const& guid, std::string const& name)
     std::hash<std::string> constexpr hasher;
     entity->hashed_guid = hasher(entity->guid);
     entity->transform = new Transform(entity);
-    //MainScene::get_instance()->add_child(entity);
+    MainScene::get_instance()->add_child(entity);
     return entity;
 }
 
@@ -43,18 +43,18 @@ void Entity::destroy_immediate()
 
     // NOTE: We need to keep a pointer to this object to keep it alive for the duration of this function.
     auto const ptr = this;
-    //MainScene::get_instance()->remove_child(ptr);
+    MainScene::get_instance()->remove_child(ptr);
 
     for (unsigned int i = 0; i < components.size(); ++i)
     {
         if (!components[i]->has_been_awaken)
         {
-            //MainScene::get_instance()->remove_component_to_awake(components[i]);
+            MainScene::get_instance()->remove_component_to_awake(components[i]);
         }
 
         if (!components[i]->has_been_started)
         {
-            //MainScene::get_instance()->remove_component_to_start(components[i]);
+            MainScene::get_instance()->remove_component_to_start(components[i]);
         }
 
         components[i]->set_can_tick(false);

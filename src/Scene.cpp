@@ -1,5 +1,5 @@
 #include "Scene.h"
-
+#include "Entity.h"
 #include <cassert>
 
 #include "utils/Utils.h"

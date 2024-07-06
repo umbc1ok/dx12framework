@@ -9,6 +9,7 @@ void Engine::setup()
 {
     Window::create();
     Editor::create();
+    create_game();
 }
 
 void Engine::run()
