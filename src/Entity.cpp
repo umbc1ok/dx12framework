@@ -76,4 +76,5 @@ void Entity::destroy_immediate()
     {
         transform->set_parent(nullptr);
     }
+    delete this;
 }
