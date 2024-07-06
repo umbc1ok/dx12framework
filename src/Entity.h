@@ -16,7 +16,7 @@ class Entity
 public:
     Entity(std::string const& name = "Entity");
     static Entity* create(std::string const& name = "Entity");
-    static Entity* create(std::string const& guid, std::string const& name = "Entity");
+    static Entity* create(std::string const& guid, std::string const& name);
 
     void destroy_immediate();
 
