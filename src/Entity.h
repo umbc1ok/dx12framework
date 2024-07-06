@@ -4,9 +4,12 @@
 
 #include "Transform.h"
 #include "Component.h"
+#include "MainScene.h"
 
 class Component;
 class Transform;
+class MainScene;
+
 
 class Entity
 {
@@ -24,7 +27,7 @@ public:
         components.emplace_back(component);
         component->entity = this;
 
-        //MainScene::get_instance()->add_component_to_start(component);
+        MainScene::get_instance()->add_component_to_start(component);
 
         // Initialization for internal components
         component->initialize();
@@ -36,7 +39,7 @@ public:
         //       gathering all the components in the components_to_awake vector and calling Awake on those when the game starts.
         //       If the component is constructed during the gameplay, we call the Awake immediately here.
 
-        /*
+
         if (MainScene::get_instance()->is_running)
         {
             if (!m_is_being_deserialized)
@@ -54,7 +57,7 @@ public:
         {
             MainScene::get_instance()->add_component_to_awake(component);
         }
-        */
+
 
         return component;
     }
@@ -65,7 +68,7 @@ public:
         components.emplace_back(component);
         component->entity = this;
 
-        //MainScene::get_instance()->add_component_to_start(component);
+        MainScene::get_instance()->add_component_to_start(component);
 
         // Initialization for internal components
         component->initialize();
@@ -76,7 +79,7 @@ public:
         //       after all of these references were assigned, or more precisely, when the game has started. We do this manually, by
         //       gathering all the components in the components_to_awake vector and calling Awake on those when the game starts.
         //       If the component is constructed during the gameplay, we call the Awake immediately here.
-        /*
+
         if (MainScene::get_instance()->is_running)
         {
             if (!m_is_being_deserialized)
@@ -94,7 +97,7 @@ public:
         {
             MainScene::get_instance()->add_component_to_awake(component);
         }
-        */
+
         return component;
     }
 
@@ -105,7 +108,7 @@ public:
         components.emplace_back(component);
         component->entity = this;
 
-        //MainScene::get_instance()->add_component_to_start(component);
+        MainScene::get_instance()->add_component_to_start(component);
 
         // Initialization for internal components
         component->initialize();
@@ -116,7 +119,7 @@ public:
         //       after all of these references were assigned, or more precisely, when the game has started. We do this manually, by
         //       gathering all the components in the components_to_awake vector and calling Awake on those when the game starts.
         //       If the component is constructed during the gameplay, we call the Awake immediately here.
-        /*
+
         if (MainScene::get_instance()->is_running)
         {
             if (!m_is_being_deserialized)
@@ -134,7 +137,7 @@ public:
         {
             MainScene::get_instance()->add_component_to_awake(component);
         }
-        */
+
 
         return component;
     }
@@ -186,5 +189,7 @@ public:
     size_t hashed_guid;
     Transform* transform = nullptr;
 
+private:
+    bool m_is_being_deserialized = false;
 };
 

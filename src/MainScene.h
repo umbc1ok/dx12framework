@@ -1,5 +1,4 @@
 #pragma once
-
 #include "Scene.h"
 
 class MainScene final : public Scene
@@ -7,15 +6,9 @@ class MainScene final : public Scene
 public:
     virtual ~MainScene() = default;
 
-    static void set_instance(Scene* const& scene)
-    {
-        m_instance = scene;
-    }
+    static void set_instance(Scene* const& scene);
 
-    static Scene* get_instance()
-    {
-        return m_instance;
-    }
+    static Scene* get_instance();
 
     MainScene(MainScene const&) = delete;
     void operator=(MainScene const&) = delete;

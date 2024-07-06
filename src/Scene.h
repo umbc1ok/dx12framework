@@ -1,10 +1,16 @@
-#include "Entity.h"
+#pragma once
+
+#include <vector>
+
+#include "Component.h"
+
+class Entity;
 
 class Scene
 {
 public:
+    virtual ~Scene() = default;
     Scene() = default;
-    virtual ~Scene();
     virtual void unload();
 
     void add_child(Entity* const& entity);
@@ -30,3 +36,4 @@ private:
     std::vector<Component*> components_to_awake = {};
     std::vector<Component*> components_to_start = {};
 };
+
