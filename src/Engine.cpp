@@ -2,6 +2,7 @@
 
 #include "Window.h"
 #include "Editor.h"
+#include "MainScene.h"
 
 
 void Engine::setup()
@@ -41,4 +42,10 @@ void Engine::cleanup()
 bool Engine::is_game_running()
 {
     return true;
+}
+
+void Engine::create_game()
+{
+    auto const main_scene = new Scene();
+    MainScene::set_instance(main_scene);
 }
