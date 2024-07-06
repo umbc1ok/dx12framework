@@ -1,12 +1,6 @@
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "d3d12.lib")
 
-#include "imgui.h"
-#include "imgui_impl/imgui_impl_win32.h"
-#include "imgui_impl/imgui_impl_dx12.h"
-#include <d3d12.h>
-#include <dxgi1_4.h>
-#include <tchar.h>
 
 #ifdef _DEBUG
 #define DX12_ENABLE_DEBUG_LAYER
@@ -17,7 +11,21 @@
 #pragma comment(lib, "dxguid.lib")
 #endif
 
-#include "imgui_internal.h"
+#define FORCE_DEDICATED_GPU 1
+
+#if FORCE_DEDICATED_GPU
+extern "C"
+{
+    __declspec(dllexport) unsigned int NvOptimusEnablement = 0x00000001;
+}
+
+extern "C"
+{
+    __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
+}
+#endif
+
+
 #include "Engine.h"
 
 // Main code
