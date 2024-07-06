@@ -37,3 +37,8 @@ void Engine::cleanup()
     Editor::get_instance()->cleanup();
     Window::get_instance()->cleanup();
 }
+
+bool Engine::is_game_running()
+{
+    return true;
+}
