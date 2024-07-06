@@ -601,6 +601,99 @@ void Editor::draw_window_menu_bar(EditorWindow* const& window)
     }
 }
 
+
+void Editor::add_child_entity() const
+{
+    if (m_selected_entity == nullptr)
+        return;
+
+    auto const entity = m_selected_entity;
+    auto const child_entity = Entity::create("Child");
+    child_entity->transform->set_parent(entity->transform);
+}
+
+void Editor::delete_selected_entity() const
+{
+    if (m_selected_entity != nullptr)
+    {
+        m_selected_entity->destroy_immediate();
+    }
+}
+
+bool Editor::draw_entity_popup(Entity* const& entity)
+{
+    if (m_selected_entity != nullptr && ImGui::BeginPopupContextItem(nullptr, ImGuiPopupFlags_MouseButtonRight))
+    {
+        if (m_selected_entity != entity)
+        {
+            m_selected_entity = entity;
+        }
+
+        if (ImGui::Button("Rename"))
+        {
+            ImGui::OpenPopup("RenamePopup");
+        }
+
+        if (ImGui::BeginPopup("RenamePopup"))
+        {
+            if (ImGui::InputText("##empty", entity->name.data(), ImGuiInputTextFlags_EnterReturnsTrue))
+            {
+                ImGui::CloseCurrentPopup();
+            }
+
+            ImGui::EndPopup();
+        }
+
+        if (ImGui::Button("Delete"))
+        {
+            delete_selected_entity();
+            ImGui::CloseCurrentPopup();
+            ImGui::EndPopup();
+            return false;
+        }
+
+        // TODO: Implement serializing
+        /*
+        if (ImGui::Button("Copy"))
+        {
+            copy_selected_entity();
+            ImGui::CloseCurrentPopup();
+            ImGui::EndPopup();
+            return true;
+        }
+
+        if (ImGui::Button("Duplicate"))
+        {
+            copy_selected_entity();
+            paste_entity();
+            ImGui::CloseCurrentPopup();
+            ImGui::EndPopup();
+            return true;
+        }
+
+        if (ImGui::Button("Save as prefab"))
+        {
+            save_entity_as_prefab();
+            ImGui::CloseCurrentPopup();
+            ImGui::EndPopup();
+            return true;
+        }
+        */
+        if (ImGui::Button("Add child"))
+        {
+            add_child_entity();
+            ImGui::CloseCurrentPopup();
+            ImGui::EndPopup();
+            return true;
+        }
+
+
+        ImGui::EndPopup();
+    }
+
+    return true;
+}
+
 void Editor::draw_scene_hierarchy(EditorWindow* const& window)
 {
     bool is_still_open = true;
@@ -655,12 +748,19 @@ void Editor::draw_entity_recursively(Transform* const& transform)
         | (transform->children.empty() ? ImGuiTreeNodeFlags_Leaf : 0) | ImGuiTreeNodeFlags_OpenOnDoubleClick
         | ImGuiTreeNodeFlags_OpenOnArrow;
 
-    if (!ImGui::TreeNodeEx(reinterpret_cast<void*>(static_cast<intptr_t>(entity->hashed_guid)), node_flags, "%s", entity->name.c_str()))
+    if (!ImGui::TreeNodeEx(reinterpret_cast<void*>(static_cast<intptr_t>(entity->hashed_guid)), node_flags, "%s",
+        entity->name.c_str()))
     {
         if (ImGui::IsItemClicked() || ImGui::IsItemClicked(ImGuiMouseButton_Right))
         {
             m_selected_entity = entity;
         }
+
+        if (!draw_entity_popup(entity))
+        {
+            return;
+        }
+
         return;
     }
 
@@ -668,6 +768,12 @@ void Editor::draw_entity_recursively(Transform* const& transform)
     if (ImGui::IsItemClicked() || ImGui::IsItemClicked(ImGuiMouseButton_Right))
     {
         m_selected_entity = entity;
+    }
+
+    if (!draw_entity_popup(entity))
+    {
+        ImGui::TreePop();
+        return;
     }
 
     for (auto const& child : transform->children)

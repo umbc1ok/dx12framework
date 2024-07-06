@@ -151,6 +151,10 @@ private:
     void draw_scene_hierarchy(EditorWindow* const& window);
     void draw_entity_recursively(Transform* const& transform);
     void draw_window_menu_bar(EditorWindow* const& window);
+    void add_child_entity() const;
+    void copy_selected_entity() const;
+    void delete_selected_entity() const;
+    bool draw_entity_popup(Entity* const& entity);
 
     std::vector<Asset> m_assets = {};
     std::vector<EditorWindow*> m_editor_windows = {};
