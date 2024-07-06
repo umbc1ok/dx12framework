@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cfloat>
+
 #include "../../thirdparty/vml/include/vector.h"
 #include "../../thirdparty/vml/include/vector_functions.h"
 #include "../../thirdparty/vml/include/matrix.h"
@@ -32,9 +34,9 @@ namespace hlsl
     using int4 = vml::vector<int, 0, 1, 2, 3>;
     using int3 = vml::vector<int, 0, 1, 2>;
     using int2 = vml::vector<int, 0, 1>;
-    using uint4 = vml::vector<uint, 0, 1, 2, 3>;
-    using uint3 = vml::vector<uint, 0, 1, 2>;
-    using uint2 = vml::vector<uint, 0, 1>;
+    using uint4 = vml::vector<unsigned int, 0, 1, 2, 3>;
+    using uint3 = vml::vector<unsigned int, 0, 1, 2>;
+    using uint2 = vml::vector<unsigned int, 0, 1>;
     using bool4 = vml::vector<bool, 0, 1, 2, 3>;
     using bool3 = vml::vector<bool, 0, 1, 2>;
     using bool2 = vml::vector<bool, 0, 1>;
@@ -167,7 +169,7 @@ namespace hlsl
 
         float4x4 _result;
         float* result = (float*)&_result;
-        for (uint i = 0; i < 16; i++)
+        for (unsigned int i = 0; i < 16; i++)
             result[i] = inv[i] * det;
         return _result;
     }
@@ -190,8 +192,8 @@ namespace hlsl
     inline float4x4 transpose(const float4x4& m)
     {
         float4x4 result;
-        for (uint i = 0; i < 4; ++i)
-            for (uint j = 0; j < 4; ++j)
+        for (unsigned int i = 0; i < 4; ++i)
+            for (unsigned int j = 0; j < 4; ++j)
                 result[i][j] = m[j][i];
         return result;
     }

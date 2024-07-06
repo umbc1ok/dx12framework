@@ -5,6 +5,9 @@
 #include "Transform.h"
 #include "Component.h"
 
+class Component;
+class Transform;
+
 class Entity
 {
 public:
@@ -182,6 +185,6 @@ public:
     std::string guid;
     size_t hashed_guid;
     Transform* transform = nullptr;
-private:
+
 };
 

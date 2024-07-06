@@ -1,3 +1,5 @@
+#pragma once
+
 #include <vector>
 
 #include "Component.h"
@@ -20,4 +22,4 @@ private:
     void remove_child(Transform* const& transform);
 
     bool m_local_dirty = false;
-}
+};
