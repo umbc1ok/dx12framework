@@ -140,80 +140,89 @@ void Editor::draw_inspector(EditorWindow* const& window)
     ImGui::Spacing();
 
     // TODO: Implement transforms and overall math
-    /*
-    glm::vec3 position = entity->transform->get_local_position();
-    ImGuiEx::InputFloat3("Position", glm::value_ptr(position));
+
+    hlsl::float3 position = entity->transform->get_local_position();
+    ImGui::InputFloat3("Position", position.data);
 
     float const input_width = ImGui::CalcItemWidth() / 3.0f - ImGui::GetStyle().ItemSpacing.x * 0.66f;
 
     ImGui::SameLine();
     ImGui::Text(" | ");
-    ImGui::SameLine();
+    //ImGui::SameLine();
 
+    // TODO: Implement copy position/rotation/scale to clipboard
+    /*
     if (ImGui::Button("Copy##1"))
     {
         std::string const cpy = glm::to_string(position);
         ImGui::SetClipboardText(cpy.c_str());
     }
-
+    */
     entity->transform->set_local_position(position);
 
-    glm::vec3 rotation = entity->transform->get_euler_angles();
-    ImGuiEx::InputFloat3("Rotation", glm::value_ptr(rotation));
-    entity->transform->set_euler_angles(rotation);
+    hlsl::float3 rotation = entity->transform->get_euler_angles();
+    ImGui::InputFloat3("Rotation", rotation.data);
+    entity->transform->set_local_euler_angles(rotation);
 
     ImGui::SameLine();
     ImGui::Text(" | ");
-    ImGui::SameLine();
+    //ImGui::SameLine();
 
+    // TODO: Implement copy position/rotation/scale to clipboard
+    /*
     if (ImGui::Button("Copy##2"))
     {
         std::string const cpy = glm::to_string(rotation);
         ImGui::SetClipboardText(cpy.c_str());
     }
-
-    glm::vec3 scale = entity->transform->get_local_scale();
-    glm::vec3 old_scale = scale;
+    */
+    hlsl::float3 scale = entity->transform->get_local_scale();
+    hlsl::float3 old_scale = scale;
 
     ImGui::PushItemWidth(input_width);
 
-    ImGui::BeginDisabled(m_lock_scale && m_disabled_scale.x);
-    ImGuiEx::InputFloat("##x", &scale.x);
-    ImGui::EndDisabled();
+    //ImGui::BeginDisabled(m_lock_scale && m_disabled_scale.x);
+    ImGui::InputFloat("##x", &scale.x);
+    //ImGui::EndDisabled();
 
     ImGui::SameLine();
 
-    ImGui::BeginDisabled(m_lock_scale && m_disabled_scale.y);
-    ImGuiEx::InputFloat("##y", &scale.y);
-    ImGui::EndDisabled();
+    //ImGui::BeginDisabled(m_lock_scale && m_disabled_scale.y);
+    ImGui::InputFloat("##y", &scale.y);
+    //ImGui::EndDisabled();
 
     ImGui::SameLine();
 
-    ImGui::BeginDisabled(m_lock_scale && m_disabled_scale.z);
-    ImGuiEx::InputFloat("Scale##z", &scale.z);
-    ImGui::EndDisabled();
+    //ImGui::BeginDisabled(m_lock_scale && m_disabled_scale.z);
+    ImGui::InputFloat("Scale##z", &scale.z);
+    //ImGui::EndDisabled();
 
     ImGui::PopItemWidth();
 
+    /*
     if (scale != old_scale && m_lock_scale)
     {
         scale = update_locked_value(scale, old_scale);
     }
-
+    */
     entity->transform->set_local_scale(scale);
 
     ImGui::SameLine();
     ImGui::Text("    | ");
     ImGui::SameLine();
 
+    // TODO: Implement copy position/rotation/scale to clipboard
+    /*
     if (ImGui::Button("Copy##3"))
     {
         std::string const cpy = glm::to_string(scale);
         ImGui::SetClipboardText(cpy.c_str());
     }
+    */
+    //ImGui::SameLine();
 
-    ImGui::SameLine();
-
+    // TODO: Implement scale locking
+    /*
     if (ImGui::Checkbox("LOCK", &m_lock_scale))
     {
         if (!m_lock_scale)
