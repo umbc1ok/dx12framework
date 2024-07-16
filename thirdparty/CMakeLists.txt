@@ -16,12 +16,13 @@ file(GLOB_RECURSE VML_HEADERS
     "${VML_DIR}/include/detail/*.h"
     "${VML_DIR}/include/uniform/*.h"
 )
+
 # Add the VML library with the collected header files
-add_library(vml STATIC ${VML_HEADERS})
+add_library(vml INTERFACE)
 # Explicitly set the language for the VML target
 set_target_properties(vml PROPERTIES LINKER_LANGUAGE CXX)
 # Set the include directories for VML
-target_include_directories(vml PUBLIC ${VML_DIR}/include)
+target_include_directories(vml INTERFACE ${VML_DIR}/include)
 
 
 
