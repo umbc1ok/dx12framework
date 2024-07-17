@@ -22,7 +22,7 @@ public:
         return m_instance;
     }
     ID3D12Device* get_device();
-    ID3D12GraphicsCommandList* get_cmd_list();
+    ID3D12GraphicsCommandList2* get_cmd_list();
     Window() {};
     ~Window() {};
     static int const NUM_BACK_BUFFERS = 3;
@@ -53,7 +53,7 @@ private:
     ID3D12DescriptorHeap* g_pd3dRtvDescHeap = nullptr;
     ID3D12DescriptorHeap* g_pd3dSrvDescHeap = nullptr;
     ID3D12CommandQueue* g_pd3dCommandQueue = nullptr;
-    ID3D12GraphicsCommandList* g_pd3dCommandList = nullptr;
+    ID3D12GraphicsCommandList2* g_pd3dCommandList = nullptr;
     ID3D12Fence* g_fence = nullptr;
     D3D12_CPU_DESCRIPTOR_HANDLE  g_mainRenderTargetDescriptor[NUM_BACK_BUFFERS] = {};
     IDXGISwapChain3* g_pSwapChain = nullptr;

@@ -127,7 +127,7 @@ ID3D12Device* Window::get_device()
     return g_pd3dDevice;
 }
 
-ID3D12GraphicsCommandList* Window::get_cmd_list()
+ID3D12GraphicsCommandList2* Window::get_cmd_list()
 {
     return g_pd3dCommandList;
 }
