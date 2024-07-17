@@ -8,7 +8,7 @@ class VertexBuffer
 {
 public:
     VertexBuffer(Vertex const* data, u32 vertices_count);
-    ~VertexBuffer() = default;
+    ~VertexBuffer();
 
     ID3D12Resource* get() const;
 
