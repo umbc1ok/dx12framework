@@ -24,8 +24,9 @@ set_target_properties(vml PROPERTIES LINKER_LANGUAGE CXX)
 # Set the include directories for VML
 target_include_directories(vml INTERFACE ${VML_DIR}/include)
 
-
-
+set(dx12dir ${CMAKE_CURRENT_LIST_DIR}/directx)
+add_library(dx12 INTERFACE)
+target_include_directories(dx12 INTERFACE ${dx12dir})
 
 # other
 CPMAddPackage("gh:assimp/assimp@5.2.5")
@@ -44,6 +45,7 @@ set_target_properties(stb_image
                       assimp 
                       imgui
 		      vml
+		      dx12
                       spdlog PROPERTIES FOLDER "thirdparty")
 
 if (TARGET zlibstatic)
