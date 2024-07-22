@@ -1,6 +1,6 @@
 #include <random>
 #include <sstream>
-
+#include <Windows.h>
 #include "Types.h"
 
 namespace olej_utils
@@ -94,4 +94,12 @@ namespace olej_utils
         h ^= h >> 16;
         return h;
     }
+
+    inline LPCWSTR string_to_LPCWSTR(std::string const& s)
+    {
+        std::wstring wsTmp(s.begin(), s.end());
+        LPCWSTR result = wsTmp.c_str();
+        return result;
+    }
+
 }
