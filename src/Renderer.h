@@ -12,6 +12,9 @@ class Renderer
 public:
     Renderer();
     ~Renderer() = default;
+
+    static Renderer* get_instance();
+
     static void create();
     void start_frame();
     void end_frame();
@@ -25,19 +28,18 @@ public:
         ID3D12Resource** pIntermediateResource,
         size_t numElements, size_t elementSize, const void* bufferData,
         D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE);
-    static Renderer* get_instance();
-    static void TransitionResource(ID3D12GraphicsCommandList2* commandList, ID3D12Resource* resource,
+
+    static void transition_resource(ID3D12GraphicsCommandList2* commandList, ID3D12Resource* resource,
         D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState);
-    void ClearRTV(ID3D12GraphicsCommandList2* commandList, D3D12_CPU_DESCRIPTOR_HANDLE rtv, FLOAT* clearColor);
-    void ClearDepth(ID3D12GraphicsCommandList2* commandList, D3D12_CPU_DESCRIPTOR_HANDLE dsv, FLOAT depth = 0.1f);
+
     CommandQueue* get_cmd_queue(D3D12_COMMAND_LIST_TYPE type) const;
     ID3D12Resource* get_current_back_buffer() const;
     D3D12_CPU_DESCRIPTOR_HANDLE get_current_rtv() const;
     ID3D12DescriptorHeap* get_dsv_heap() const;
-    ID3D12DescriptorHeap* get_srv_desc_heap() { return g_pd3dSrvDescHeap; }
+    ID3D12DescriptorHeap* get_srv_desc_heap() const { return g_pd3dSrvDescHeap; }
 
-    static int const NUM_BACK_BUFFERS = 3;
-    static int const NUM_FRAMES_IN_FLIGHT = 3;
+    static constexpr int NUM_BACK_BUFFERS = 3;
+    static constexpr int NUM_FRAMES_IN_FLIGHT = 3;
 
     ID3D12GraphicsCommandList2* g_pd3dCommandList = nullptr;
 
@@ -50,6 +52,10 @@ private:
     // Cleanup
     void cleanup_device_d3d();
     void cleanup_render_targets();
+
+    // Clear resources
+    void clear_rtv(ID3D12GraphicsCommandList2* commandList, D3D12_CPU_DESCRIPTOR_HANDLE rtv, FLOAT* clearColor);
+    void clear_depth(ID3D12GraphicsCommandList2* commandList, D3D12_CPU_DESCRIPTOR_HANDLE dsv, FLOAT depth = 0.1f);
 
     // Basic DX12 stuff
     ID3D12Device2* g_pd3dDevice = nullptr;
@@ -76,9 +82,7 @@ private:
     CommandQueue* m_ComputeCommandQueue;
     CommandQueue* m_CopyCommandQueue;
 
-
     PipelineState* m_pipeline_state;
-
 
     DrawableCube* cube;
 

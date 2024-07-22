@@ -22,12 +22,12 @@ void Engine::run()
     bool run = true;
     while (run)
     {
-        std::cout << "FRAME" << "\n";
         Renderer::get_instance()->start_frame();
         Renderer::get_instance()->render();
         Editor::get_instance()->update();
         Renderer::get_instance()->end_frame();
         MSG msg;
+
         // Poll events after running engine to prevent exceptions when closing the window
         while (::PeekMessage(&msg, nullptr, 0U, 0U, PM_REMOVE))
         {

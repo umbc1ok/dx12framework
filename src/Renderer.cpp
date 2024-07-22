@@ -27,7 +27,7 @@ void Renderer::start_frame()
     auto command_list = m_DirectCommandQueue->get_command_list();
     g_pd3dCommandList = command_list;
 
-    Renderer::TransitionResource(g_pd3dCommandList, get_current_back_buffer(),
+    Renderer::transition_resource(g_pd3dCommandList, get_current_back_buffer(),
         D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
     g_pd3dCommandList->SetDescriptorHeaps(1, &g_pd3dSrvDescHeap);
@@ -35,7 +35,7 @@ void Renderer::start_frame()
 
 void Renderer::end_frame()
 {
-    TransitionResource(g_pd3dCommandList, get_current_back_buffer(),
+    transition_resource(g_pd3dCommandList, get_current_back_buffer(),
         D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
     auto index = g_pSwapChain->GetCurrentBackBufferIndex();
     g_fencevalues[g_pSwapChain->GetCurrentBackBufferIndex()] = m_DirectCommandQueue->execute_command_list(g_pd3dCommandList);
@@ -232,8 +232,8 @@ void Renderer::render()
 
     FLOAT clearColor[] = { 0.4f, 0.6f, 0.9f, 1.0f };
 
-    ClearRTV(cmd_list, rtv, clearColor);
-    ClearDepth(cmd_list, dsv);
+    clear_rtv(cmd_list, rtv, clearColor);
+    clear_depth(cmd_list, dsv);
 
     cmd_list->SetPipelineState(m_pipeline_state->get_pipeline_state());
     cmd_list->SetGraphicsRootSignature(m_pipeline_state->get_root_signature());
@@ -300,7 +300,7 @@ Renderer* Renderer::get_instance()
     return m_instance;
 }
 
-void Renderer::TransitionResource(ID3D12GraphicsCommandList2* commandList,
+void Renderer::transition_resource(ID3D12GraphicsCommandList2* commandList,
     ID3D12Resource* resource,
     D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState)
 {
@@ -311,13 +311,13 @@ void Renderer::TransitionResource(ID3D12GraphicsCommandList2* commandList,
     commandList->ResourceBarrier(1, &barrier);
 }
 
-void Renderer::ClearRTV(ID3D12GraphicsCommandList2* commandList,
+void Renderer::clear_rtv(ID3D12GraphicsCommandList2* commandList,
     D3D12_CPU_DESCRIPTOR_HANDLE rtv, FLOAT* clearColor)
 {
     commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
 }
 
-void Renderer::ClearDepth(ID3D12GraphicsCommandList2* commandList,
+void Renderer::clear_depth(ID3D12GraphicsCommandList2* commandList,
     D3D12_CPU_DESCRIPTOR_HANDLE dsv, FLOAT depth)
 {
     commandList->ClearDepthStencilView(dsv, D3D12_CLEAR_FLAG_DEPTH, depth, 0, 0, nullptr);

@@ -95,6 +95,7 @@ void PipelineState::create_root_signature()
     // Create a root signature.
     D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = {};
     featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
+
     if (FAILED(device->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &featureData, sizeof(featureData))))
     {
         featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
@@ -120,10 +121,10 @@ void PipelineState::create_root_signature()
     ID3DBlob* error_blob;
     AssertFailed(D3DX12SerializeVersionedRootSignature(&rootSignatureDescription,
         featureData.HighestVersion, &root_signature_blob, &error_blob));
+
     // Create the root signature.
     AssertFailed(device->CreateRootSignature(0, root_signature_blob->GetBufferPointer(),
         root_signature_blob->GetBufferSize(), IID_PPV_ARGS(&m_root_signature)));
 
     root_signature_blob->Release();
-    //error_blob->Release();
 }
