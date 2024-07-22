@@ -1,6 +1,9 @@
 #pragma once
 #include <d3dcommon.h>
 #include <string>
+#include <dxcapi.h>
+
+#include <wrl/client.h>
 
 enum class ShaderType
 {
@@ -18,6 +21,7 @@ public:
     char* read_hlsl_shader_from_file(std::string const& path, size_t* p_size);
     bool read_file_to_blob(std::string const& path, ID3DBlob** pp_blob);
     bool save_compiled_shader(std::string const& path, ID3DBlob* p_blob);
+    ID3DBlob* get_blob();
 
 private:
     std::string m_path = {};
@@ -26,5 +30,9 @@ private:
     std::string m_main_function_name = {};
     std::string shader_model = {};
     ID3DBlob* shader_blob;
+
+    //Microsoft::WRL::ComPtr<IDxcLibrary> library;
+    //Microsoft::WRL::ComPtr<IDxcCompiler> compiler;
+    //Microsoft::WRL::ComPtr<IDxcIncludeHandler> include_handler;
 };
 
