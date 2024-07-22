@@ -3,9 +3,13 @@
 #include "imgui_impl/imgui_impl_win32.h"
 #include "imgui_impl/imgui_impl_dx12.h"
 #include <d3d12.h>
+#include <d3dx12.h>
 #include <dxgi1_4.h>
+#include <iostream>
 #include <tchar.h>
 #include "imgui_internal.h"
+#include "Renderer.h"
+#include "utils/ErrorHandler.h"
 
 // Forward declaration, for reason look into imgui_impl_win32.h
 IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -29,11 +33,12 @@ LRESULT Window::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_SIZE:
         if (window->g_pd3dDevice != nullptr && wParam != SIZE_MINIMIZED)
         {
-            m_instance->wait_for_last_submitted_frame();
-            m_instance->cleanup_render_targets();
-            HRESULT result = m_instance->g_pSwapChain->ResizeBuffers(0, (UINT)LOWORD(lParam), (UINT)HIWORD(lParam), DXGI_FORMAT_UNKNOWN, DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT);
-            assert(SUCCEEDED(result) && "Failed to resize swapchain.");
-            m_instance->create_render_targets();
+            // TODO: Add resize handling
+            //m_instance->wait_for_last_submitted_frame();
+            //m_instance->cleanup_render_targets();
+            //HRESULT result = m_instance->g_pSwapChain->ResizeBuffers(0, (UINT)LOWORD(lParam), (UINT)HIWORD(lParam), DXGI_FORMAT_UNKNOWN, DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT);
+            //assert(SUCCEEDED(result) && "Failed to resize swapchain.");
+            //m_instance->create_render_targets();
         }
         return 0;
     case WM_SYSCOMMAND:
@@ -52,7 +57,7 @@ void Window::create()
     m_instance = new Window();
     wc = { sizeof(wc), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr, L"ImGui Example", nullptr };
     ::RegisterClassExW(&wc);
-    hwnd = ::CreateWindowW(wc.lpszClassName, L"DX12FRAMEWORK by Hubert Olejnik", WS_OVERLAPPEDWINDOW, 100, 100, 1280, 800, nullptr, nullptr, wc.hInstance, nullptr);
+    hwnd = ::CreateWindowW(wc.lpszClassName, L"DX12FRAMEWORK by Hubert Olejnik", WS_OVERLAPPEDWINDOW, 100, 100, 1920, 1080, nullptr, nullptr, wc.hInstance, nullptr);
     if (!m_instance->create_device_d3d(hwnd))
     {
         m_instance->cleanup_device_d3d();
@@ -62,6 +67,7 @@ void Window::create()
     }
     ::ShowWindow(hwnd, SW_SHOWDEFAULT);
     ::UpdateWindow(hwnd);
+
 }
 
 void Window::update()
@@ -71,47 +77,30 @@ void Window::update()
 
 void Window::start_frame()
 {
-    frameCtx = wait_for_next_frame_resources();
+    auto commandList = m_instance->m_DirectCommandQueue->get_command_list();
+    m_instance->g_pd3dCommandList = commandList;
+    // GOWNO
+    //frameCtx = wait_for_next_frame_resources();
     UINT backBufferIdx = g_pSwapChain->GetCurrentBackBufferIndex();
-    frameCtx->CommandAllocator->Reset();
-
-    barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-    barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-    barrier.Transition.pResource = g_mainRenderTargetResource[backBufferIdx];
-    barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-    barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
-    barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
-    g_pd3dCommandList->Reset(frameCtx->CommandAllocator, nullptr);
-    g_pd3dCommandList->ResourceBarrier(1, &barrier);
+    std::cout << "backBufferIdx: " << backBufferIdx << "\n";
+    Renderer::TransitionResource(g_pd3dCommandList, get_current_back_buffer(),
+        D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
     // Render Dear ImGui graphics
-    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 0.00f);
     const float clear_color_with_alpha[4] = { clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w };
-    g_pd3dCommandList->ClearRenderTargetView(g_mainRenderTargetDescriptor[backBufferIdx], clear_color_with_alpha, 0, nullptr);
-    g_pd3dCommandList->OMSetRenderTargets(1, &g_mainRenderTargetDescriptor[backBufferIdx], FALSE, nullptr);
     g_pd3dCommandList->SetDescriptorHeaps(1, &g_pd3dSrvDescHeap);
 
 }
 
 void Window::end_frame()
 {
-    barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
-    barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
-    g_pd3dCommandList->ResourceBarrier(1, &barrier);
-    g_pd3dCommandList->Close();
-
-    g_pd3dCommandQueue->ExecuteCommandLists(1, (ID3D12CommandList* const*)&g_pd3dCommandList);
-
-
-    // Present
-    //HRESULT hr = g_pSwapChain->Present(1, 0);   // Present with vsync
+    Renderer::TransitionResource(g_pd3dCommandList, get_current_back_buffer(),
+        D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+    auto index = g_pSwapChain->GetCurrentBackBufferIndex();
+    g_fencevalues[g_pSwapChain->GetCurrentBackBufferIndex()] = m_DirectCommandQueue->execute_command_list(g_pd3dCommandList);
     HRESULT hr = g_pSwapChain->Present(0, 0); // Present without vsync
-    g_SwapChainOccluded = (hr == DXGI_STATUS_OCCLUDED);
-
-    UINT64 fenceValue = g_fenceLastSignaledValue + 1;
-    g_pd3dCommandQueue->Signal(g_fence, fenceValue);
-    g_fenceLastSignaledValue = fenceValue;
-    frameCtx->FenceValue = fenceValue;
+    m_DirectCommandQueue->wait_for_fence_value(g_fencevalues[index]);
 }
 
 void Window::cleanup()
@@ -122,14 +111,37 @@ void Window::cleanup()
 }
 
 
-ID3D12Device* Window::get_device()
+ID3D12Device2* Window::get_device()
 {
     return g_pd3dDevice;
 }
 
-ID3D12GraphicsCommandList2* Window::get_cmd_list()
+
+
+CommandQueue* Window::get_cmd_queue(D3D12_COMMAND_LIST_TYPE type) const
 {
-    return g_pd3dCommandList;
+    CommandQueue* commandQueue;
+    switch (type)
+    {
+    case D3D12_COMMAND_LIST_TYPE_DIRECT:
+        commandQueue = m_DirectCommandQueue;
+        break;
+    case D3D12_COMMAND_LIST_TYPE_COMPUTE:
+        commandQueue = m_ComputeCommandQueue;
+        break;
+    case D3D12_COMMAND_LIST_TYPE_COPY:
+        commandQueue = m_CopyCommandQueue;
+        break;
+    default:
+        assert(false && "Invalid command queue type.");
+    }
+
+    return commandQueue;
+}
+
+ID3D12Resource* Window::get_current_back_buffer() const
+{
+    return g_mainRenderTargetResource[g_pSwapChain->GetCurrentBackBufferIndex()];
 }
 
 bool Window::create_device_d3d(HWND hWnd)
@@ -138,8 +150,8 @@ bool Window::create_device_d3d(HWND hWnd)
     {
         ZeroMemory(&sd, sizeof(sd));
         sd.BufferCount = NUM_BACK_BUFFERS;
-        sd.Width = 0;
-        sd.Height = 0;
+        sd.Width = 1920;
+        sd.Height = 1080;
         sd.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
         sd.Flags = DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
         sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
@@ -159,7 +171,7 @@ bool Window::create_device_d3d(HWND hWnd)
 #endif
 
     // Create device
-    D3D_FEATURE_LEVEL featureLevel = D3D_FEATURE_LEVEL_11_0;
+    D3D_FEATURE_LEVEL featureLevel = D3D_FEATURE_LEVEL_12_0;
     if (D3D12CreateDevice(nullptr, featureLevel, IID_PPV_ARGS(&g_pd3dDevice)) != S_OK)
         return false;
 
@@ -205,35 +217,22 @@ bool Window::create_device_d3d(HWND hWnd)
     }
 
     {
-        D3D12_COMMAND_QUEUE_DESC desc = {};
-        desc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
-        desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-        desc.NodeMask = 1;
-        if (g_pd3dDevice->CreateCommandQueue(&desc, IID_PPV_ARGS(&g_pd3dCommandQueue)) != S_OK)
-            return false;
+        // GOWNO
+        if (g_pd3dDevice)
+        {
+            m_DirectCommandQueue = new CommandQueue(g_pd3dDevice, D3D12_COMMAND_LIST_TYPE_DIRECT);
+            m_ComputeCommandQueue = new CommandQueue(g_pd3dDevice, D3D12_COMMAND_LIST_TYPE_COMPUTE);
+            m_CopyCommandQueue = new CommandQueue(g_pd3dDevice, D3D12_COMMAND_LIST_TYPE_COPY);
+        }
     }
-
-    for (UINT i = 0; i < NUM_FRAMES_IN_FLIGHT; i++)
-        if (g_pd3dDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&g_frameContext[i].CommandAllocator)) != S_OK)
-            return false;
-
-    if (g_pd3dDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, g_frameContext[0].CommandAllocator, nullptr, IID_PPV_ARGS(&g_pd3dCommandList)) != S_OK ||
-        g_pd3dCommandList->Close() != S_OK)
-        return false;
-
-    if (g_pd3dDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&g_fence)) != S_OK)
-        return false;
-
-    g_fenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
-    if (g_fenceEvent == nullptr)
-        return false;
 
     {
         IDXGIFactory4* dxgiFactory = nullptr;
         IDXGISwapChain1* swapChain1 = nullptr;
         if (CreateDXGIFactory1(IID_PPV_ARGS(&dxgiFactory)) != S_OK)
             return false;
-        if (dxgiFactory->CreateSwapChainForHwnd(g_pd3dCommandQueue, hWnd, &sd, nullptr, nullptr, &swapChain1) != S_OK)
+        // GOWNO
+        if (dxgiFactory->CreateSwapChainForHwnd(m_DirectCommandQueue->get_d_3d12_command_queue(), hWnd, &sd, nullptr, nullptr, &swapChain1) != S_OK)
             return false;
         if (swapChain1->QueryInterface(IID_PPV_ARGS(&g_pSwapChain)) != S_OK)
             return false;
@@ -242,8 +241,42 @@ bool Window::create_device_d3d(HWND hWnd)
         g_pSwapChain->SetMaximumFrameLatency(NUM_BACK_BUFFERS);
         g_hSwapChainWaitableObject = g_pSwapChain->GetFrameLatencyWaitableObject();
     }
+    D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
+    dsvHeapDesc.NumDescriptors = 1;
+    dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+    dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+    AssertFailed(g_pd3dDevice->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_dsv_heap)));
+    D3D12_DEPTH_STENCIL_VIEW_DESC dsv = {};
+    dsv.Format = DXGI_FORMAT_D32_FLOAT;
+    dsv.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+    dsv.Texture2D.MipSlice = 0;
+    dsv.Flags = D3D12_DSV_FLAG_NONE;
+
+    D3D12_CLEAR_VALUE optimizedClearValue = {};
+    optimizedClearValue.Format = DXGI_FORMAT_D32_FLOAT;
+    optimizedClearValue.DepthStencil = { 0.1f, 0 };
+
+    // TODO: Clear those heapype and rsrc_desc
+    auto heaptype = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+    auto rsrc_desc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, 1920, 1080,
+        1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
+    AssertFailed(g_pd3dDevice->CreateCommittedResource(
+        &heaptype,
+        D3D12_HEAP_FLAG_NONE,
+        &rsrc_desc,
+        D3D12_RESOURCE_STATE_DEPTH_WRITE,
+        &optimizedClearValue,
+        IID_PPV_ARGS(&m_depth_buffer)
+    ));
+
+    g_pd3dDevice->CreateDepthStencilView(m_depth_buffer, &dsv,
+        m_dsv_heap->GetCPUDescriptorHandleForHeapStart());
 
     create_render_targets();
+
+
+
+
     return true;
 }
 
@@ -265,8 +298,9 @@ void Window::cleanup_device_d3d()
     if (g_hSwapChainWaitableObject != nullptr) { CloseHandle(g_hSwapChainWaitableObject); }
     for (UINT i = 0; i < NUM_FRAMES_IN_FLIGHT; i++)
         if (g_frameContext[i].CommandAllocator) { g_frameContext[i].CommandAllocator->Release(); g_frameContext[i].CommandAllocator = nullptr; }
-    if (g_pd3dCommandQueue) { g_pd3dCommandQueue->Release(); g_pd3dCommandQueue = nullptr; }
-    if (g_pd3dCommandList) { g_pd3dCommandList->Release(); g_pd3dCommandList = nullptr; }
+    // GOWNO TOTALNE
+    //if (g_pd3dCommandQueue) { g_pd3dCommandQueue->Release(); g_pd3dCommandQueue = nullptr; }
+    //if (g_pd3dCommandList) { g_pd3dCommandList->Release(); g_pd3dCommandList = nullptr; }
     if (g_pd3dRtvDescHeap) { g_pd3dRtvDescHeap->Release(); g_pd3dRtvDescHeap = nullptr; }
     if (g_pd3dSrvDescHeap) { g_pd3dSrvDescHeap->Release(); g_pd3dSrvDescHeap = nullptr; }
     if (g_fence) { g_fence->Release(); g_fence = nullptr; }
@@ -329,3 +363,17 @@ FrameContext* Window::wait_for_next_frame_resources()
 
     return frameCtx;
 }
+
+D3D12_CPU_DESCRIPTOR_HANDLE Window::get_current_rtv() const
+{
+
+    return CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pd3dRtvDescHeap->GetCPUDescriptorHandleForHeapStart(),
+        g_pSwapChain->GetCurrentBackBufferIndex(), g_pd3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV));
+}
+
+ID3D12DescriptorHeap* Window::get_dsv_heap() const
+{
+    return m_dsv_heap;
+}
+
+

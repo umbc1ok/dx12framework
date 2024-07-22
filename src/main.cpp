@@ -1,10 +1,10 @@
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "d3d12.lib")
+//#pragma comment(lib, "dxcompiler.lib")
 
-
-#ifdef _DEBUG
+//#ifdef _DEBUG
 #define DX12_ENABLE_DEBUG_LAYER
-#endif
+//#endif
 
 #ifdef DX12_ENABLE_DEBUG_LAYER
 #include <dxgidebug.h>
@@ -24,7 +24,6 @@ extern "C"
     __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
 }
 #endif
-
 
 #include "Engine.h"
 

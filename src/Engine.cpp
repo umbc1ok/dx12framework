@@ -1,15 +1,19 @@
 #include "Engine.h"
 
+#include <iostream>
+
 #include "Window.h"
 #include "Editor.h"
 #include "Entity.h"
 #include "MainScene.h"
+#include "Renderer.h"
 
 
 void Engine::setup()
 {
     Window::create();
     Editor::create();
+    Renderer::create();
     create_game();
 }
 
@@ -18,7 +22,9 @@ void Engine::run()
     bool run = true;
     while (run)
     {
+        std::cout << "FRAME" << "\n";
         Window::get_instance()->start_frame();
+        Renderer::get_instance()->render();
         Editor::get_instance()->update();
         Window::get_instance()->end_frame();
         MSG msg;
