@@ -18,10 +18,6 @@ DrawableCube::DrawableCube()
     hlsl::ComposeMatrix(position, hlsl::float4(1.0f, 1.0f, 1.0f, 1.0f), hlsl::float3(1.0f, 1.0f, 1.0f));
 }
 
-void DrawableCube::predraw()
-{
-}
-
 void DrawableCube::draw()
 {
     auto commandList = Renderer::get_instance()->g_pd3dCommandList;

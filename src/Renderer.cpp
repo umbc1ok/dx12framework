@@ -242,7 +242,6 @@ void Renderer::render()
     cmd_list->RSSetScissorRects(1, &m_ScissorRect);
 
     cmd_list->OMSetRenderTargets(1, &rtv, FALSE, &dsv);
-    cube->predraw();
     cube->draw();
 }
 
