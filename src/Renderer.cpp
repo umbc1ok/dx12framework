@@ -325,23 +325,23 @@ void Renderer::clear_depth(ID3D12GraphicsCommandList2* commandList,
 
 CommandQueue* Renderer::get_cmd_queue(D3D12_COMMAND_LIST_TYPE type) const
 {
-    CommandQueue* commandQueue;
+    CommandQueue* command_queue;
     switch (type)
     {
     case D3D12_COMMAND_LIST_TYPE_DIRECT:
-        commandQueue = m_DirectCommandQueue;
+        command_queue = m_DirectCommandQueue;
         break;
     case D3D12_COMMAND_LIST_TYPE_COMPUTE:
-        commandQueue = m_ComputeCommandQueue;
+        command_queue = m_ComputeCommandQueue;
         break;
     case D3D12_COMMAND_LIST_TYPE_COPY:
-        commandQueue = m_CopyCommandQueue;
+        command_queue = m_CopyCommandQueue;
         break;
     default:
         assert(false && "Invalid command queue type.");
     }
 
-    return commandQueue;
+    return command_queue;
 }
 
 ID3D12Resource* Renderer::get_current_back_buffer() const
