@@ -55,15 +55,7 @@ void Window::create()
     ::RegisterClassExW(&wc);
 
     hwnd = ::CreateWindowW(wc.lpszClassName, L"DX12FRAMEWORK by Hubert Olejnik", WS_OVERLAPPEDWINDOW, 0, 0, 1920, 1080, nullptr, nullptr, wc.hInstance, nullptr);
-    /*
-    if (!m_instance->create_device_d3d(hwnd))
-    {
-        m_instance->cleanup_device_d3d();
-        ::UnregisterClassW(wc.lpszClassName, wc.hInstance);
 
-        return;
-    }
-    */
     ::ShowWindow(hwnd, SW_SHOWDEFAULT);
     ::UpdateWindow(hwnd);
 
