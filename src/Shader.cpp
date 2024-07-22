@@ -2,11 +2,15 @@
 
 #include <d3dcommon.h>
 #include <d3dcompiler.h>
+
+
+
 #include <fstream>
 #include <iostream>
 #include <Windows.h>
 #include <filesystem>
 
+#include "Window.h"
 #include "utils/Types.h"
 #include "utils/Utils.h"
 
@@ -18,13 +22,23 @@ Shader::Shader(std::string name, ShaderType type)
     {
     case ShaderType::VERTEX:
         m_main_function_name = "vs_main";
-        shader_model = "vs_6_0";
+        shader_model = "vs_5_1";
         break;
     case ShaderType::PIXEL:
         m_main_function_name = "ps_main";
-        shader_model = "ps_6_0";
+        shader_model = "ps_5_1";
         break;
     }
+
+    // TODO: Handle errors
+    /*
+    HRESULT hr = DxcCreateInstance(CLSID_DxcLibrary, IID_PPV_ARGS(&library));
+
+    hr = DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&compiler));
+
+    hr = library->CreateIncludeHandler(&include_handler);
+    */
+
     load_shader();
 }
 
@@ -38,7 +52,18 @@ void Shader::load_shader()
         char const* shader_source = read_hlsl_shader_from_file(m_path, &size);
         hr = D3DPreprocess(shader_source, size, m_path.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, &shader_blob,
             &shader_compile_errors_blob);
+        /*
+        Microsoft::WRL::ComPtr<IDxcBlobEncoding> source_blob;
+        hr = library->CreateBlobWithEncodingFromPinned((LPBYTE)shader_source, size, CP_UTF8, &source_blob);
 
+        Microsoft::WRL::ComPtr<IDxcOperationResult> result;
+        hr = compiler->Preprocess(source_blob.Get(), olej_utils::string_to_LPCWSTR(m_path), nullptr, 0, nullptr, 0, include_handler.Get(), &result);
+        Microsoft::WRL::ComPtr<IDxcBlob> pPreprocessedBlob;
+        hr = result->GetResult(&pPreprocessedBlob);
+        if (pPreprocessedBlob) {
+            wprintf(L"Preprocessed HLSL code:\n%hs", (const char*)pPreprocessedBlob->GetBufferPointer());
+        }
+        */
         delete[] shader_source;
 
         if (FAILED(hr))
@@ -60,7 +85,6 @@ void Shader::load_shader()
 
         std::string const hash =
             std::to_string(olej_utils::murmur_hash(static_cast<u8*>(shader_blob->GetBufferPointer()), shader_blob->GetBufferSize(), 0));
-
         if (!read_file_to_blob(m_path + hash + m_main_function_name, &shader_blob))
         {
             hr = D3DCompile(shader_blob->GetBufferPointer(), shader_blob->GetBufferSize(), nullptr, nullptr, nullptr, m_main_function_name.c_str(), shader_model.c_str(), 0, 0,
@@ -189,4 +213,9 @@ bool Shader::save_compiled_shader(std::string const& path, ID3DBlob* p_blob)
     file.close();
 
     return true;
+}
+
+ID3DBlob* Shader::get_blob()
+{
+    return shader_blob;
 }
