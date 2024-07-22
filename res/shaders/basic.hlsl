@@ -2,7 +2,7 @@
 struct ModelViewProjection
 {
     float4x4 MVP;
-}
+};
 
 ConstantBuffer<ModelViewProjection> ModelViewProjectionCB : register(b0);
 
@@ -37,7 +37,7 @@ VertexShaderOutput vs_main(VertexPosColor IN)
 
 
  
-float4 main( PixelShaderInput IN ) : SV_Target
+float4 ps_main( VertexShaderOutput IN ) : SV_Target
 {
     return IN.Color;
 }
