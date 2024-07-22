@@ -7,6 +7,7 @@
 #include <imgui_impl/imgui_impl_win32.h>
 #include <imgui_internal.h>
 #include "Entity.h"
+#include "Renderer.h"
 #include "Window.h"
 
 Editor* Editor::m_instance;
@@ -40,12 +41,13 @@ Editor::Editor()
         style.WindowRounding = 0.0f;
         style.Colors[ImGuiCol_WindowBg].w = 1.0f;
     }
+    auto renderer = Renderer::get_instance();
     auto window_instance = Window::get_instance();
     ImGui_ImplWin32_Init(window_instance->get_hwnd());
-    ImGui_ImplDX12_Init(window_instance->get_device(), Window::NUM_FRAMES_IN_FLIGHT,
-        DXGI_FORMAT_R8G8B8A8_UNORM, window_instance->get_srv_desc_heap(),
-        window_instance->get_srv_desc_heap()->GetCPUDescriptorHandleForHeapStart(),
-        window_instance->get_srv_desc_heap()->GetGPUDescriptorHandleForHeapStart());
+    ImGui_ImplDX12_Init(renderer->get_device(), Renderer::NUM_FRAMES_IN_FLIGHT,
+        DXGI_FORMAT_R8G8B8A8_UNORM, renderer->get_srv_desc_heap(),
+        renderer->get_srv_desc_heap()->GetCPUDescriptorHandleForHeapStart(),
+        renderer->get_srv_desc_heap()->GetGPUDescriptorHandleForHeapStart());
 }
 
 void Editor::update()
@@ -95,12 +97,12 @@ void Editor::update()
 
     ImGui::Render();
 
-    ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), Window::get_instance()->g_pd3dCommandList);
+    ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), Renderer::get_instance()->g_pd3dCommandList);
     // Update and Render additional Platform Windows
     if (m_io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
     {
         ImGui::UpdatePlatformWindows();
-        ImGui::RenderPlatformWindowsDefault(nullptr, (void*)Window::get_instance()->g_pd3dCommandList);
+        ImGui::RenderPlatformWindowsDefault(nullptr, (void*)Renderer::get_instance()->g_pd3dCommandList);
     }
 }
 

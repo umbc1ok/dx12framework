@@ -8,10 +8,10 @@ IndexBuffer::IndexBuffer(u16 const* data, u16 const no_of_indicies)
     m_data = data;
     m_no_of_indicies = no_of_indicies;
 
-    auto cmdqueue = Window::get_instance()->get_cmd_queue(D3D12_COMMAND_LIST_TYPE_COPY);
+    auto cmdqueue = Renderer::get_instance()->get_cmd_queue(D3D12_COMMAND_LIST_TYPE_COPY);
     auto cmdlist = cmdqueue->get_command_list();
     ID3D12Resource* intermediateIndexBuffer;
-    Renderer::update_buffer_resource(cmdlist,
+    Renderer::get_instance()->update_buffer_resource(cmdlist,
         &m_IndexBuffer, &intermediateIndexBuffer,
         no_of_indicies, sizeof(u16), data);
 

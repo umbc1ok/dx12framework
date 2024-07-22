@@ -11,10 +11,10 @@ VertexBuffer::VertexBuffer(Vertex const* data, u32 vertices_count)
 {
     m_data = data;
     m_verticies_count = vertices_count;
-    auto cmdqueue = Window::get_instance()->get_cmd_queue(D3D12_COMMAND_LIST_TYPE_COPY);
+    auto cmdqueue = Renderer::get_instance()->get_cmd_queue(D3D12_COMMAND_LIST_TYPE_COPY);
     auto cmdlist = cmdqueue->get_command_list();
     ID3D12Resource* intermediateVertexBuffer;
-    Renderer::update_buffer_resource(cmdlist,
+    Renderer::get_instance()->update_buffer_resource(cmdlist,
         &m_vertex_buffer, &intermediateVertexBuffer,
         vertices_count, sizeof(Vertex), data);
     //intermediateVertexBuffer->Release();

@@ -1,4 +1,6 @@
 #include "PipelineState.h"
+
+#include "Renderer.h"
 #include "Shader.h"
 #include "Window.h"
 #include "utils/ErrorHandler.h"
@@ -67,10 +69,10 @@ PipelineState::PipelineState(std::string vs_name, std::string ps_name)
     sizeof(PipelineStateStream), &pipeline_state_stream
     };
 
-    auto commandQueue = Window::get_instance()->get_cmd_queue(D3D12_COMMAND_LIST_TYPE_COPY);
+    auto commandQueue = Renderer::get_instance()->get_cmd_queue(D3D12_COMMAND_LIST_TYPE_COPY);
     auto commandList = commandQueue->get_command_list();
 
-    AssertFailed(Window::get_instance()->get_device()->CreatePipelineState(&pipelineStateStreamDesc, IID_PPV_ARGS(&m_pipeline_state)));
+    AssertFailed(Renderer::get_instance()->get_device()->CreatePipelineState(&pipelineStateStreamDesc, IID_PPV_ARGS(&m_pipeline_state)));
 
     auto fenceValue = commandQueue->execute_command_list(commandList);
     commandQueue->wait_for_fence_value(fenceValue);
@@ -89,7 +91,7 @@ ID3D12PipelineState* PipelineState::get_pipeline_state() const
 // This is very basic, using it only to render a cube for now
 void PipelineState::create_root_signature()
 {
-    auto device = Window::get_instance()->get_device();
+    auto device = Renderer::get_instance()->get_device();
     // Create a root signature.
     D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = {};
     featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;

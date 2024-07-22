@@ -6,6 +6,8 @@
 #include <DirectXMath.h>
 #include <imgui.h>
 
+#include "Renderer.h"
+
 using namespace DirectX;
 DrawableCube::DrawableCube()
 {
@@ -22,7 +24,7 @@ void DrawableCube::predraw()
 
 void DrawableCube::draw()
 {
-    auto commandList = Window::get_instance()->g_pd3dCommandList;
+    auto commandList = Renderer::get_instance()->g_pd3dCommandList;
     commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     commandList->IASetVertexBuffers(0, 1, m_vertex_buffer->get_view());
     commandList->IASetIndexBuffer(m_index_buffer->get_view());

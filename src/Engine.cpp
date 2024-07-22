@@ -12,8 +12,8 @@
 void Engine::setup()
 {
     Window::create();
-    Editor::create();
     Renderer::create();
+    Editor::create();
     create_game();
 }
 
@@ -23,10 +23,10 @@ void Engine::run()
     while (run)
     {
         std::cout << "FRAME" << "\n";
-        Window::get_instance()->start_frame();
+        Renderer::get_instance()->start_frame();
         Renderer::get_instance()->render();
         Editor::get_instance()->update();
-        Window::get_instance()->end_frame();
+        Renderer::get_instance()->end_frame();
         MSG msg;
         // Poll events after running engine to prevent exceptions when closing the window
         while (::PeekMessage(&msg, nullptr, 0U, 0U, PM_REMOVE))
@@ -44,7 +44,7 @@ void Engine::run()
 void Engine::cleanup()
 {
     Editor::get_instance()->cleanup();
-    Window::get_instance()->cleanup();
+    Renderer::get_instance()->cleanup();
 }
 
 bool Engine::is_game_running()
