@@ -50,6 +50,23 @@ void Renderer::cleanup()
     cleanup_render_targets();
 }
 
+void Renderer::on_window_resize()
+{
+    RECT rect;
+    int width, height;
+    if (GetWindowRect(Window::get_hwnd(), &rect))
+    {
+        width = rect.right - rect.left;
+        height = rect.bottom - rect.top;
+    }
+    cleanup_render_targets();
+    HRESULT result = g_pSwapChain->ResizeBuffers(0, (UINT)LOWORD(width), (UINT)HIWORD(height), DXGI_FORMAT_UNKNOWN, DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT);
+    assert(SUCCEEDED(result) && "Failed to resize swapchain.");
+    create_render_targets();
+    m_Viewport = CD3DX12_VIEWPORT(0.0f, 0.0f,
+        static_cast<float>(width), static_cast<float>(height));
+}
+
 bool Renderer::create_device_d3d(HWND hWnd)
 {
     DXGI_SWAP_CHAIN_DESC1 sd;

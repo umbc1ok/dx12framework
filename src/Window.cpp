@@ -24,23 +24,17 @@ void Window::update_window_name(std::string const& name)
 
 LRESULT Window::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    Window* window = Window::get_instance();
+    Renderer* renderer = Renderer::get_instance();
     if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
         return true;
 
     switch (msg)
     {
     case WM_SIZE:
-        /*
-        if (window->g_pd3dDevice != nullptr && wParam != SIZE_MINIMIZED)
+        if (renderer != nullptr && renderer->get_device() != nullptr && wParam != SIZE_MINIMIZED)
         {
-            // TODO: Add resize handling
-            //m_instance->cleanup_render_targets();
-            //HRESULT result = m_instance->g_pSwapChain->ResizeBuffers(0, (UINT)LOWORD(lParam), (UINT)HIWORD(lParam), DXGI_FORMAT_UNKNOWN, DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT);
-            //assert(SUCCEEDED(result) && "Failed to resize swapchain.");
-            m_instance->create_render_targets();
+            renderer->on_window_resize();
         }
-        */
         return 0;
     case WM_SYSCOMMAND:
         if ((wParam & 0xfff0) == SC_KEYMENU) // Disable ALT application menu
