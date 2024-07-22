@@ -6,5 +6,8 @@
 // TODO: Check if it actually stops the program
 inline void AssertFailed(HRESULT hr)
 {
-    assert(FAILED(hr));
+    if (FAILED(hr) == true)
+    {
+        printf("Error: %d\n", hr);
+    }
 }
