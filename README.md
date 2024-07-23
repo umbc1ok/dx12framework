@@ -5,3 +5,11 @@
 </p>
 
 Work very much in progress.
+
+Milestones:
+
+- [X] Rendering a cube
+- [ ] Model loading
+- [ ] Postprocessing framework
+- [ ] PBR and IBL
+- [ ] Mesh shading
