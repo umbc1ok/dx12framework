@@ -13,3 +13,4 @@ CTestTestfile.cmake
 res/shaders/compiled/
 
 *.cap
+.vs/
