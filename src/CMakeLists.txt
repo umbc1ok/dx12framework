@@ -31,6 +31,7 @@ target_link_libraries(${PROJECT_NAME} vml)
 target_link_libraries(${PROJECT_NAME} dx12)
 #target_link_libraries(${PROJECT_NAME} "C:\\Program Files (x86)\\Windows Kits\\10\\Lib\\10.0.22621.0\\um\\x64\\dxcompiler.lib")
 target_link_libraries(${PROJECT_NAME} DirectXTK12)
+target_link_libraries(${PROJECT_NAME} DirectXTex)
 
 
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD 
