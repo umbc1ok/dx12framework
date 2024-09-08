@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cfloat>
+#include <cstring>
 
 #include "../../thirdparty/vml/include/vector.h"
 #include "../../thirdparty/vml/include/vector_functions.h"
