@@ -1,5 +1,10 @@
 cmake_minimum_required(VERSION 3.21 FATAL_ERROR)
+set(CMAKE_POLICY_DEFAULT_CMP0169 OLD)
 project(DX12FRAMEWORK VERSION 2.0)
+
+cmake_policy(SET CMP0169 OLD)
+
+
 
 IF (WIN32)
   message(NOTICE "\n")
@@ -19,3 +24,6 @@ add_subdirectory(thirdparty)
 
 # ---- Main project's files ----
 add_subdirectory(src)
+
+
+
