@@ -28,11 +28,13 @@ set(dx12dir ${CMAKE_CURRENT_LIST_DIR}/directx)
 add_library(dx12 INTERFACE)
 target_include_directories(dx12 INTERFACE ${dx12dir})
 
+
+
 # other
 CPMAddPackage("gh:assimp/assimp@5.2.5")
 CPMAddPackage("gh:ocornut/imgui#v1.90.9-docking")
 CPMAddPackage("gh:gabime/spdlog@1.10.0")
-
+CPMAddPackage("gh:microsoft/DirectXTK12#sep2024")
 
 set(imgui_SOURCE_DIR ${imgui_SOURCE_DIR} CACHE INTERNAL "")
 add_library(imgui STATIC ${imgui_SOURCE_DIR}/imgui.cpp
@@ -46,6 +48,7 @@ set_target_properties(stb_image
                       imgui
 		      vml
 		      dx12
+              DirectXTK12
                       spdlog PROPERTIES FOLDER "thirdparty")
 
 if (TARGET zlibstatic)
