@@ -1,5 +1,7 @@
 #include "Renderer.h"
 
+#include <dxgidebug.h>
+
 #include "DrawableCube.h"
 #include "PipelineState.h"
 #include "Window.h"
@@ -88,9 +90,16 @@ bool Renderer::create_device_d3d(HWND hWnd)
 
     // [DEBUG] Enable debug interface
 #ifdef DX12_ENABLE_DEBUG_LAYER
-    ID3D12Debug* pdx12Debug = nullptr;
+
     if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&pdx12Debug))))
+    {
         pdx12Debug->EnableDebugLayer();
+    }
+
+    if(SUCCEEDED(DXGIGetDebugInterface1(0, IID_PPV_ARGS(&pDXGIDebug))))
+    {
+		pDXGIDebug->EnableLeakTrackingForThread();
+    }
 #endif
 
     // Create device
@@ -102,13 +111,10 @@ bool Renderer::create_device_d3d(HWND hWnd)
 #ifdef DX12_ENABLE_DEBUG_LAYER
     if (pdx12Debug != nullptr)
     {
-        ID3D12InfoQueue* pInfoQueue = nullptr;
         g_pd3dDevice->QueryInterface(IID_PPV_ARGS(&pInfoQueue));
         pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
         pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
         pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, true);
-        pInfoQueue->Release();
-        pdx12Debug->Release();
     }
 #endif
 
@@ -221,11 +227,11 @@ void Renderer::cleanup_device_d3d()
     if (g_pd3dDevice) { g_pd3dDevice->Release(); g_pd3dDevice = nullptr; }
 
 #ifdef DX12_ENABLE_DEBUG_LAYER
-    IDXGIDebug1* pDebug = nullptr;
-    if (SUCCEEDED(DXGIGetDebugInterface1(0, IID_PPV_ARGS(&pDebug))))
+    if (pDXGIDebug != nullptr)
     {
-        pDebug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_SUMMARY);
-        pDebug->Release();
+        pDXGIDebug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_SUMMARY);
+        pDXGIDebug->DisableLeakTrackingForThread();
+        pDXGIDebug->Release();
     }
 #endif
 }
