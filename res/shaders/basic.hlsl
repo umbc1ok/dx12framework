@@ -6,14 +6,18 @@ struct ModelViewProjection
 
 ConstantBuffer<ModelViewProjection> ModelViewProjectionCB : register(b0);
 
+Texture2D foo : register(t0);
+SamplerState test_sampler : register(s0);
+
 struct VertexPosColor
 {
     float3 Position : POSITION;
-    float3 Color    : COLOR;
+    float2 UV    : TEXCOORD;
 };
+
 struct VertexShaderOutput
 {
-    float4 Color    : COLOR;
+    float2 UV    : TEXCOORD;
     float4 Position : SV_Position;
 };
 
@@ -30,7 +34,7 @@ VertexShaderOutput vs_main(VertexPosColor IN)
     VertexShaderOutput OUT;
  
     OUT.Position = mul(ModelViewProjectionCB.MVP, float4(IN.Position, 1.0f));
-    OUT.Color = float4(IN.Color, 1.0f);
+    OUT.UV = float2(IN.UV);
  
     return OUT;
 }
@@ -39,5 +43,5 @@ VertexShaderOutput vs_main(VertexPosColor IN)
  
 float4 ps_main( VertexShaderOutput IN ) : SV_Target
 {
-    return IN.Color;
+    return foo.Sample(test_sampler, IN.UV);
 }

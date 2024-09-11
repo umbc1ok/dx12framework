@@ -1,5 +1,6 @@
 #include "DrawableCube.h"
 
+#include <d3dx12.h>
 #include <iostream>
 
 #include "Window.h"
@@ -7,13 +8,14 @@
 #include <imgui.h>
 
 #include "Renderer.h"
+#include "ResourceLoaders/TextureLoader.h"
 
 using namespace DirectX;
 DrawableCube::DrawableCube()
 {
     m_vertex_buffer = new VertexBuffer(g_Vertices, sizeof(g_Vertices) / sizeof(Vertex));
     m_index_buffer = new IndexBuffer(g_Indicies, sizeof(g_Indicies) / sizeof(u16));
-
+	m_texture = TextureLoader::texture_from_file("./res/textures/racoon2.dds");
     hlsl::float3 position(0.0f, 0.0f, 0.0f);
     hlsl::ComposeMatrix(position, hlsl::float4(1.0f, 1.0f, 1.0f, 1.0f), hlsl::float3(1.0f, 1.0f, 1.0f));
 }
@@ -22,6 +24,7 @@ DrawableCube::~DrawableCube()
 {
 	delete m_vertex_buffer;
 	delete m_index_buffer;
+	delete m_texture;
 }
 
 void DrawableCube::draw()
@@ -30,7 +33,6 @@ void DrawableCube::draw()
     commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     commandList->IASetVertexBuffers(0, 1, m_vertex_buffer->get_view());
     commandList->IASetIndexBuffer(m_index_buffer->get_view());
-
 
     const DirectX::XMVECTOR eyePosition = XMVectorSet(0, 0, -10, 1);
     const XMVECTOR focusPoint = XMVectorSet(0, 0, 0, 1);
@@ -45,7 +47,8 @@ void DrawableCube::draw()
 
     XMMATRIX mvpMatrix = XMMatrixMultiply(world, view);
     mvpMatrix = XMMatrixMultiply(mvpMatrix, projection);
-
+    commandList->SetDescriptorHeaps(1, &m_texture->heap);
+	commandList->SetGraphicsRootDescriptorTable(1, m_texture->SRV_GPU);
     commandList->SetGraphicsRoot32BitConstants(0, 16, &mvpMatrix, 0);
     commandList->DrawIndexedInstanced(_countof(g_Indicies), 1, 0, 0, 0);
 }
