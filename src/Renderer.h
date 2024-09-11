@@ -1,9 +1,10 @@
 #pragma once
 #include <dxgi1_4.h>
+#include <dxgidebug.h>
 
 #include "DrawableCube.h"
 #include "DX12Wrappers/CommandQueue.h"
-
+#define DX12_ENABLE_DEBUG_LAYER 
 
 class PipelineState;
 
@@ -84,6 +85,10 @@ private:
     CommandQueue* m_CopyCommandQueue;
 
     PipelineState* m_pipeline_state;
+
+	ID3D12Debug6* pdx12Debug = nullptr;
+	IDXGIDebug1* pDXGIDebug = nullptr;
+    ID3D12InfoQueue* pInfoQueue = nullptr;
 
     DrawableCube* cube;
 
