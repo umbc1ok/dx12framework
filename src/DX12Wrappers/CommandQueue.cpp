@@ -83,8 +83,8 @@ uint64_t CommandQueue::execute_command_list(ID3D12GraphicsCommandList2* commandL
     m_CommandAllocatorQueue.emplace(CommandAllocatorEntry{ fenceValue, commandAllocator });
     m_CommandListQueue.push(commandList);
 
-    commandAllocator->Release();
-
+	// TODO: Do I need to release the command allocator?
+    //commandAllocator->Release();
     return fenceValue;
 }
 
