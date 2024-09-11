@@ -21,29 +21,31 @@ void Renderer::create()
     m_instance->m_Viewport = CD3DX12_VIEWPORT(0.0f, 0.0f,
         static_cast<float>(1920), static_cast<float>(1080));
     m_instance->m_ScissorRect = CD3DX12_RECT(0, 0, LONG_MAX, LONG_MAX);
-    m_instance->cube = new DrawableCube();
+	m_instance->cube = new DrawableCube();
+
 }
 
 void Renderer::start_frame()
 {
-    auto command_list = m_DirectCommandQueue->get_command_list();
-    g_pd3dCommandList = command_list;
-
-    Renderer::transition_resource(g_pd3dCommandList, get_current_back_buffer(),
+    auto cmdqueue = get_cmd_queue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+    auto command_list = cmdqueue->get_command_list();
+	g_pd3dCommandList = command_list;
+    Renderer::transition_resource(command_list, get_current_back_buffer(),
         D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_RENDER_TARGET);
-
-    g_pd3dCommandList->SetDescriptorHeaps(1, &g_pd3dSrvDescHeap);
 }
 
 void Renderer::end_frame()
 {
-    transition_resource(g_pd3dCommandList, get_current_back_buffer(),
+    auto command_list = g_pd3dCommandList;
+    transition_resource(command_list, get_current_back_buffer(),
         D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
-    auto index = g_pSwapChain->GetCurrentBackBufferIndex();
-    g_fencevalues[g_pSwapChain->GetCurrentBackBufferIndex()] = m_DirectCommandQueue->execute_command_list(g_pd3dCommandList);
-    HRESULT hr = g_pSwapChain->Present(0, 0); // Present without vsync (set first parameter to 1 to enable)
 
+    auto index = g_pSwapChain->GetCurrentBackBufferIndex();
+    g_fencevalues[g_pSwapChain->GetCurrentBackBufferIndex()] = m_DirectCommandQueue->execute_command_list(command_list);
     m_DirectCommandQueue->wait_for_fence_value(g_fencevalues[index]);
+
+    HRESULT hr = g_pSwapChain->Present(1, 0); // Present without vsync (set first parameter to 1 to enable)
+    AssertFailed(hr);
 }
 
 void Renderer::cleanup()
@@ -198,8 +200,8 @@ bool Renderer::create_device_d3d(HWND hWnd)
         desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
         desc.NumDescriptors = 1;
         desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-        if (g_pd3dDevice->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&g_pd3dSrvDescHeap)) != S_OK)
-            return false;
+        HRESULT hr = g_pd3dDevice->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&g_pd3dSrvDescHeap));
+        AssertFailed(hr);
     }
 
     {
@@ -288,26 +290,25 @@ void Renderer::cleanup_render_targets()
 
 void Renderer::render()
 {
-    auto window = Window::get_instance();
-    auto cmdqueue = get_cmd_queue(D3D12_COMMAND_LIST_TYPE_DIRECT);
     auto cmd_list = g_pd3dCommandList;
     auto back_buffer = get_current_back_buffer();
     auto rtv = get_current_rtv();
     auto dsv = get_dsv_heap()->GetCPUDescriptorHandleForHeapStart();
-
     FLOAT clearColor[] = { 0.4f, 0.6f, 0.9f, 1.0f };
 
     clear_rtv(cmd_list, rtv, clearColor);
     clear_depth(cmd_list, dsv);
 
-    cmd_list->SetPipelineState(m_pipeline_state->get_pipeline_state());
     cmd_list->SetGraphicsRootSignature(m_pipeline_state->get_root_signature());
-
+    cmd_list->SetPipelineState(m_pipeline_state->get_pipeline_state());
     cmd_list->RSSetViewports(1, &m_Viewport);
     cmd_list->RSSetScissorRects(1, &m_ScissorRect);
 
     cmd_list->OMSetRenderTargets(1, &rtv, FALSE, &dsv);
+
     cube->draw();
+    cmd_list->SetDescriptorHeaps(1, &g_pd3dSrvDescHeap);
+    cmd_list->SetGraphicsRootDescriptorTable(1, g_pd3dSrvDescHeap->GetGPUDescriptorHandleForHeapStart());
 }
 
 ID3D12Device2* Renderer::get_device() const

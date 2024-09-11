@@ -1,4 +1,5 @@
 #include "PipelineState.h"
+#include <D3dx12.h>
 
 #include "Renderer.h"
 #include "Shader.h"
@@ -6,12 +7,11 @@
 #include "utils/ErrorHandler.h"
 #include "utils/maths.h"
 
-
 PipelineState::PipelineState(std::string vs_name, std::string ps_name)
 {
     D3D12_INPUT_ELEMENT_DESC input_layout[] = {
         { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-        { "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
     };
     vertex_shader = new Shader(vs_name, ShaderType::VERTEX);
     pixel_shader = new Shader(ps_name, ShaderType::PIXEL);
@@ -69,13 +69,9 @@ PipelineState::PipelineState(std::string vs_name, std::string ps_name)
     sizeof(PipelineStateStream), &pipeline_state_stream
     };
 
-    auto command_queue = Renderer::get_instance()->get_cmd_queue(D3D12_COMMAND_LIST_TYPE_COPY);
-    auto command_list = command_queue->get_command_list();
 
     AssertFailed(Renderer::get_instance()->get_device()->CreatePipelineState(&pipeline_state_stream_desc, IID_PPV_ARGS(&m_pipeline_state)));
 
-    auto fenceValue = command_queue->execute_command_list(command_list);
-    command_queue->wait_for_fence_value(fenceValue);
 }
 
 ID3D12RootSignature* PipelineState::get_root_signature() const
@@ -106,15 +102,20 @@ void PipelineState::create_root_signature()
         D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
         D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
         D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
-        D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
-        D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
+        D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
 
     // A single 32-bit constant root parameter that is used by the vertex shader.
-    CD3DX12_ROOT_PARAMETER1 root_parameters[1];
+    CD3DX12_ROOT_PARAMETER1 root_parameters[2];
     root_parameters[0].InitAsConstants(sizeof(hlsl::float4x4) / 4, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
 
+    CD3DX12_DESCRIPTOR_RANGE1 myTextureDescriptorRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
+    root_parameters[1].InitAsDescriptorTable(1, &myTextureDescriptorRange);
     CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC root_signature_description;
-    root_signature_description.Init_1_1(_countof(root_parameters), root_parameters, 0, nullptr, root_signature_flags);
+
+    CD3DX12_STATIC_SAMPLER_DESC static_samplers[1];
+    static_samplers[0].Init(0, D3D12_FILTER_ANISOTROPIC); // s3
+
+    root_signature_description.Init_1_1(_countof(root_parameters), root_parameters, 1, static_samplers, root_signature_flags);
 
     // Serialize the root signature.
     ID3DBlob* root_signature_blob;
