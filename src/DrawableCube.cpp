@@ -18,6 +18,12 @@ DrawableCube::DrawableCube()
     hlsl::ComposeMatrix(position, hlsl::float4(1.0f, 1.0f, 1.0f, 1.0f), hlsl::float3(1.0f, 1.0f, 1.0f));
 }
 
+DrawableCube::~DrawableCube()
+{
+	delete m_vertex_buffer;
+	delete m_index_buffer;
+}
+
 void DrawableCube::draw()
 {
     auto commandList = Renderer::get_instance()->g_pd3dCommandList;
