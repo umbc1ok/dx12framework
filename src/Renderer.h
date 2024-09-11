@@ -43,6 +43,7 @@ public:
     static constexpr int NUM_FRAMES_IN_FLIGHT = 3;
 
     ID3D12GraphicsCommandList2* g_pd3dCommandList = nullptr;
+    void create_depth_stencil();
     void on_window_resize();
 
 private:

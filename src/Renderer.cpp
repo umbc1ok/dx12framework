@@ -52,6 +52,60 @@ void Renderer::cleanup()
     cleanup_render_targets();
 }
 
+void Renderer::create_depth_stencil()
+{
+    if (m_dsv_heap != nullptr)
+    {
+        m_dsv_heap->Release();
+        m_dsv_heap = nullptr;
+    }
+    D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
+    dsvHeapDesc.NumDescriptors = 1;
+    dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+    dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+    AssertFailed(g_pd3dDevice->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_dsv_heap)));
+
+
+    D3D12_DEPTH_STENCIL_VIEW_DESC dsv = {};
+    dsv.Format = DXGI_FORMAT_D32_FLOAT;
+    dsv.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+    dsv.Texture2D.MipSlice = 0;
+    dsv.Flags = D3D12_DSV_FLAG_NONE;
+
+    D3D12_CLEAR_VALUE optimizedClearValue = {};
+    optimizedClearValue.Format = DXGI_FORMAT_D32_FLOAT;
+    optimizedClearValue.DepthStencil = { 0.1f, 0 };
+
+    if (m_depth_buffer != nullptr)
+    {
+        m_depth_buffer->Release();
+        m_depth_buffer = nullptr;
+    }
+
+    RECT rect;
+    int width, height;
+    if (GetWindowRect(Window::get_hwnd(), &rect))
+    {
+        width = rect.right - rect.left;
+        height = rect.bottom - rect.top;
+    }
+    // TODO: Clear those heapype and rsrc_desc
+    auto heaptype = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+    auto rsrc_desc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT,width, height,
+        1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
+    AssertFailed(g_pd3dDevice->CreateCommittedResource(
+        &heaptype,
+        D3D12_HEAP_FLAG_NONE,
+        &rsrc_desc,
+        D3D12_RESOURCE_STATE_DEPTH_WRITE,
+        &optimizedClearValue,
+        IID_PPV_ARGS(&m_depth_buffer)
+    ));
+
+    g_pd3dDevice->CreateDepthStencilView(m_depth_buffer, &dsv,
+        m_dsv_heap->GetCPUDescriptorHandleForHeapStart());
+}
+
 void Renderer::on_window_resize()
 {
     RECT rect;
@@ -65,6 +119,7 @@ void Renderer::on_window_resize()
     HRESULT result = g_pSwapChain->ResizeBuffers(0, (UINT)LOWORD(width), (UINT)HIWORD(height), DXGI_FORMAT_UNKNOWN, DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT);
     assert(SUCCEEDED(result) && "Failed to resize swapchain.");
     create_render_targets();
+    create_depth_stencil();
     m_Viewport = CD3DX12_VIEWPORT(0.0f, 0.0f,
         static_cast<float>(width), static_cast<float>(height));
 }
@@ -169,39 +224,7 @@ bool Renderer::create_device_d3d(HWND hWnd)
         g_pSwapChain->SetMaximumFrameLatency(NUM_BACK_BUFFERS);
         //g_hSwapChainWaitableObject = g_pSwapChain->GetFrameLatencyWaitableObject();
     }
-
-    D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
-    dsvHeapDesc.NumDescriptors = 1;
-    dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-    dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-    AssertFailed(g_pd3dDevice->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_dsv_heap)));
-
-    D3D12_DEPTH_STENCIL_VIEW_DESC dsv = {};
-    dsv.Format = DXGI_FORMAT_D32_FLOAT;
-    dsv.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-    dsv.Texture2D.MipSlice = 0;
-    dsv.Flags = D3D12_DSV_FLAG_NONE;
-
-    D3D12_CLEAR_VALUE optimizedClearValue = {};
-    optimizedClearValue.Format = DXGI_FORMAT_D32_FLOAT;
-    optimizedClearValue.DepthStencil = { 0.1f, 0 };
-
-    // TODO: Clear those heapype and rsrc_desc
-    auto heaptype = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-    auto rsrc_desc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, 1920, 1080,
-        1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
-    AssertFailed(g_pd3dDevice->CreateCommittedResource(
-        &heaptype,
-        D3D12_HEAP_FLAG_NONE,
-        &rsrc_desc,
-        D3D12_RESOURCE_STATE_DEPTH_WRITE,
-        &optimizedClearValue,
-        IID_PPV_ARGS(&m_depth_buffer)
-    ));
-
-    g_pd3dDevice->CreateDepthStencilView(m_depth_buffer, &dsv,
-        m_dsv_heap->GetCPUDescriptorHandleForHeapStart());
-
+    create_depth_stencil();
     create_render_targets();
 
     return true;
