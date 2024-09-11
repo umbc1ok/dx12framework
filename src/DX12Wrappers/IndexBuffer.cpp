@@ -19,7 +19,8 @@ IndexBuffer::IndexBuffer(u16 const* data, u16 const no_of_indicies)
     m_IndexBufferView.BufferLocation = m_IndexBuffer->GetGPUVirtualAddress();
     m_IndexBufferView.Format = DXGI_FORMAT_R16_UINT;
     m_IndexBufferView.SizeInBytes = sizeof(u16) * no_of_indicies;
-    cmdqueue->execute_command_list(cmdlist);
+    auto fence_value = cmdqueue->execute_command_list(cmdlist);
+    cmdqueue->wait_for_fence_value(fence_value);
 }
 
 IndexBuffer::~IndexBuffer()
