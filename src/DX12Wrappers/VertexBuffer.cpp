@@ -22,8 +22,8 @@ VertexBuffer::VertexBuffer(Vertex const* data, u32 vertices_count)
     m_VertexBufferView->BufferLocation = m_vertex_buffer->GetGPUVirtualAddress();
     m_VertexBufferView->SizeInBytes = sizeof(Vertex) * vertices_count;
     m_VertexBufferView->StrideInBytes = sizeof(Vertex);
-    cmdqueue->execute_command_list(cmdlist);
-
+    auto fence_value = cmdqueue->execute_command_list(cmdlist);
+    cmdqueue->wait_for_fence_value(fence_value);
 }
 
 VertexBuffer::~VertexBuffer()
