@@ -49,7 +49,6 @@ void Renderer::end_frame()
 void Renderer::cleanup()
 {
     cleanup_device_d3d();
-    cleanup_render_targets();
 }
 
 void Renderer::create_depth_stencil()
@@ -116,6 +115,9 @@ void Renderer::on_window_resize()
         height = rect.bottom - rect.top;
     }
     cleanup_render_targets();
+
+	m_DirectCommandQueue->flush();
+
     HRESULT result = g_pSwapChain->ResizeBuffers(0, (UINT)LOWORD(width), (UINT)HIWORD(height), DXGI_FORMAT_UNKNOWN, DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT);
     assert(SUCCEEDED(result) && "Failed to resize swapchain.");
     create_render_targets();
@@ -243,11 +245,28 @@ void Renderer::create_render_targets()
 
 void Renderer::cleanup_device_d3d()
 {
-    cleanup_render_targets();
-    if (g_pSwapChain) { g_pSwapChain->SetFullscreenState(false, nullptr); g_pSwapChain->Release(); g_pSwapChain = nullptr; }
-    if (g_pd3dRtvDescHeap) { g_pd3dRtvDescHeap->Release(); g_pd3dRtvDescHeap = nullptr; }
-    if (g_pd3dSrvDescHeap) { g_pd3dSrvDescHeap->Release(); g_pd3dSrvDescHeap = nullptr; }
+    // Command queues
+    delete m_DirectCommandQueue;
+    delete m_ComputeCommandQueue;
+    delete m_CopyCommandQueue;
+
+    delete cube;
+
     if (g_pd3dDevice) { g_pd3dDevice->Release(); g_pd3dDevice = nullptr; }
+    if (g_pSwapChain) { g_pSwapChain->SetFullscreenState(false, nullptr); g_pSwapChain->Release(); g_pSwapChain = nullptr; }
+
+    // Heaps
+	if (g_pd3dRtvDescHeap) { g_pd3dRtvDescHeap->Release(); g_pd3dRtvDescHeap = nullptr; }
+    if (g_pd3dSrvDescHeap) { g_pd3dSrvDescHeap->Release(); g_pd3dSrvDescHeap = nullptr; }
+    if (m_dsv_heap) { m_dsv_heap->Release(); m_dsv_heap = nullptr; }
+
+    // Resources
+    if (m_depth_buffer) { m_depth_buffer->Release(); m_depth_buffer = nullptr; }
+    cleanup_render_targets();
+    for(int i = 0; i < NUM_BACK_BUFFERS; i++)
+    {
+        if (g_mainRenderTargetResource[i]) { g_mainRenderTargetResource[i]->Release(); g_mainRenderTargetResource[i] = nullptr; }
+    }
 
 #ifdef DX12_ENABLE_DEBUG_LAYER
     if (pDXGIDebug != nullptr)
