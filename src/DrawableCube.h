@@ -9,7 +9,7 @@ class DrawableCube
 {
 public:
     DrawableCube();
-    ~DrawableCube() = default;
+    ~DrawableCube();
 
     void draw();
 private:
