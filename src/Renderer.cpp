@@ -6,6 +6,7 @@
 #include "PipelineState.h"
 #include "Window.h"
 #include "utils/ErrorHandler.h"
+#include "utils/Utils.h"
 
 Renderer* Renderer::m_instance;
 
@@ -22,7 +23,7 @@ void Renderer::create()
         static_cast<float>(1920), static_cast<float>(1080));
     m_instance->m_ScissorRect = CD3DX12_RECT(0, 0, LONG_MAX, LONG_MAX);
 	m_instance->cube = new DrawableCube();
-
+    m_instance->model = Model::create("./res/models/nanosuit/nanosuit.obj");
 }
 
 void Renderer::start_frame()
@@ -44,7 +45,7 @@ void Renderer::end_frame()
     g_fencevalues[g_pSwapChain->GetCurrentBackBufferIndex()] = m_DirectCommandQueue->execute_command_list(command_list);
     m_DirectCommandQueue->wait_for_fence_value(g_fencevalues[index]);
 
-    HRESULT hr = g_pSwapChain->Present(1, 0); // Present without vsync (set first parameter to 1 to enable)
+    HRESULT hr = g_pSwapChain->Present(0, 0); // Present without vsync (set first parameter to 1 to enable)
     AssertFailed(hr);
 }
 
@@ -75,7 +76,7 @@ void Renderer::create_depth_stencil()
 
     D3D12_CLEAR_VALUE optimizedClearValue = {};
     optimizedClearValue.Format = DXGI_FORMAT_D32_FLOAT;
-    optimizedClearValue.DepthStencil = { 0.1f, 0 };
+    optimizedClearValue.DepthStencil = { 1.0f, 0 };
 
     if (m_depth_buffer != nullptr)
     {
@@ -90,7 +91,7 @@ void Renderer::create_depth_stencil()
         width = rect.right - rect.left;
         height = rect.bottom - rect.top;
     }
-    // TODO: Clear those heapype and rsrc_desc
+
     auto heaptype = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
     auto rsrc_desc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT,width, height,
         1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
@@ -273,7 +274,8 @@ void Renderer::cleanup_device_d3d()
 #ifdef DX12_ENABLE_DEBUG_LAYER
     if (pDXGIDebug != nullptr)
     {
-        pDXGIDebug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_SUMMARY);
+        // TODO: TURN THIS ON AND CLEANUP ALL NON-RELEASED OBJECTS
+        //pDXGIDebug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_SUMMARY);
         pDXGIDebug->DisableLeakTrackingForThread();
         pDXGIDebug->Release();
     }
@@ -297,7 +299,7 @@ void Renderer::render()
     FLOAT clearColor[] = { 0.4f, 0.6f, 0.9f, 1.0f };
 
     clear_rtv(cmd_list, rtv, clearColor);
-    clear_depth(cmd_list, dsv);
+    clear_depth(cmd_list, dsv, 1.0f);
 
     cmd_list->SetGraphicsRootSignature(m_pipeline_state->get_root_signature());
     cmd_list->SetPipelineState(m_pipeline_state->get_pipeline_state());
@@ -305,8 +307,8 @@ void Renderer::render()
     cmd_list->RSSetScissorRects(1, &m_ScissorRect);
 
     cmd_list->OMSetRenderTargets(1, &rtv, FALSE, &dsv);
-
-    cube->draw();
+    model->draw();
+    //cube->draw();
     cmd_list->SetDescriptorHeaps(1, &g_pd3dSrvDescHeap);
     cmd_list->SetGraphicsRootDescriptorTable(1, g_pd3dSrvDescHeap->GetGPUDescriptorHandleForHeapStart());
 }

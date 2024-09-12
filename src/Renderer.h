@@ -3,6 +3,7 @@
 #include <dxgidebug.h>
 
 #include "DrawableCube.h"
+#include "Model.h"
 #include "DX12Wrappers/CommandQueue.h"
 #define DX12_ENABLE_DEBUG_LAYER 
 
@@ -92,6 +93,7 @@ private:
     ID3D12InfoQueue* pInfoQueue = nullptr;
 
     DrawableCube* cube;
+    Model* model;
 
     static Renderer* m_instance;
 };

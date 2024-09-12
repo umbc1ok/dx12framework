@@ -47,8 +47,8 @@ void DrawableCube::draw()
 
     XMMATRIX mvpMatrix = XMMatrixMultiply(world, view);
     mvpMatrix = XMMatrixMultiply(mvpMatrix, projection);
-    commandList->SetDescriptorHeaps(1, &m_texture->heap);
 	commandList->SetGraphicsRootDescriptorTable(1, m_texture->SRV_GPU);
+    commandList->SetDescriptorHeaps(1, &m_texture->heap);
     commandList->SetGraphicsRoot32BitConstants(0, 16, &mvpMatrix, 0);
     commandList->DrawIndexedInstanced(_countof(g_Indicies), 1, 0, 0, 0);
 }

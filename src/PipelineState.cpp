@@ -11,6 +11,7 @@ PipelineState::PipelineState(std::string vs_name, std::string ps_name)
 {
     D3D12_INPUT_ELEMENT_DESC input_layout[] = {
         { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
         { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
     };
     vertex_shader = new Shader(vs_name, ShaderType::VERTEX);
@@ -43,14 +44,14 @@ PipelineState::PipelineState(std::string vs_name, std::string ps_name)
     blend_desc.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
     blend_desc.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
     blend_desc.RenderTarget[0].DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
-    blend_desc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
+    blend_desc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_SUBTRACT;
     blend_desc.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ONE;
     blend_desc.AlphaToCoverageEnable = TRUE;
     blend_desc.IndependentBlendEnable = TRUE;
 
     CD3DX12_DEPTH_STENCIL_DESC depth_stencil_desc = CD3DX12_DEPTH_STENCIL_DESC(CD3DX12_DEFAULT());
     // VERY FUCKING IMPORTANT LINE
-    depth_stencil_desc.DepthFunc = D3D12_COMPARISON_FUNC_GREATER_EQUAL;
+    //depth_stencil_desc.DepthFunc = D3D12_COMPARISON_FUNC_GREATER;
 
 
     pipeline_state_stream.pRootSignature = m_root_signature;
@@ -64,11 +65,9 @@ PipelineState::PipelineState(std::string vs_name, std::string ps_name)
     pipeline_state_stream.blendDesc = blend_desc;
     pipeline_state_stream.depthStencildesc = depth_stencil_desc;
 
-
     D3D12_PIPELINE_STATE_STREAM_DESC pipeline_state_stream_desc = {
     sizeof(PipelineStateStream), &pipeline_state_stream
     };
-
 
     AssertFailed(Renderer::get_instance()->get_device()->CreatePipelineState(&pipeline_state_stream_desc, IID_PPV_ARGS(&m_pipeline_state)));
 
