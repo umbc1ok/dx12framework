@@ -10,6 +10,10 @@
 #include "utils/ErrorHandler.h"
 #include "utils/Types.h"
 #include "utils/Utils.h"
+#include <codecvt>
+#include <locale>
+
+#include "WICTextureLoader.h"
 
 Texture* TextureLoader::texture_from_file(std::string const& path)
 {
@@ -18,12 +22,19 @@ Texture* TextureLoader::texture_from_file(std::string const& path)
 	auto cmdlist = cmdqueue->get_command_list();
 	HRESULT hr;
 
+	
 	// Informations about the texture resource
 	DirectX::TexMetadata metadata;
 	// Content of the texture resource
 	DirectX::ScratchImage scratchImage;
 
-	hr = DirectX::LoadFromDDSFile(L"./res/textures/racoon.dds", DirectX::DDS_FLAGS_FORCE_RGB, &metadata, scratchImage);
+    // Convert std::string to std::wstring
+    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+    std::wstring wpath = converter.from_bytes(path);
+
+    //hr = DirectX::LoadFromDDSFile(wpath.c_str(), DirectX::DDS_FLAGS_FORCE_RGB, &metadata, scratchImage);
+	
+    hr = DirectX::LoadFromWICFile(wpath.c_str(), DirectX::WIC_FLAGS_NONE, &metadata, scratchImage);
 	AssertFailed(hr);
 	D3D12_RESOURCE_DESC texture_desc = {};
 	texture_desc = CD3DX12_RESOURCE_DESC::Tex2D(
@@ -33,6 +44,7 @@ Texture* TextureLoader::texture_from_file(std::string const& path)
 		static_cast<u16>(metadata.arraySize));
 
 	Texture* texture = new Texture();
+    texture->path = path;
 
 	CD3DX12_HEAP_PROPERTIES default_heap_properties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 	device->CreateCommittedResource(

@@ -5,6 +5,13 @@
 
 namespace olej_utils
 {
+
+    template<typename T>
+    class Badge {
+        friend T;
+        Badge() {}
+    };
+
     template<typename T>
     void swap_and_erase(std::vector<T>& vector, T element)
     {
@@ -101,5 +108,8 @@ namespace olej_utils
         LPCWSTR result = wsTmp.c_str();
         return result;
     }
+
+
+
 
 }

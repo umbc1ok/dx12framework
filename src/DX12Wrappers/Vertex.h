@@ -10,7 +10,7 @@
 struct Vertex
 {
     hlsl::float3 position;
-    //hlsl::float3 normal;
+    hlsl::float3 normal;
     hlsl::float2 UV;
 };
 
