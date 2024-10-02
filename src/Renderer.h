@@ -88,7 +88,9 @@ private:
 
     PipelineState* m_pipeline_state;
 
-	ID3D12Debug6* pdx12Debug = nullptr;
+    // Previously used ID3D12Debug6, but it's available in Agility SDK 1.7+ (which for now is in preview)
+    // For multiplatform use, let's downgrade it to ID3D12Debug3
+	ID3D12Debug3* pdx12Debug = nullptr;
 	IDXGIDebug1* pDXGIDebug = nullptr;
     ID3D12InfoQueue* pInfoQueue = nullptr;
 
