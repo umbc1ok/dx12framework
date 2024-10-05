@@ -7,6 +7,7 @@
 #include "Window.h"
 #include "utils/ErrorHandler.h"
 #include "utils/Utils.h"
+#include <Camera.h>
 
 Renderer* Renderer::m_instance;
 
@@ -45,7 +46,7 @@ void Renderer::end_frame()
     g_fencevalues[g_pSwapChain->GetCurrentBackBufferIndex()] = m_DirectCommandQueue->execute_command_list(command_list);
     m_DirectCommandQueue->wait_for_fence_value(g_fencevalues[index]);
 
-    HRESULT hr = g_pSwapChain->Present(0, 0); // Present without vsync (set first parameter to 1 to enable)
+    HRESULT hr = g_pSwapChain->Present(1, 0); // Present without vsync (set first parameter to 1 to enable)
     AssertFailed(hr);
 }
 
