@@ -46,6 +46,7 @@ public:
     ID3D12GraphicsCommandList2* g_pd3dCommandList = nullptr;
     void create_depth_stencil();
     void on_window_resize();
+    Entity* camera_entity;
 
 private:
 
@@ -96,6 +97,7 @@ private:
 
     DrawableCube* cube;
     Model* model;
+
 
     static Renderer* m_instance;
 };

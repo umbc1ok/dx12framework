@@ -12,6 +12,7 @@
 #include "utils/Types.h"
 #include "Mesh.h"
 #include "Renderer.h"
+#include "Camera.h"
 
 using namespace DirectX;
 
@@ -23,24 +24,22 @@ Model* Model::create(std::string const& model_path)
     return model;
 }
 
-void Model::draw()
+void Model::set_constant_buffer()
 {
     auto commandList = Renderer::get_instance()->g_pd3dCommandList;
 
-    const DirectX::XMVECTOR eyePosition = XMVectorSet(0, 0, -10, 1);
-    const XMVECTOR focusPoint = XMVectorSet(0, 0, 0, 1);
-    const XMVECTOR upDirection = XMVectorSet(0, 1, 0, 0);
-    XMMATRIX view = XMMatrixLookAtLH(eyePosition, focusPoint, upDirection);
-    XMMATRIX projection = XMMatrixPerspectiveFovLH(XMConvertToRadians(45.0f), 1920.0f / 1080.0f, 0.1f, 100.0f);
-    XMMATRIX world = XMMatrixTranslation(1.0f, 0.0f, 0.0f);
-    world *= XMMatrixRotationX(ImGui::GetTime());
-    world *= XMMatrixRotationZ(ImGui::GetTime());
-    world *= XMMatrixRotationY(ImGui::GetTime());
-
-
-    DirectX::XMMATRIX mvpMatrix = XMMatrixMultiply(world, view);
-    mvpMatrix = XMMatrixMultiply(mvpMatrix, projection);
+    hlsl::float4x4 view = Camera::get_main_camera()->get_view_matrix();
+    hlsl::float4x4 projection = Camera::get_main_camera()->get_projection_matrix();
+    float time = ImGui::GetTime();
+    hlsl::float4x4 world = hlsl::ComposeMatrix(hlsl::float3(0.0f, 0.0f, 0.0f), hlsl::EulerToQuaternion(hlsl::float3(0, 0, 0)), hlsl::float3(0.3f, 0.3f, 0.3f));
+    hlsl::float4x4 mvpMatrix = projection * view;
+    mvpMatrix = mvpMatrix * world;
     commandList->SetGraphicsRoot32BitConstants(0, 16, &mvpMatrix, 0);
+}
+
+void Model::draw()
+{
+    set_constant_buffer();
     for (auto const& mesh : m_meshes)
     {
         mesh->draw();

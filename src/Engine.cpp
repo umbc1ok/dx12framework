@@ -7,6 +7,9 @@
 #include "Entity.h"
 #include "MainScene.h"
 #include "Renderer.h"
+#include <Camera.h>
+
+#include "Input.h"
 
 
 void Engine::setup()
@@ -14,7 +17,11 @@ void Engine::setup()
     Window::create();
     Renderer::create();
     Editor::create();
+    Input::create();
     create_game();
+    Renderer::get_instance()->camera_entity = Entity::create("Camera");
+    Camera::create();
+    Renderer::get_instance()->camera_entity->add_component(Camera::get_main_camera());
 }
 
 void Engine::run()
@@ -22,6 +29,8 @@ void Engine::run()
     bool run = true;
     while (run)
     {
+        MainScene::get_instance()->run_frame();
+        Input::get_instance()->update();
         Renderer::get_instance()->start_frame();
         Renderer::get_instance()->render();
         Editor::get_instance()->update();

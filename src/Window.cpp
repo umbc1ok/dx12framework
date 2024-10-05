@@ -8,6 +8,8 @@
 #include <iostream>
 #include <tchar.h>
 #include "imgui_internal.h"
+#include "Keyboard.h"
+#include "Mouse.h"
 #include "Renderer.h"
 #include "utils/ErrorHandler.h"
 
@@ -43,6 +45,15 @@ LRESULT Window::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_DESTROY:
         ::PostQuitMessage(0);
         return 0;
+    case WM_KEYDOWN:
+        DirectX::Keyboard::ProcessMessage(msg, wParam, lParam);
+        break;
+    case WM_KEYUP:
+        DirectX::Keyboard::ProcessMessage(msg, wParam, lParam);
+        break;
+    case WM_MOUSEMOVE:
+        DirectX::Mouse::ProcessMessage(msg, wParam, lParam);
+        break;
     }
     return ::DefWindowProcW(hWnd, msg, wParam, lParam);
 }
