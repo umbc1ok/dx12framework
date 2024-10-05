@@ -64,6 +64,7 @@ private:
     hlsl::float3 m_local_position = hlsl::float3(0.0f);
     hlsl::float3 m_local_euler_angles = hlsl::float3(0.0f);
     hlsl::float4 m_local_quat_rotation = hlsl::float4(1.0f, 0.0, 0.0f, 0.0f);
+    hlsl::float3 m_local_euler_angles_cached = hlsl::float3(-69.0f);
     hlsl::float3 m_local_scale = hlsl::float3(1.0f);
 
     hlsl::float3 m_position = {};

@@ -93,6 +93,7 @@ hlsl::float3 Transform::get_position()
     return m_position;
 }
 
+// Set rotation - euler angles are in degrees
 void Transform::set_rotation(hlsl::float3 const& euler_angles)
 {
     if (parent == nullptr)
@@ -100,14 +101,12 @@ void Transform::set_rotation(hlsl::float3 const& euler_angles)
         // TODO: Check if euler angles are in degrees or radians in hlsl::EulerToQuaternion, I suppose in radians
         m_local_quat_rotation = hlsl::float4(hlsl::EulerToQuaternion(euler_angles * hlsl::DEG2RAD));
         m_local_euler_angles = euler_angles;
+        m_quat_rotation = m_local_quat_rotation;
     }
     else
     {
         // Calculate the global rotation quaternion from the given euler angles
         hlsl::float4 const global_rotation = hlsl::float4(hlsl::EulerToQuaternion(euler_angles * hlsl::DEG2RAD));
-
-        // Get the parent's global rotation
-        hlsl::float4 const parent_global_rotation = parent->get_rotation();
 
         // Calculate the new local rotation by inverse of parent's rotation
         //m_local_quat_rotation = glm::inverse(parent_global_rotation) * global_rotation;
@@ -204,13 +203,13 @@ hlsl::float3 Transform::get_local_scale() const
 
 void Transform::set_local_euler_angles(hlsl::float3 const& euler_angles)
 {
-    /*
-    auto const is_rotation_modified = glm::epsilonNotEqual(euler_angles, m_euler_angles, 0.0001f);
-    if (!is_rotation_modified.x && !is_rotation_modified.y && !is_rotation_modified.z)
+    
+    auto const is_rotation_modified = hlsl::epsilonNotEqual(euler_angles, m_local_euler_angles, 0.0001f);
+    if (!is_rotation_modified[0] && !is_rotation_modified[1] && !is_rotation_modified[2])
     {
         return;
     }
-    */
+    
     m_local_euler_angles = euler_angles;
     m_local_quat_rotation = hlsl::float4(hlsl::EulerToQuaternion(euler_angles * hlsl::DEG2RAD));
 
@@ -244,20 +243,22 @@ hlsl::float3 Transform::get_forward()
 
 void Transform::recompute_forward_right_up_if_needed()
 {
-    // TODO: Check if it's necessary
-    /*
-    if (glm::epsilonEqual(m_euler_angles_when_caching, get_euler_angles(), 0.0001f) == glm::bvec3(true, true, true))
+
+    auto epsilon_bool_vec = hlsl::epsilonNotEqual(m_local_euler_angles_cached, get_euler_angles(), 0.0001f);
+    if (!epsilon_bool_vec[0] && !epsilon_bool_vec[1] && !epsilon_bool_vec[2])
+    {
         return;
-    */
+    }
+
     auto const euler_angles = get_euler_angles();
-    //m_euler_angles_when_caching = euler_angles;
+    m_local_euler_angles_cached = euler_angles;
 
     auto direction_forward = hlsl::float3(0.0f, 0.0f, -1.0f);
     // TODO: Check if it should be float4(xyz,1.0f) or float4(xyz,0.0f)
-    direction_forward = (hlsl::float4(direction_forward, 0.0f) * hlsl::rotation(get_rotation())).xyz;
-    m_forward = normalize(direction_forward);
-    m_right = normalize(cross(m_forward, m_world_up));
-    m_up = normalize(cross(m_right, m_forward));
+    direction_forward = (hlsl::float4(direction_forward, 0.0f) * hlsl::transpose(hlsl::rotation(get_rotation()))).xyz;
+    m_forward = hlsl::normalizeSafe(direction_forward);
+    m_right = hlsl::normalizeSafe(hlsl::cross(m_forward, m_world_up));
+    m_up = hlsl::normalizeSafe(hlsl::cross(m_right, m_forward));
 }
 
 hlsl::float3 Transform::get_right()
@@ -290,7 +291,9 @@ void Transform::recompute_model_matrix_if_needed()
     if (m_local_dirty || m_parent_dirty)
     {
         if (parent == nullptr)
+        {
             compute_model_matrix();
+        }
         else
             compute_model_matrix(parent->get_model_matrix());
 
@@ -331,7 +334,6 @@ hlsl::float4x4 Transform::get_local_model_matrix()
 
 void Transform::compute_local_model_matrix()
 {
-    hlsl::float4x4 const rotation_matrix = hlsl::rotation(m_local_quat_rotation);
     m_local_model_matrix = hlsl::ComposeMatrix(m_local_position, m_local_quat_rotation, m_local_scale);
     m_local_dirty = false;
 }
