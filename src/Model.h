@@ -13,8 +13,9 @@ public:
     static Model* create(std::string const& model_path);
     ~Model() = default;
 
+    void set_constant_buffer();
     void draw();
-    void bind_textures();
+
 private:
     void load_model(std::string const& model_path);
     void proccess_node(aiNode const* node, aiScene const* scene);
