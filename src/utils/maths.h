@@ -2,6 +2,7 @@
 
 #include <cfloat>
 #include <cstring>
+#include <vector>
 
 #include "../../thirdparty/vml/include/vector.h"
 #include "../../thirdparty/vml/include/vector_functions.h"
@@ -487,6 +488,53 @@ namespace hlsl
     inline float4x4 ComposeMatrix(const float3& t, const float4& r, const float3& s)
     {
         return translation(t) * rotation(r) * scale(s);
+    }
+
+    inline std::vector<bool> epsilonNotEqual(hlsl::float3 const value1, hlsl::float3 value2, float epsilon)
+    {
+        std::vector<bool> result;
+        // X
+        if (fabs(value1.x - value2.x) > epsilon)
+        {
+            result.push_back(true);
+        }
+        else
+        {
+            result.push_back(false);
+        }
+        // Y
+        if (fabs(value1.y - value2.y) > epsilon)
+        {
+            result.push_back(true);
+        }
+        else
+        {
+            result.push_back(false);
+
+        }
+
+        // Z
+        if (fabs(value1.z - value2.z) > epsilon)
+        {
+            result.push_back(true);
+        }
+        else
+        {
+            result.push_back(false);
+        }
+        return result;
+    }
+
+    inline float3 normalizeSafe(float3 v)
+    {
+        float len = length(v);
+        if (len > 0.0f)
+            return v / len;
+        return float3(0.0f, 0.0f, 0.0f);
+    }
+    inline float3 cross(float3 a, float3 b)
+    {
+        return float3(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
     }
 
 } // namespace hlsl
