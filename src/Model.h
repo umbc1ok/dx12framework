@@ -3,10 +3,11 @@
 #include "Texture.h"
 #include "assimp/scene.h"
 #include "spdlog/details/synchronous_factory.h"
+#include "Component.h"
 
 class Mesh;
 
-class Model
+class Model : public Component
 {
 public:
     Model() = default;
