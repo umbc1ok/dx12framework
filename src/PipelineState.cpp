@@ -16,6 +16,7 @@ PipelineState::PipelineState(std::string vs_name, std::string ps_name)
     };
     vertex_shader = new Shader(vs_name, ShaderType::VERTEX);
     pixel_shader = new Shader(ps_name, ShaderType::PIXEL);
+    Shader* mesh_shader = new Shader("tset", ShaderType::MESH);
 
     create_root_signature();
     PipelineStateStream pipeline_state_stream = {};

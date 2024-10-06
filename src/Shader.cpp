@@ -109,34 +109,53 @@ void Shader::load_shader_dxc()
     uint32_t codePage = CP_UTF8;
     IDxcBlobEncoding* sourceBlob;
     HRESULT hr;
-    hr = library->CreateBlobFromFile(L"./res/shaders/basic.hlsl", &codePage, &sourceBlob);
+    if(m_type == ShaderType::MESH)
+    {
+        hr = library->CreateBlobFromFile(L"./res/shaders/mesh_pipeline/MS_BASIC.hlsl", &codePage, &sourceBlob);
+    }
+    else
+    {
+        hr = library->CreateBlobFromFile(L"./res/shaders/basic.hlsl", &codePage, &sourceBlob);
+    }
 
     //if(FAILED(hr)) Handle file loading error...
-
+    // TODO: Get rid of all hard-coded strings
     IDxcOperationResult* result;
     if (m_type == ShaderType::VERTEX)
     {
         hr = compiler->Compile(
-        sourceBlob, // pSource
-        L"./res/shaders/basic.hlsl", // pSourceName
-        L"vs_main", // pEntryPoint
-        L"vs_6_1", // pTargetProfile
-        nullptr, 0, // pArguments, argCount
-        nullptr, 0, // pDefines, defineCount
-        include_handler.Get(), // pIncludeHandler
-        &result); // ppResult
+            sourceBlob, // pSource
+            L"./res/shaders/basic.hlsl", // pSourceName
+            L"vs_main", // pEntryPoint
+            L"vs_6_5", // pTargetProfile
+            nullptr, 0, // pArguments, argCount
+            nullptr, 0, // pDefines, defineCount
+            include_handler.Get(), // pIncludeHandler
+            &result); // ppResult
+    }
+    else if (m_type == ShaderType::MESH)
+    {
+        hr = compiler->Compile(
+            sourceBlob, // pSource
+            L"./res/shaders/mesh_pipeline/MS_BASIC.hlsl", // pSourceName
+            L"main", // pEntryPoint
+            L"ms_6_5", // pTargetProfile
+            nullptr, 0, // pArguments, argCount
+            nullptr, 0, // pDefines, defineCount
+            include_handler.Get(), // pIncludeHandler
+            &result); // ppResult
     }
     else
     {
-    hr = compiler->Compile(
-        sourceBlob, // pSource
-        L"./res/shaders/basic.hlsl", // pSourceName
-        L"ps_main", // pEntryPoint
-        L"ps_6_1", // pTargetProfile
-        nullptr, 0, // pArguments, argCount
-        nullptr, 0, // pDefines, defineCount
-        include_handler.Get(), // pIncludeHandler
-        &result); // ppResult
+        hr = compiler->Compile(
+            sourceBlob, // pSource
+            L"./res/shaders/basic.hlsl", // pSourceName
+            L"ps_main", // pEntryPoint
+            L"ps_6_5", // pTargetProfile
+            nullptr, 0, // pArguments, argCount
+            nullptr, 0, // pDefines, defineCount
+            include_handler.Get(), // pIncludeHandler
+            &result); // ppResult
     }
 
 

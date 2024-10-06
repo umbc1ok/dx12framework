@@ -11,6 +11,7 @@ enum class ShaderType
 {
     VERTEX,
     PIXEL,
+    MESH,
     NONE
 };
 
