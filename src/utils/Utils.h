@@ -102,7 +102,7 @@ namespace olej_utils
         return h;
     }
 
-    inline LPCWSTR string_to_LPCWSTR(std::string const& s)
+    inline LPCWSTR const string_to_LPCWSTR(std::string const& s)
     {
         std::wstring wsTmp(s.begin(), s.end());
         LPCWSTR result = wsTmp.c_str();

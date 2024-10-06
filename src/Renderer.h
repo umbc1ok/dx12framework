@@ -4,6 +4,7 @@
 
 #include "DrawableCube.h"
 #include "Model.h"
+#include "../build/src/MeshletizedModel.h"
 #include "DX12Wrappers/CommandQueue.h"
 #define DX12_ENABLE_DEBUG_LAYER 
 
@@ -43,10 +44,14 @@ public:
     static constexpr int NUM_BACK_BUFFERS = 3;
     static constexpr int NUM_FRAMES_IN_FLIGHT = 3;
 
-    ID3D12GraphicsCommandList2* g_pd3dCommandList = nullptr;
+    ID3D12GraphicsCommandList6* g_pd3dCommandList = nullptr;
     void create_depth_stencil();
     void on_window_resize();
+
     Entity* camera_entity;
+    UINT8* m_cbvDataBegin;
+    Microsoft::WRL::ComPtr<ID3D12Resource> m_constantBuffer;
+    int frame_index = 0;
 
 private:
 
@@ -97,6 +102,7 @@ private:
 
     DrawableCube* cube;
     Model* model;
+    MeshletizedModel* meshletizedModel;
 
 
     static Renderer* m_instance;

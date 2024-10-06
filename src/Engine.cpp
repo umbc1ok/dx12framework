@@ -33,7 +33,7 @@ void Engine::run()
         Input::get_instance()->update();
         Renderer::get_instance()->start_frame();
         Renderer::get_instance()->render();
-        Editor::get_instance()->update();
+        //Editor::get_instance()->update();
         Renderer::get_instance()->end_frame();
         MSG msg;
 

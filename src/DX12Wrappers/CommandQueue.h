@@ -16,11 +16,11 @@ public:
     CommandQueue(ID3D12Device2* device, D3D12_COMMAND_LIST_TYPE type);
 	~CommandQueue();
     // Get an available command list from the command queue.
-    ID3D12GraphicsCommandList2* get_command_list();
+    ID3D12GraphicsCommandList6* get_command_list();
 
     // Execute a command list.
     // Returns the fence value to wait for for this command list.
-    uint64_t execute_command_list(ID3D12GraphicsCommandList2* commandList);
+    uint64_t execute_command_list(ID3D12GraphicsCommandList6* commandList);
 
     uint64_t signal();
     bool is_fence_complete(uint64_t fenceValue);
@@ -31,7 +31,7 @@ public:
 protected:
 
     ID3D12CommandAllocator* create_command_allocator();
-    ID3D12GraphicsCommandList2* create_command_list(ID3D12CommandAllocator* allocator);
+    ID3D12GraphicsCommandList6* create_command_list(ID3D12CommandAllocator* allocator);
 
 private:
     // Keep track of command allocators that are "in-flight"
@@ -42,7 +42,7 @@ private:
     };
 
     using CommandAllocatorQueue = std::queue<CommandAllocatorEntry>;
-    using CommandListQueue = std::queue< ID3D12GraphicsCommandList2* >;
+    using CommandListQueue = std::queue< ID3D12GraphicsCommandList6* >;
 
     D3D12_COMMAND_LIST_TYPE                     m_CommandListType;
     ID3D12Device2* m_d3d12Device;

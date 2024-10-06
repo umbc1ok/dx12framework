@@ -19,21 +19,28 @@ Renderer::Renderer()
 void Renderer::create()
 {
     m_instance = new Renderer();
-    m_instance->m_pipeline_state = new PipelineState("basic.hlsl", "basic.hlsl");
+    HRESULT hr;
     m_instance->m_Viewport = CD3DX12_VIEWPORT(0.0f, 0.0f,
         static_cast<float>(1920), static_cast<float>(1080));
     m_instance->m_ScissorRect = CD3DX12_RECT(0, 0, LONG_MAX, LONG_MAX);
 	m_instance->cube = new DrawableCube();
-    m_instance->model = Model::create("./res/models/nanosuit/nanosuit.obj");
+    m_instance->meshletizedModel = new MeshletizedModel();
+    //m_instance->model = Model::create("./res/models/nanosuit/nanosuit.obj");
+    hr = m_instance->meshletizedModel->LoadFromFile(L"./res/models/dragon/Dragon_LOD0.bin");
+    m_instance->m_pipeline_state = new PipelineState("MS_BASIC.hlsl", "PS_BASIC.hlsl");
+    AssertFailed(hr);
 }
 
 void Renderer::start_frame()
 {
+    auto index = g_pSwapChain->GetCurrentBackBufferIndex();
+    frame_index = index;
     auto cmdqueue = get_cmd_queue(D3D12_COMMAND_LIST_TYPE_DIRECT);
     auto command_list = cmdqueue->get_command_list();
 	g_pd3dCommandList = command_list;
-    Renderer::transition_resource(command_list, get_current_back_buffer(),
+    transition_resource(command_list, get_current_back_buffer(),
         D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_RENDER_TARGET);
+    meshletizedModel->UploadGpuResources();
 }
 
 void Renderer::end_frame()
@@ -276,6 +283,7 @@ void Renderer::cleanup_device_d3d()
     if (pDXGIDebug != nullptr)
     {
         // TODO: TURN THIS ON AND CLEANUP ALL NON-RELEASED OBJECTS
+        // Also, does it really matter?
         //pDXGIDebug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_SUMMARY);
         pDXGIDebug->DisableLeakTrackingForThread();
         pDXGIDebug->Release();
@@ -308,10 +316,13 @@ void Renderer::render()
     cmd_list->RSSetScissorRects(1, &m_ScissorRect);
 
     cmd_list->OMSetRenderTargets(1, &rtv, FALSE, &dsv);
-    model->draw();
+    //cmd_list->SetDescriptorHeaps(1, &g_pd3dSrvDescHeap);
+    //cmd_list->SetGraphicsRootConstantBufferView(0, PipelineState::m_constantBuffer->GetGPUVirtualAddress() + sizeof(SceneConstantBuffer) * frame_index);
+    //cmd_list->SetGraphicsRootDescriptorTable(1, g_pd3dSrvDescHeap->GetGPUDescriptorHandleForHeapStart());
+    meshletizedModel->set_CBV();
+    cmd_list->SetGraphicsRootConstantBufferView(0, m_constantBuffer->GetGPUVirtualAddress() + sizeof(SceneConstantBuffer) * frame_index);
+    meshletizedModel->draw(cmd_list);
     //cube->draw();
-    cmd_list->SetDescriptorHeaps(1, &g_pd3dSrvDescHeap);
-    cmd_list->SetGraphicsRootDescriptorTable(1, g_pd3dSrvDescHeap->GetGPUDescriptorHandleForHeapStart());
 }
 
 ID3D12Device2* Renderer::get_device() const
