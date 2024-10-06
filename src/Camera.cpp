@@ -39,6 +39,7 @@ void Camera::update_internals()
 {
     if (m_dirty)
     {
+        // HACK: Farplane and nearplane are switched, otherwise depth test was behaving oppositely
         m_projection = hlsl::perspective(fov, width / height, far_plane, near_plane);
     }
 }
