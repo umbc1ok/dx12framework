@@ -1,6 +1,6 @@
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "d3d12.lib")
-//#pragma comment(lib, "dxcompiler.lib")
+#pragma comment(lib, "dxcompiler.lib")
 
 //#ifdef _DEBUG
 #define DX12_ENABLE_DEBUG_LAYER
