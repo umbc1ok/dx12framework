@@ -5,6 +5,8 @@
 
 #include <wrl/client.h>
 
+//#pragma comment(lib, "dxcompiler.lib")
+
 enum class ShaderType
 {
     VERTEX,
@@ -18,10 +20,12 @@ public:
     Shader(std::string name, ShaderType type);
 
     void load_shader();
+    void load_shader_dxc();
     char* read_hlsl_shader_from_file(std::string const& path, size_t* p_size);
     bool read_file_to_blob(std::string const& path, ID3DBlob** pp_blob);
     bool save_compiled_shader(std::string const& path, ID3DBlob* p_blob);
     ID3DBlob* get_blob();
+    IDxcBlob* dxc_blob;
 
 private:
     std::string m_path = {};
@@ -31,8 +35,8 @@ private:
     std::string shader_model = {};
     ID3DBlob* shader_blob;
 
-    //Microsoft::WRL::ComPtr<IDxcLibrary> library;
-    //Microsoft::WRL::ComPtr<IDxcCompiler> compiler;
-    //Microsoft::WRL::ComPtr<IDxcIncludeHandler> include_handler;
+    Microsoft::WRL::ComPtr<IDxcLibrary> library;
+    Microsoft::WRL::ComPtr<IDxcCompiler> compiler;
+    Microsoft::WRL::ComPtr<IDxcIncludeHandler> include_handler;
 };
 
