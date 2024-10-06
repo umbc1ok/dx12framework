@@ -61,7 +61,7 @@ float4 main(VertexOut input) : SV_TARGET
     blinnTerm = cosAngle != 0.0 ? blinnTerm : 0.0;
     blinnTerm = pow(blinnTerm, shininess);
 
-    float3 finalColor = (cosAngle + blinnTerm + ambientIntensity) * diffuseColor;
+    float3 finalColor = (cosAngle + blinnTerm + ambientIntensity);
 
     return float4(finalColor, 1);
 }

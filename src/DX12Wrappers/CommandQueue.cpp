@@ -29,10 +29,10 @@ CommandQueue::~CommandQueue()
     m_d3d12CommandQueue->Release();
 }
 
-ID3D12GraphicsCommandList2* CommandQueue::get_command_list()
+ID3D12GraphicsCommandList6* CommandQueue::get_command_list()
 {
     ID3D12CommandAllocator* commandAllocator = nullptr;
-    ID3D12GraphicsCommandList2* cmd_list = nullptr;
+    ID3D12GraphicsCommandList6* cmd_list = nullptr;
 
     if (!m_CommandAllocatorQueue.empty() && is_fence_complete(m_CommandAllocatorQueue.front().fenceValue))
     {
@@ -65,7 +65,7 @@ ID3D12GraphicsCommandList2* CommandQueue::get_command_list()
     return cmd_list;
 }
 
-uint64_t CommandQueue::execute_command_list(ID3D12GraphicsCommandList2* commandList)
+uint64_t CommandQueue::execute_command_list(ID3D12GraphicsCommandList6* commandList)
 {
     commandList->Close();
 
@@ -127,9 +127,9 @@ ID3D12CommandAllocator* CommandQueue::create_command_allocator()
     return commandAllocator;
 }
 
-ID3D12GraphicsCommandList2* CommandQueue::create_command_list(ID3D12CommandAllocator* allocator)
+ID3D12GraphicsCommandList6* CommandQueue::create_command_list(ID3D12CommandAllocator* allocator)
 {
-    ID3D12GraphicsCommandList2* commandList;
+    ID3D12GraphicsCommandList6* commandList;
     AssertFailed(m_d3d12Device->CreateCommandList(0, m_CommandListType, allocator, nullptr, IID_PPV_ARGS(&commandList)));
 
     return commandList;
