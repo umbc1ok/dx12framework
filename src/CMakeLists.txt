@@ -32,6 +32,7 @@ target_link_libraries(${PROJECT_NAME} dx12)
 target_link_libraries(${PROJECT_NAME} DirectXTK12)
 target_link_libraries(${PROJECT_NAME} DirectXTex)
 target_link_libraries(${PROJECT_NAME} dxcompiler)
+target_link_libraries(${PROJECT_NAME} DirectXMesh)
 
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD 
 				   COMMAND ${CMAKE_COMMAND} -E create_symlink 
