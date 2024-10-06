@@ -53,12 +53,16 @@ PipelineState::PipelineState(std::string vs_name, std::string ps_name)
     // VERY FUCKING IMPORTANT LINE
     //depth_stencil_desc.DepthFunc = D3D12_COMPARISON_FUNC_GREATER;
 
+    CD3DX12_SHADER_BYTECODE* vs = new CD3DX12_SHADER_BYTECODE(vertex_shader->dxc_blob->GetBufferPointer(), vertex_shader->dxc_blob->GetBufferSize());
+
+    CD3DX12_SHADER_BYTECODE* ps = new CD3DX12_SHADER_BYTECODE(pixel_shader->dxc_blob->GetBufferPointer(), pixel_shader->dxc_blob->GetBufferSize());
+
 
     pipeline_state_stream.pRootSignature = m_root_signature;
     pipeline_state_stream.InputLayout = { input_layout, _countof(input_layout) };
     pipeline_state_stream.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-    pipeline_state_stream.VS = CD3DX12_SHADER_BYTECODE(vertex_shader->get_blob());
-    pipeline_state_stream.PS = CD3DX12_SHADER_BYTECODE(pixel_shader->get_blob());
+    pipeline_state_stream.VS = *vs;
+    pipeline_state_stream.PS = *ps;
     pipeline_state_stream.DSVFormat = DXGI_FORMAT_D32_FLOAT;
     pipeline_state_stream.RTVFormats = rtv_formats;
     pipeline_state_stream.RasterizerState = rasterizer_desc;

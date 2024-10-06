@@ -11,8 +11,10 @@
 #include <filesystem>
 
 #include "Window.h"
+#include "utils/ErrorHandler.h"
 #include "utils/Types.h"
 #include "utils/Utils.h"
+
 
 Shader::Shader(std::string name, ShaderType type)
 {
@@ -22,24 +24,24 @@ Shader::Shader(std::string name, ShaderType type)
     {
     case ShaderType::VERTEX:
         m_main_function_name = "vs_main";
-        shader_model = "vs_5_1";
+        shader_model = "VS_6_0";
         break;
     case ShaderType::PIXEL:
         m_main_function_name = "ps_main";
-        shader_model = "ps_5_1";
+        shader_model = "PS_6_0";
         break;
     }
 
     // TODO: Handle errors
-    /*
+    
     HRESULT hr = DxcCreateInstance(CLSID_DxcLibrary, IID_PPV_ARGS(&library));
 
     hr = DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&compiler));
 
     hr = library->CreateIncludeHandler(&include_handler);
-    */
+    
 
-    load_shader();
+    load_shader_dxc();
 }
 
 void Shader::load_shader()
@@ -52,6 +54,7 @@ void Shader::load_shader()
         char const* shader_source = read_hlsl_shader_from_file(m_path, &size);
         hr = D3DPreprocess(shader_source, size, m_path.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, &shader_blob,
             &shader_compile_errors_blob);
+
         /*
         Microsoft::WRL::ComPtr<IDxcBlobEncoding> source_blob;
         hr = library->CreateBlobWithEncodingFromPinned((LPBYTE)shader_source, size, CP_UTF8, &source_blob);
@@ -99,6 +102,98 @@ void Shader::load_shader()
             save_compiled_shader(m_path + hash + m_main_function_name, shader_blob);
         }
     }
+}
+
+void Shader::load_shader_dxc()
+{
+    uint32_t codePage = CP_UTF8;
+    IDxcBlobEncoding* sourceBlob;
+    HRESULT hr;
+    hr = library->CreateBlobFromFile(L"./res/shaders/basic.hlsl", &codePage, &sourceBlob);
+
+    //if(FAILED(hr)) Handle file loading error...
+
+    IDxcOperationResult* result;
+    if (m_type == ShaderType::VERTEX)
+    {
+        hr = compiler->Compile(
+        sourceBlob, // pSource
+        L"./res/shaders/basic.hlsl", // pSourceName
+        L"vs_main", // pEntryPoint
+        L"vs_6_1", // pTargetProfile
+        nullptr, 0, // pArguments, argCount
+        nullptr, 0, // pDefines, defineCount
+        include_handler.Get(), // pIncludeHandler
+        &result); // ppResult
+    }
+    else
+    {
+    hr = compiler->Compile(
+        sourceBlob, // pSource
+        L"./res/shaders/basic.hlsl", // pSourceName
+        L"ps_main", // pEntryPoint
+        L"ps_6_1", // pTargetProfile
+        nullptr, 0, // pArguments, argCount
+        nullptr, 0, // pDefines, defineCount
+        include_handler.Get(), // pIncludeHandler
+        &result); // ppResult
+    }
+
+
+    if (SUCCEEDED(hr))
+    {
+        result->GetStatus(&hr);
+    }
+    if (FAILED(hr))
+    {
+        if (result)
+        {
+            IDxcBlobEncoding* errorsBlob;
+            hr = result->GetErrorBuffer(&errorsBlob);
+            if (SUCCEEDED(hr) && errorsBlob)
+            {
+                wprintf(L"Compilation failed with errors:\n%hs\n",
+                    (const char*)errorsBlob->GetBufferPointer());
+            }
+        }
+        // Handle compilation error...
+    }
+    
+    result->GetResult(&dxc_blob);
+
+    //size_t size = 0;
+    //char const* shader_source = read_hlsl_shader_from_file(m_path, &size);
+    //const DxcBuffer* sourceBuffer = new DxcBuffer(shader_source, size, CP_UTF8);
+    //IDxcBlobEncoding* sourceBlob;
+    //uint32_t codePage = CP_UTF8;
+    //library->CreateBlobFromFile(olej_utils::string_to_LPCWSTR(m_path), &codePage, &sourceBlob);
+    //HRESULT hr;
+    //LPCWSTR args = olej_utils::string_to_LPCWSTR("-P");
+    //_GUID xd;
+    //IDxcResult* result;
+    //IDxcCompilerArgs* args = IDxcUtils::BuildArguments(m_path, "vs_main", "vs_6_0", nullptr, 0);
+    //hr = compiler->Compile(sourceBuffer, &args, 1, include_handler.Get(), IID_PPV_ARGS(&result));
+
+    //if (FAILED(hr))
+    //{
+    //    // TODO: Handle errors
+    //    std::cout << "GOWNO0" << std::endl;
+    //}
+    //IDxcBlob* shaderBlob;
+    //result->GetResult(&shaderBlob);
+    //std::string const hash = std::to_string(olej_utils::murmur_hash(static_cast<u8*>(shaderBlob->GetBufferPointer()), shaderBlob->GetBufferSize(), 0));
+    //if (!read_file_to_blob(m_path + hash + m_main_function_name, &shaderBlob));
+    //{
+    //    hr = compiler->Compile(sourceBuffer, nullptr, 0, include_handler.Get(), IID_PPV_ARGS(&result));
+
+    //    if (FAILED(hr))
+    //    {
+    //        std::cout << "GOWNO" << "\n";
+    //        return;
+    //    }
+    //    save_compiled_shader(m_path + hash + m_main_function_name, shader_blob);
+    //}
+
 }
 
 char* Shader::read_hlsl_shader_from_file(std::string const& path, size_t* p_size)
