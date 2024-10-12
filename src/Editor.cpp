@@ -96,14 +96,17 @@ void Editor::update()
     }
 
     ImGui::Render();
-
-    ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), Renderer::get_instance()->g_pd3dCommandList);
+    auto cmdlist = Renderer::get_instance()->g_pd3dCommandList;
+    auto hp = Renderer::get_instance()->get_srv_desc_heap();
+    cmdlist->SetDescriptorHeaps(1, &hp);
+    ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), cmdlist);
     // Update and Render additional Platform Windows
     if (m_io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
     {
         ImGui::UpdatePlatformWindows();
-        ImGui::RenderPlatformWindowsDefault(nullptr, (void*)Renderer::get_instance()->g_pd3dCommandList);
+        ImGui::RenderPlatformWindowsDefault(nullptr, (void*)cmdlist);
     }
+    
 }
 
 void Editor::draw_inspector(EditorWindow* const& window)

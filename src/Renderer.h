@@ -100,11 +100,6 @@ private:
 	IDXGIDebug1* pDXGIDebug = nullptr;
     ID3D12InfoQueue* pInfoQueue = nullptr;
 
-    DrawableCube* cube;
-    Model* model;
-    MeshletizedModel* meshletizedModel;
-
-
     static Renderer* m_instance;
 };
 

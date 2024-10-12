@@ -8,6 +8,7 @@ public:
 
     static void set_instance(Scene* const& scene);
 
+    void update();
     static Scene* get_instance();
 
     MainScene(MainScene const&) = delete;
