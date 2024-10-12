@@ -27,7 +27,7 @@ struct VertexOut
 
 ConstantBuffer<Constants> Globals : register(b0);
 
-float4 main(VertexOut input) : SV_TARGET
+float4 ps_main(VertexOut input) : SV_TARGET
 {
     float ambientIntensity = 0.1;
     float3 lightColor = float3(1, 1, 1);
@@ -61,7 +61,7 @@ float4 main(VertexOut input) : SV_TARGET
     blinnTerm = cosAngle != 0.0 ? blinnTerm : 0.0;
     blinnTerm = pow(blinnTerm, shininess);
 
-    float3 finalColor = (cosAngle + blinnTerm + ambientIntensity);
+    float3 finalColor = (cosAngle + blinnTerm + ambientIntensity) * diffuseColor + float3(0.1f.xxx);
 
     return float4(finalColor, 1);
 }

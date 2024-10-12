@@ -16,30 +16,32 @@
 #include "utils/Utils.h"
 
 
-Shader::Shader(std::string name, ShaderType type)
+Shader::Shader(std::wstring name, ShaderType type)
 {
     m_type = type;
-    m_path = "./res/shaders/" + name;
+    m_path = L"./res/shaders/" + name;
     switch (m_type)
     {
     case ShaderType::VERTEX:
-        m_main_function_name = "vs_main";
-        shader_model = "VS_6_0";
+        m_main_function_name = L"vs_main";
+        shader_model = L"vs_6_5";
         break;
     case ShaderType::PIXEL:
-        m_main_function_name = "ps_main";
-        shader_model = "PS_6_0";
+        m_main_function_name = L"ps_main";
+        shader_model = L"ps_6_5";
+        break;
+    case ShaderType::MESH:
+        m_main_function_name = L"ms_main";
+        shader_model = L"ms_6_5";
         break;
     }
 
-    // TODO: Handle errors
-    
     HRESULT hr = DxcCreateInstance(CLSID_DxcLibrary, IID_PPV_ARGS(&library));
-
+    AssertFailed(hr);
     hr = DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&compiler));
-
+    AssertFailed(hr);
     hr = library->CreateIncludeHandler(&include_handler);
-    
+    AssertFailed(hr);
 
     load_shader_dxc();
 }
@@ -52,7 +54,7 @@ void Shader::load_shader()
 
         size_t size = 0;
         char const* shader_source = read_hlsl_shader_from_file(m_path, &size);
-        hr = D3DPreprocess(shader_source, size, m_path.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, &shader_blob,
+        hr = D3DPreprocess(shader_source, size, olej_utils::wstring_to_string(m_path).c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, &shader_blob,
             &shader_compile_errors_blob);
 
         delete[] shader_source;
@@ -74,11 +76,11 @@ void Shader::load_shader()
             return;
         }
 
-        std::string const hash =
-            std::to_string(olej_utils::murmur_hash(static_cast<u8*>(shader_blob->GetBufferPointer()), shader_blob->GetBufferSize(), 0));
+        std::wstring const hash =
+            std::to_wstring(olej_utils::murmur_hash(static_cast<u8*>(shader_blob->GetBufferPointer()), shader_blob->GetBufferSize(), 0));
         if (!read_file_to_blob(m_path + hash + m_main_function_name, &shader_blob))
         {
-            hr = D3DCompile(shader_blob->GetBufferPointer(), shader_blob->GetBufferSize(), nullptr, nullptr, nullptr, m_main_function_name.c_str(), shader_model.c_str(), 0, 0,
+            hr = D3DCompile(shader_blob->GetBufferPointer(), shader_blob->GetBufferSize(), nullptr, nullptr, nullptr, olej_utils::wstring_to_string(m_main_function_name).c_str(), olej_utils::wstring_to_string(shader_model).c_str(), 0, 0,
                 &shader_blob, &shader_compile_errors_blob);
 
             if (FAILED(hr))
@@ -97,54 +99,28 @@ void Shader::load_shader_dxc()
     uint32_t codePage = CP_UTF8;
     IDxcBlobEncoding* sourceBlob;
     HRESULT hr;
-    if(m_type == ShaderType::MESH)
-    {
-        hr = library->CreateBlobFromFile(L"./res/shaders/mesh_pipeline/MS_BASIC.hlsl", &codePage, &sourceBlob);
-    }
-    else
-    {
-        hr = library->CreateBlobFromFile(L"./res/shaders/mesh_pipeline/PS_BASIC.hlsl", &codePage, &sourceBlob);
-    }
 
-    //if(FAILED(hr)) Handle file loading error...
+    if(m_type == ShaderType::MESH)
+        hr = library->CreateBlobFromFile(L"./res/shaders/mesh_pipeline/MS_BASIC.hlsl", &codePage, &sourceBlob);
+    else if (m_type == ShaderType::VERTEX)
+        hr = library->CreateBlobFromFile(L"./res/shaders/vs.hlsl", &codePage, &sourceBlob);
+    else if (m_type == ShaderType::PIXEL)
+        hr = library->CreateBlobFromFile(L"./res/shaders/mesh_pipeline/PS_BASIC.hlsl", &codePage, &sourceBlob);
+    AssertFailed(hr);
+
+    
     // TODO: Get rid of all hard-coded strings
     IDxcOperationResult* result;
-    if (m_type == ShaderType::VERTEX)
-    {
-        hr = compiler->Compile(
-            sourceBlob, // pSource
-            L"./res/shaders/basic.hlsl", // pSourceName
-            L"vs_main", // pEntryPoint
-            L"vs_6_5", // pTargetProfile
-            nullptr, 0, // pArguments, argCount
-            nullptr, 0, // pDefines, defineCount
-            include_handler.Get(), // pIncludeHandler
-            &result); // ppResult
-    }
-    else if (m_type == ShaderType::MESH)
-    {
-        hr = compiler->Compile(
-            sourceBlob, // pSource
-            L"E:/repositories/mine/dx12framework/res/shaders/mesh_pipeline/MS_BASIC.hlsl", // pSourceName
-            L"main", // pEntryPoint
-            L"ms_6_5", // pTargetProfile
-            nullptr, 0, // pArguments, argCount
-            nullptr, 0, // pDefines, defineCount
-            include_handler.Get(), // pIncludeHandler
-            &result); // ppResult
-    }
-    else
-    {
-        hr = compiler->Compile(
-            sourceBlob, // pSource
-            L"E:/repositories/mine/dx12framework/res/shaders/mesh_pipeline/PS_BASIC.hlsl", // pSourceName
-            L"main", // pEntryPoint
-            L"ps_6_5", // pTargetProfile
-            nullptr, 0, // pArguments, argCount
-            nullptr, 0, // pDefines, defineCount
-            include_handler.Get(), // pIncludeHandler
-            &result); // ppResult
-    }
+
+    hr = compiler->Compile(
+        sourceBlob, // pSource
+        m_path.c_str(), // pSourceName
+        m_main_function_name.c_str(), // pEntryPoint
+        shader_model.c_str(), // pTargetProfile
+        nullptr, 0, // pArguments, argCount
+        nullptr, 0, // pDefines, defineCount
+        include_handler.Get(), // pIncludeHandler
+        &result); // ppResult
 
 
     if (SUCCEEDED(hr))
@@ -203,7 +179,7 @@ void Shader::load_shader_dxc()
 
 }
 
-char* Shader::read_hlsl_shader_from_file(std::string const& path, size_t* p_size)
+char* Shader::read_hlsl_shader_from_file(std::wstring const& path, size_t* p_size)
 {
     std::ifstream file(path, std::ios::binary | std::ios::ate);
 
@@ -230,11 +206,11 @@ char* Shader::read_hlsl_shader_from_file(std::string const& path, size_t* p_size
     return nullptr;
 }
 
-bool Shader::read_file_to_blob(std::string const& path, ID3DBlob** pp_blob)
+bool Shader::read_file_to_blob(std::wstring const& path, ID3DBlob** pp_blob)
 {
     size_t const last_slash_pos = path.find_last_of('/');
-    std::string const filename = path.substr(last_slash_pos + 1);
-    std::string const full_path = m_compiled_path + filename;
+    std::wstring const filename = path.substr(last_slash_pos + 1);
+    std::wstring const full_path = m_compiled_path + filename;
 
     std::filesystem::path const directory = m_compiled_path;
 
@@ -268,7 +244,7 @@ bool Shader::read_file_to_blob(std::string const& path, ID3DBlob** pp_blob)
 
     if (!file.read(static_cast<char*>((*pp_blob)->GetBufferPointer()), file_size))
     {
-        std::cerr << "Failed to read file: " << full_path + "\n";
+        std::cerr << "Failed to read file: " << olej_utils::wstring_to_string(full_path) + "\n";
         (*pp_blob)->Release();
         *pp_blob = nullptr;
         return false;
@@ -277,11 +253,11 @@ bool Shader::read_file_to_blob(std::string const& path, ID3DBlob** pp_blob)
     return true;
 }
 
-bool Shader::save_compiled_shader(std::string const& path, ID3DBlob* p_blob)
+bool Shader::save_compiled_shader(std::wstring const& path, ID3DBlob* p_blob)
 {
     size_t const last_slash_pos = path.find_last_of('/');
-    std::string const filename = path.substr(last_slash_pos + 1);
-    std::string const full_path = m_compiled_path + filename;
+    std::wstring const filename = path.substr(last_slash_pos + 1);
+    std::wstring const full_path = m_compiled_path + filename;
 
     std::filesystem::path const directory = m_compiled_path;
 
@@ -300,7 +276,7 @@ bool Shader::save_compiled_shader(std::string const& path, ID3DBlob* p_blob)
 
     if (!file.is_open())
     {
-        std::cerr << "Failed to open file: " << full_path << std::endl;
+        std::cerr << "Failed to open file: " << olej_utils::wstring_to_string(full_path) << std::endl;
         return false;
     }
 
@@ -308,7 +284,7 @@ bool Shader::save_compiled_shader(std::string const& path, ID3DBlob* p_blob)
 
     if (!file)
     {
-        std::cerr << "Failed to write to file: " << full_path << std::endl;
+        std::cerr << "Failed to write to file: " << olej_utils::wstring_to_string(full_path) << std::endl;
         return false;
     }
 

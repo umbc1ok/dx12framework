@@ -35,7 +35,7 @@ struct PipelineStateStreamMesh
 class PipelineState
 {
 public:
-    PipelineState(std::string vs_name, std::string ps_name);
+    PipelineState(std::wstring vs_name, std::wstring ps_name);
     ~PipelineState();
     ID3D12RootSignature* get_root_signature() const;
     ID3D12PipelineState* get_pipeline_state() const;
