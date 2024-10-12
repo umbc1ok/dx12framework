@@ -19,16 +19,12 @@ Renderer::Renderer()
 void Renderer::create()
 {
     m_instance = new Renderer();
-    HRESULT hr;
+    RECT rect;
+    GetWindowRect(Window::get_hwnd(), &rect);
     m_instance->m_Viewport = CD3DX12_VIEWPORT(0.0f, 0.0f,
-        static_cast<float>(1920), static_cast<float>(1080));
+        static_cast<float>(rect.right), static_cast<float>(rect.bottom));
     m_instance->m_ScissorRect = CD3DX12_RECT(0, 0, LONG_MAX, LONG_MAX);
-	m_instance->cube = new DrawableCube();
-    m_instance->meshletizedModel = new MeshletizedModel();
-    //m_instance->model = Model::create("./res/models/nanosuit/nanosuit.obj");
-    hr = m_instance->meshletizedModel->LoadFromFile(L"./res/models/dragon/Dragon_LOD0.bin");
     m_instance->m_pipeline_state = new PipelineState(L"MS_BASIC.hlsl", L"PS_BASIC.hlsl");
-    AssertFailed(hr);
 }
 
 void Renderer::start_frame()
@@ -40,7 +36,6 @@ void Renderer::start_frame()
 	g_pd3dCommandList = command_list;
     transition_resource(command_list, get_current_back_buffer(),
         D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_RENDER_TARGET);
-    meshletizedModel->UploadGpuResources();
 }
 
 void Renderer::end_frame()
@@ -261,8 +256,6 @@ void Renderer::cleanup_device_d3d()
     delete m_ComputeCommandQueue;
     delete m_CopyCommandQueue;
 
-    delete cube;
-
     if (g_pd3dDevice) { g_pd3dDevice->Release(); g_pd3dDevice = nullptr; }
     if (g_pSwapChain) { g_pSwapChain->SetFullscreenState(false, nullptr); g_pSwapChain->Release(); g_pSwapChain = nullptr; }
 
@@ -302,7 +295,6 @@ void Renderer::cleanup_render_targets()
 void Renderer::render()
 {
     auto cmd_list = g_pd3dCommandList;
-    auto back_buffer = get_current_back_buffer();
     auto rtv = get_current_rtv();
     auto dsv = get_dsv_heap()->GetCPUDescriptorHandleForHeapStart();
     FLOAT clearColor[] = { 0.4f, 0.6f, 0.9f, 1.0f };
@@ -316,13 +308,8 @@ void Renderer::render()
     cmd_list->RSSetScissorRects(1, &m_ScissorRect);
 
     cmd_list->OMSetRenderTargets(1, &rtv, FALSE, &dsv);
-    //cmd_list->SetDescriptorHeaps(1, &g_pd3dSrvDescHeap);
-    //cmd_list->SetGraphicsRootConstantBufferView(0, PipelineState::m_constantBuffer->GetGPUVirtualAddress() + sizeof(SceneConstantBuffer) * frame_index);
-    //cmd_list->SetGraphicsRootDescriptorTable(1, g_pd3dSrvDescHeap->GetGPUDescriptorHandleForHeapStart());
-    meshletizedModel->set_CBV();
-    cmd_list->SetGraphicsRootConstantBufferView(0, m_constantBuffer->GetGPUVirtualAddress() + sizeof(SceneConstantBuffer) * frame_index);
-    meshletizedModel->draw(cmd_list);
-    //cube->draw();
+
+    MainScene::get_instance()->run_frame();
 }
 
 ID3D12Device2* Renderer::get_device() const
