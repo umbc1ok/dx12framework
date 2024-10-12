@@ -7,7 +7,7 @@
 #include "utils/ErrorHandler.h"
 #include "utils/maths.h"
 
-PipelineState::PipelineState(std::string vs_name, std::string ps_name)
+PipelineState::PipelineState(std::wstring vs_name, std::wstring ps_name)
 {
     auto device = Renderer::get_instance()->get_device();
     if(is_mesh_shader)
@@ -52,31 +52,10 @@ PipelineState::PipelineState(std::string vs_name, std::string ps_name)
         blend_desc.IndependentBlendEnable = TRUE;
 
         D3D12_DEPTH_STENCIL_DESC depth_stencil_desc = CD3DX12_DEPTH_STENCIL_DESC(CD3DX12_DEFAULT());
-        // VERY FUCKING IMPORTANT LINE
-        //depth_stencil_desc.DepthFunc = D3D12_COMPARISON_FUNC_GREATER;
 
         D3D12_SHADER_BYTECODE* ms = new D3D12_SHADER_BYTECODE(mesh_shader->dxc_blob->GetBufferPointer(), mesh_shader->dxc_blob->GetBufferSize());
-
         D3D12_SHADER_BYTECODE* ps = new D3D12_SHADER_BYTECODE(pixel_shader->dxc_blob->GetBufferPointer(), pixel_shader->dxc_blob->GetBufferSize());
 
-        //PipelineStateStreamMesh pipeline_state_stream = {};
-
-        //pipeline_state_stream.pRootSignature = m_root_signature;
-        //pipeline_state_stream.InputLayout = { input_layout, _countof(input_layout) };
-        //pipeline_state_stream.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-        //pipeline_state_stream.MS = *ms;
-        //pipeline_state_stream.PS = *ps;
-        //pipeline_state_stream.DSVFormat = DXGI_FORMAT_D32_FLOAT;
-        //pipeline_state_stream.RTVFormats = rtv_formats;
-        //pipeline_state_stream.RasterizerState = rasterizer_desc;
-        //pipeline_state_stream.blendDesc = blend_desc;
-        //pipeline_state_stream.depthStencildesc = depth_stencil_desc;
-
-        //D3D12_PIPELINE_STATE_MESH_STREAM_DESC pipeline_state_stream_desc = {
-        //sizeof(PipelineStateStreamMesh), &pipeline_state_stream
-        //};
-
-        //AssertFailed(Renderer::get_instance()->get_device()->CreatePipelineState(&pipeline_state_stream_desc, IID_PPV_ARGS(&m_pipeline_state)));
         create_root_signature();
         D3DX12_MESH_SHADER_PIPELINE_STATE_DESC psoDesc = {};
         psoDesc.pRootSignature = m_root_signature;
@@ -85,9 +64,9 @@ PipelineState::PipelineState(std::string vs_name, std::string ps_name)
         psoDesc.NumRenderTargets = 1;
         psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
         psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
-        psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);    // CW front; cull back
-        psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);         // Opaque
-        psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT); // Less-equal depth test w/ writes; no stencil
+        psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+        psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT); 
+        psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT); 
         psoDesc.SampleMask = UINT_MAX;
         psoDesc.SampleDesc = DefaultSampleDesc();
         psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;

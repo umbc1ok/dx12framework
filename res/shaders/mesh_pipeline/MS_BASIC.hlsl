@@ -114,7 +114,7 @@ VertexOut GetVertexAttributes(uint meshletIndex, uint vertexIndex)
 [RootSignature(ROOT_SIG)]
 [OutputTopology("triangle")]
 [NumThreads(128, 1, 1)]
-void main(
+void ms_main(
     uint gtid : SV_GroupThreadID,
     uint gid : SV_GroupID,
     out indices uint3 tris[126],

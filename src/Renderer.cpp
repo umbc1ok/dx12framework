@@ -27,7 +27,7 @@ void Renderer::create()
     m_instance->meshletizedModel = new MeshletizedModel();
     //m_instance->model = Model::create("./res/models/nanosuit/nanosuit.obj");
     hr = m_instance->meshletizedModel->LoadFromFile(L"./res/models/dragon/Dragon_LOD0.bin");
-    m_instance->m_pipeline_state = new PipelineState("MS_BASIC.hlsl", "PS_BASIC.hlsl");
+    m_instance->m_pipeline_state = new PipelineState(L"MS_BASIC.hlsl", L"PS_BASIC.hlsl");
     AssertFailed(hr);
 }
 

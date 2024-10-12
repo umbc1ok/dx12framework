@@ -109,7 +109,11 @@ namespace olej_utils
         return result;
     }
 
-
+    inline std::string const wstring_to_string(std::wstring const& s)
+    {
+        std::string wsTmp(s.begin(), s.end());
+        return wsTmp;
+    }
 
 
 }
