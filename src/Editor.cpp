@@ -16,6 +16,7 @@ void Editor::create()
 {
     m_instance = new Editor();
     m_instance->add_scene_hierarchy();
+    m_instance->add_inspector();
 }
 
 Editor::Editor()
