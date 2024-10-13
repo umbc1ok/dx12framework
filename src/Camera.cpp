@@ -5,13 +5,17 @@
 
 #include "Component.h"
 #include "Input.h"
+#include "Window.h"
 
 class Entity;
 
 void Camera::update()
 {
     Component::update();
-    handle_input();
+    if(!Window::get_cursor_visible())
+    {
+        handle_input();
+    }
 }
 
 void Camera::create()
