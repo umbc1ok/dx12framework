@@ -1,7 +1,5 @@
 #include "Window.h"
 #include "imgui.h"
-#include "imgui_impl/imgui_impl_win32.h"
-#include "imgui_impl/imgui_impl_dx12.h"
 #include <d3d12.h>
 #include <d3dx12.h>
 #include <dxgi1_4.h>
@@ -11,7 +9,6 @@
 #include "Keyboard.h"
 #include "Mouse.h"
 #include "Renderer.h"
-#include "utils/ErrorHandler.h"
 
 // Forward declaration, for reason look into imgui_impl_win32.h
 IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -54,18 +51,37 @@ LRESULT Window::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_MOUSEMOVE:
         DirectX::Mouse::ProcessMessage(msg, wParam, lParam);
         break;
+    case WM_MBUTTONDOWN:
+        cursor_visible = !cursor_visible;
+        change_mouse_mode();
+        break;
     }
     return ::DefWindowProcW(hWnd, msg, wParam, lParam);
+}
+
+void Window::change_mouse_mode()
+{
+    if (cursor_visible)
+    {
+        ::ShowCursor(true);
+        ImGui::GetIO().ConfigFlags &= ~ImGuiConfigFlags_NoMouse;
+    }
+    else
+    {
+        ::ShowCursor(false);
+        ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NoMouse;
+    }
 }
 
 void Window::create()
 {
     m_instance = new Window();
 
-    wc = { sizeof(wc), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr, L"ImGui Example", nullptr };
+    wc = { sizeof(wc), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr, L"DX12FRAMEWORK by Hubert Olejnik", nullptr };
     ::RegisterClassExW(&wc);
 
     hwnd = ::CreateWindowW(wc.lpszClassName, L"DX12FRAMEWORK by Hubert Olejnik", WS_OVERLAPPEDWINDOW, 0, 0, 1920, 1080, nullptr, nullptr, wc.hInstance, nullptr);
+
 
     ::ShowWindow(hwnd, SW_SHOWDEFAULT);
     ::UpdateWindow(hwnd);
