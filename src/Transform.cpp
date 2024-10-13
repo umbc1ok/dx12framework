@@ -40,18 +40,9 @@ void Transform::set_position(hlsl::float3 const& position)
     {
         hlsl::float3 const parent_global_position = parent->get_position();
         hlsl::float3 new_local_position = position - parent_global_position;
-        // TODO: Check if using inverse matrix instead of inverse quaternion is working
+
         auto inversed_rotation_matrix = hlsl::inverse(hlsl::rotation(parent->get_rotation()));
         new_local_position = (hlsl::float4(position, 1.0f) * inversed_rotation_matrix).xyz;
-
-        // TODO: Check if this is necessary
-        /*
-        auto const is_position_modified = glm::epsilonNotEqual(new_local_position, m_local_position, 0.0001f);
-        if (!is_position_modified.x && !is_position_modified.y && !is_position_modified.z)
-        {
-            return;
-        }
-        */
 
         m_local_position = new_local_position;
     }
@@ -98,7 +89,6 @@ void Transform::set_rotation(hlsl::float3 const& euler_angles)
 {
     if (parent == nullptr)
     {
-        // TODO: Check if euler angles are in degrees or radians in hlsl::EulerToQuaternion, I suppose in radians
         m_local_quat_rotation = hlsl::float4(hlsl::EulerToQuaternion(euler_angles * hlsl::DEG2RAD));
         m_local_euler_angles = euler_angles;
         m_quat_rotation = m_local_quat_rotation;
@@ -109,8 +99,6 @@ void Transform::set_rotation(hlsl::float3 const& euler_angles)
         hlsl::float4 const global_rotation = hlsl::float4(hlsl::EulerToQuaternion(euler_angles * hlsl::DEG2RAD));
 
         // Calculate the new local rotation by inverse of parent's rotation
-        //m_local_quat_rotation = glm::inverse(parent_global_rotation) * global_rotation;
-        // TODO: Just as before, check if this inverse rotation matrix makes sense
         auto inversed_rotation_matrix = hlsl::inverse(hlsl::rotation(parent->get_rotation()));
         m_local_quat_rotation = inversed_rotation_matrix * global_rotation;
 
@@ -139,14 +127,6 @@ void Transform::set_scale(hlsl::float3 const& scale)
         hlsl::float3 const parent_global_scale = parent->get_scale();
         hlsl::float3 const new_local_scale = scale / parent_global_scale;
 
-        // TODO: Check if it's necessary, if so implement vlm's counterpart for epsilonNotEqual
-        /*
-        auto const is_scale_modified = glm::epsilonNotEqual(new_local_scale, m_local_scale, 0.0001f);
-        if (!is_scale_modified.x && !is_scale_modified.y && !is_scale_modified.z)
-        {
-            return;
-        }
-        */
         m_local_scale = new_local_scale;
     }
 
@@ -162,15 +142,6 @@ hlsl::float3 Transform::get_scale()
 
 void Transform::set_local_position(hlsl::float3 const& position)
 {
-    // TODO: Check if it's necessary
-    /*
-    auto const is_position_modified = glm::epsilonNotEqual(position, m_local_position, 0.0001f);
-    if (!is_position_modified.x && !is_position_modified.y && !is_position_modified.z)
-    {
-        return;
-    }
-    */
-
     m_local_position = position;
 
     set_dirty();
@@ -183,14 +154,6 @@ hlsl::float3 Transform::get_local_position() const
 
 void Transform::set_local_scale(hlsl::float3 const& scale)
 {
-    // TODO: Check if it's necessary
-    /*
-    auto const is_scale_modified = glm::epsilonNotEqual(scale, m_local_scale, 0.0001f);
-    if (!is_scale_modified.x && !is_scale_modified.y && !is_scale_modified.z)
-    {
-        return;
-    }
-    */
     m_local_scale = scale;
 
     set_dirty();
@@ -254,7 +217,7 @@ void Transform::recompute_forward_right_up_if_needed()
     m_local_euler_angles_cached = euler_angles;
 
     auto direction_forward = hlsl::float3(0.0f, 0.0f, -1.0f);
-    // TODO: Check if it should be float4(xyz,1.0f) or float4(xyz,0.0f)
+
     direction_forward = (hlsl::float4(direction_forward, 0.0f) * hlsl::transpose(hlsl::rotation(get_rotation()))).xyz;
     m_forward = hlsl::normalizeSafe(direction_forward);
     m_right = hlsl::normalizeSafe(hlsl::cross(m_forward, m_world_up));

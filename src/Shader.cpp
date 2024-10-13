@@ -96,6 +96,8 @@ void Shader::load_shader()
 
 void Shader::load_shader_dxc()
 {
+    // TODO: Add shader reloading
+
     uint32_t codePage = CP_UTF8;
     IDxcBlobEncoding* sourceBlob;
     HRESULT hr;
@@ -109,7 +111,6 @@ void Shader::load_shader_dxc()
     AssertFailed(hr);
 
     
-    // TODO: Get rid of all hard-coded strings
     IDxcOperationResult* result;
 
     hr = compiler->Compile(
@@ -143,40 +144,6 @@ void Shader::load_shader_dxc()
     }
     
     result->GetResult(&dxc_blob);
-
-    //size_t size = 0;
-    //char const* shader_source = read_hlsl_shader_from_file(m_path, &size);
-    //const DxcBuffer* sourceBuffer = new DxcBuffer(shader_source, size, CP_UTF8);
-    //IDxcBlobEncoding* sourceBlob;
-    //uint32_t codePage = CP_UTF8;
-    //library->CreateBlobFromFile(olej_utils::string_to_LPCWSTR(m_path), &codePage, &sourceBlob);
-    //HRESULT hr;
-    //LPCWSTR args = olej_utils::string_to_LPCWSTR("-P");
-    //_GUID xd;
-    //IDxcResult* result;
-    //IDxcCompilerArgs* args = IDxcUtils::BuildArguments(m_path, "vs_main", "vs_6_0", nullptr, 0);
-    //hr = compiler->Compile(sourceBuffer, &args, 1, include_handler.Get(), IID_PPV_ARGS(&result));
-
-    //if (FAILED(hr))
-    //{
-    //    // TODO: Handle errors
-    //    std::cout << "GOWNO0" << std::endl;
-    //}
-    //IDxcBlob* shaderBlob;
-    //result->GetResult(&shaderBlob);
-    //std::string const hash = std::to_string(olej_utils::murmur_hash(static_cast<u8*>(shaderBlob->GetBufferPointer()), shaderBlob->GetBufferSize(), 0));
-    //if (!read_file_to_blob(m_path + hash + m_main_function_name, &shaderBlob));
-    //{
-    //    hr = compiler->Compile(sourceBuffer, nullptr, 0, include_handler.Get(), IID_PPV_ARGS(&result));
-
-    //    if (FAILED(hr))
-    //    {
-    //        std::cout << "GOWNO" << "\n";
-    //        return;
-    //    }
-    //    save_compiled_shader(m_path + hash + m_main_function_name, shader_blob);
-    //}
-
 }
 
 char* Shader::read_hlsl_shader_from_file(std::wstring const& path, size_t* p_size)

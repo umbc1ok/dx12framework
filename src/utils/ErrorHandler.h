@@ -5,7 +5,6 @@
 
 #include "Renderer.h"
 
-// TODO: Check if it actually stops the program
 inline void AssertFailed(HRESULT hr)
 {
     if (FAILED(hr) == true)

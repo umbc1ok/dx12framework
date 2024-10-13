@@ -155,8 +155,6 @@ void Editor::draw_inspector(EditorWindow* const& window)
     ImGui::Text("Transform");
     ImGui::Spacing();
 
-    // TODO: Implement transforms and overall math
-
     hlsl::float3 position = entity->transform->get_local_position();
     ImGui::InputFloat3("Position", position.data);
 
