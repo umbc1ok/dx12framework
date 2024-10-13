@@ -143,6 +143,7 @@ public:
     void add_content_browser();
     void add_scene_hierarchy();
     void add_debug_window();
+    void set_docking_space();
 
 
     i32 m_last_window_id = 0;

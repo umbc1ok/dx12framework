@@ -67,6 +67,7 @@ void Editor::update()
     ImGui_ImplDX12_NewFrame();
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
+    set_docking_space();
     ImGuiIO& m_io = ImGui::GetIO();
 
     auto const windows_copy = m_editor_windows;
@@ -561,6 +562,11 @@ void Editor::add_debug_window()
 {
     auto debug_window = new EditorWindow(m_last_window_id, ImGuiWindowFlags_MenuBar, EditorWindowType::Debug);
     m_editor_windows.emplace_back(debug_window);
+}
+
+void Editor::set_docking_space()
+{
+    ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
 }
 
 void Editor::draw_window_menu_bar(EditorWindow* const& window)
