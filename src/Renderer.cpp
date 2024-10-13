@@ -38,6 +38,26 @@ void Renderer::start_frame()
         D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_RENDER_TARGET);
 }
 
+void Renderer::render()
+{
+    auto cmd_list = g_pd3dCommandList;
+    auto rtv = get_current_rtv();
+    auto dsv = get_dsv_heap()->GetCPUDescriptorHandleForHeapStart();
+    FLOAT clearColor[] = { 0.4f, 0.6f, 0.9f, 1.0f };
+
+    clear_rtv(cmd_list, rtv, clearColor);
+    clear_depth(cmd_list, dsv, 1.0f);
+
+    cmd_list->SetGraphicsRootSignature(m_pipeline_state->get_root_signature());
+    cmd_list->SetPipelineState(m_pipeline_state->get_pipeline_state());
+    cmd_list->RSSetViewports(1, &m_Viewport);
+    cmd_list->RSSetScissorRects(1, &m_ScissorRect);
+
+    cmd_list->OMSetRenderTargets(1, &rtv, FALSE, &dsv);
+
+    MainScene::get_instance()->run_frame();
+}
+
 void Renderer::end_frame()
 {
     auto command_list = g_pd3dCommandList;
@@ -292,25 +312,7 @@ void Renderer::cleanup_render_targets()
 }
 
 
-void Renderer::render()
-{
-    auto cmd_list = g_pd3dCommandList;
-    auto rtv = get_current_rtv();
-    auto dsv = get_dsv_heap()->GetCPUDescriptorHandleForHeapStart();
-    FLOAT clearColor[] = { 0.4f, 0.6f, 0.9f, 1.0f };
 
-    clear_rtv(cmd_list, rtv, clearColor);
-    clear_depth(cmd_list, dsv, 1.0f);
-
-    cmd_list->SetGraphicsRootSignature(m_pipeline_state->get_root_signature());
-    cmd_list->SetPipelineState(m_pipeline_state->get_pipeline_state());
-    cmd_list->RSSetViewports(1, &m_Viewport);
-    cmd_list->RSSetScissorRects(1, &m_ScissorRect);
-
-    cmd_list->OMSetRenderTargets(1, &rtv, FALSE, &dsv);
-
-    MainScene::get_instance()->run_frame();
-}
 
 ID3D12Device2* Renderer::get_device() const
 {
