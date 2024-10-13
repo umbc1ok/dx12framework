@@ -2,7 +2,6 @@
 
 #include <dxgidebug.h>
 
-#include "DrawableCube.h"
 #include "PipelineState.h"
 #include "Window.h"
 #include "utils/ErrorHandler.h"
@@ -20,9 +19,15 @@ void Renderer::create()
 {
     m_instance = new Renderer();
     RECT rect;
+    int width, height;
+    if (GetWindowRect(Window::get_hwnd(), &rect))
+    {
+        width = rect.right - rect.left;
+        height = rect.bottom - rect.top;
+    }
     GetWindowRect(Window::get_hwnd(), &rect);
     m_instance->m_Viewport = CD3DX12_VIEWPORT(0.0f, 0.0f,
-        static_cast<float>(rect.right), static_cast<float>(rect.bottom));
+        static_cast<float>(width), static_cast<float>(height));
     m_instance->m_ScissorRect = CD3DX12_RECT(0, 0, LONG_MAX, LONG_MAX);
     m_instance->m_pipeline_state = new PipelineState(L"MS_BASIC.hlsl", L"PS_BASIC.hlsl");
 }
@@ -154,12 +159,20 @@ void Renderer::on_window_resize()
 
 bool Renderer::create_device_d3d(HWND hWnd)
 {
+    RECT rect;
+    int width, height;
+    if (GetWindowRect(Window::get_hwnd(), &rect))
+    {
+        width = rect.right - rect.left;
+        height = rect.bottom - rect.top;
+    }
+
     DXGI_SWAP_CHAIN_DESC1 sd;
     {
         ZeroMemory(&sd, sizeof(sd));
         sd.BufferCount = NUM_BACK_BUFFERS;
-        sd.Width = 1920;
-        sd.Height = 1080;
+        sd.Width = width;
+        sd.Height = height;
         sd.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
         sd.Flags = DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
         sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
@@ -254,7 +267,9 @@ bool Renderer::create_device_d3d(HWND hWnd)
     }
     create_depth_stencil();
     create_render_targets();
-
+    // HACK: ImGui was blurry until first window resize
+    // This gets rid of that problem, I dont know why
+    on_window_resize();
     return true;
 }
 
