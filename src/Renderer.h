@@ -4,7 +4,6 @@
 
 #include "DrawableCube.h"
 #include "Model.h"
-#include "../build/src/MeshletizedModel.h"
 #include "DX12Wrappers/CommandQueue.h"
 #define DX12_ENABLE_DEBUG_LAYER 
 
@@ -49,8 +48,6 @@ public:
     void on_window_resize();
 
     Entity* camera_entity;
-    UINT8* m_cbvDataBegin;
-    Microsoft::WRL::ComPtr<ID3D12Resource> m_constantBuffer;
     int frame_index = 0;
 
 private:

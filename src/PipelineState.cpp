@@ -79,30 +79,6 @@ PipelineState::PipelineState(std::wstring vs_name, std::wstring ps_name)
 
         AssertFailed(device->CreatePipelineState(&streamDesc, IID_PPV_ARGS(&m_pipeline_state)));
 
-
-        int frameCount = 3;
-        const UINT64 constantBufferSize = sizeof(SceneConstantBuffer) * frameCount;
-
-        const CD3DX12_HEAP_PROPERTIES constantBufferHeapProps(D3D12_HEAP_TYPE_UPLOAD);
-        const CD3DX12_RESOURCE_DESC constantBufferDesc = CD3DX12_RESOURCE_DESC::Buffer(constantBufferSize);
-
-        AssertFailed(Renderer::get_instance()->get_device()->CreateCommittedResource(
-            &constantBufferHeapProps,
-            D3D12_HEAP_FLAG_NONE,
-            &constantBufferDesc,
-            D3D12_RESOURCE_STATE_GENERIC_READ,
-            nullptr,
-            IID_PPV_ARGS(&Renderer::get_instance()->m_constantBuffer)));
-
-        // Describe and create a constant buffer view.
-        D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
-        cbvDesc.BufferLocation = Renderer::get_instance()->m_constantBuffer->GetGPUVirtualAddress();
-        cbvDesc.SizeInBytes = constantBufferSize;
-
-        // Map and initialize the constant buffer. We don't unmap this until the
-        // app closes. Keeping things mapped for the lifetime of the resource is okay.
-        CD3DX12_RANGE readRange(0, 0);        // We do not intend to read from this resource on the CPU.
-        AssertFailed(Renderer::get_instance()->m_constantBuffer->Map(0, &readRange, reinterpret_cast<void**>(&Renderer::get_instance()->m_cbvDataBegin)));
     }
     else
     {
