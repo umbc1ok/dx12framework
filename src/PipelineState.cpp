@@ -16,10 +16,11 @@ PipelineState::PipelineState(std::wstring vs_name, std::wstring ps_name)
         mesh_shader = new Shader(vs_name, ShaderType::MESH);
         pixel_shader = new Shader(ps_name, ShaderType::PIXEL);
 
-        const D3D12_INPUT_ELEMENT_DESC input_layout[2] =
+        const D3D12_INPUT_ELEMENT_DESC input_layout[3] =
         {
             { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 1 },
             { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 1 },
+            { "UV", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 1 }
         };
 
 
@@ -29,7 +30,7 @@ PipelineState::PipelineState(std::wstring vs_name, std::wstring ps_name)
 
         CD3DX12_RASTERIZER_DESC rasterizer_desc = {};
         rasterizer_desc.FillMode = D3D12_FILL_MODE_SOLID; // Use D3D12_FILL_MODE_WIREFRAME for wireframe mode
-        rasterizer_desc.CullMode = D3D12_CULL_MODE_FRONT;  // Use D3D12_CULL_MODE_NONE or D3D12_CULL_MODE_FRONT as needed
+        rasterizer_desc.CullMode = D3D12_CULL_MODE_NONE;  // Use D3D12_CULL_MODE_NONE or D3D12_CULL_MODE_FRONT as needed
         rasterizer_desc.FrontCounterClockwise = FALSE;
         rasterizer_desc.DepthBias = D3D12_DEFAULT_DEPTH_BIAS;
         rasterizer_desc.DepthBiasClamp = D3D12_DEFAULT_DEPTH_BIAS_CLAMP;
@@ -64,7 +65,7 @@ PipelineState::PipelineState(std::wstring vs_name, std::wstring ps_name)
         psoDesc.NumRenderTargets = 1;
         psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
         psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
-        psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+        psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(rasterizer_desc);
         psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT); 
         psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT); 
         psoDesc.SampleMask = UINT_MAX;
