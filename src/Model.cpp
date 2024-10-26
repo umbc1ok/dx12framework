@@ -134,7 +134,7 @@ Mesh* Model::proccess_mesh(aiMesh const* mesh, aiScene const* scene)
     std::vector<hlsl::float3> positions;
     std::vector<hlsl::float3> normals;
     std::vector<hlsl::float2> UVs;
-    std::vector<u16> indices;
+    std::vector<u32> indices;
     std::vector<Texture*> textures;
     std::vector<u32> attributes;
     for (u32 i = 0; i < mesh->mNumVertices; ++i)
@@ -194,7 +194,7 @@ void Model::uploadGPUResources()
         auto& m = m_meshes[i];
 
         // Create committed D3D resources of proper sizes
-        auto indexDesc = CD3DX12_RESOURCE_DESC::Buffer(m->m_indices.size());
+        auto indexDesc = CD3DX12_RESOURCE_DESC::Buffer(m->m_indices.size() * sizeof(u32));
         auto meshletDesc = CD3DX12_RESOURCE_DESC::Buffer(m->m_meshlets.size() * sizeof(m->m_meshlets[0]));
         auto cullDataDesc = CD3DX12_RESOURCE_DESC::Buffer(m->m_cullData.size() * sizeof(m->m_cullData[0]));
         // gowno
@@ -212,7 +212,7 @@ void Model::uploadGPUResources()
 
 
         m->IBView.BufferLocation = m->IndexResource->GetGPUVirtualAddress();
-        m->mesh_info.IndexSize = sizeof(u16);
+        m->mesh_info.IndexSize = sizeof(u32);
         m->IBView.Format = m->mesh_info.IndexSize == 4 ? DXGI_FORMAT_R32_UINT : DXGI_FORMAT_R16_UINT;
         m->IBView.SizeInBytes = m->m_indices.size() * m->mesh_info.IndexSize;
         // gowno gowno gowno
@@ -264,7 +264,7 @@ void Model::uploadGPUResources()
         {
             uint8_t* memory = nullptr;
             indexUpload->Map(0, nullptr, reinterpret_cast<void**>(&memory));
-            std::memcpy(memory, m->m_indices.data(), m->m_indices.size() * sizeof(u16));
+            std::memcpy(memory, m->m_indices.data(), m->m_indices.size() * sizeof(u32));
             indexUpload->Unmap(0, nullptr);
         }
 
@@ -381,9 +381,9 @@ std::vector<Texture*> Model::load_material_textures(aiMaterial const* material, 
         file_path = m_directory + '/' + file_path;
 
 
-        Texture* texture = TextureLoader::texture_from_file(file_path);
-        textures.push_back(texture);
-        m_loaded_textures.push_back(texture);
+        //Texture* texture = TextureLoader::texture_from_file(file_path);
+        //textures.push_back(texture);
+        //m_loaded_textures.push_back(texture);
     }
 
     return textures;

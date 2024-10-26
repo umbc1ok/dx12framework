@@ -69,7 +69,7 @@ inline uint32_t AddAttribute(uint32_t base, Attribute::EType add) { return base 
 class Mesh
 {
 public:
-    Mesh(std::vector<Vertex> const& vertices, std::vector<u16> const& indices, std::vector<Texture*> const& textures, std::vector<hlsl::float3> const& positions, std::vector<hlsl::float3> const& normals, std::vector<hlsl::float2> const& UVS, std::vector<u32> attributes);
+    Mesh(std::vector<Vertex> const& vertices, std::vector<u32> const& indices, std::vector<Texture*> const& textures, std::vector<hlsl::float3> const& positions, std::vector<hlsl::float3> const& normals, std::vector<hlsl::float2> const& UVS, std::vector<u32> attributes);
     ~Mesh() = default;
 
     void draw();
@@ -78,11 +78,11 @@ public:
 
     void meshletize();
     std::vector<Vertex> m_vertices;
-    std::vector<u16> m_indices;
+    std::vector<u32> m_indices;
     std::vector<Texture*> m_textures;
 
     std::vector<uint32_t>              m_vertexRemap;
-    std::vector<uint16_t>              m_indexReorder;
+    std::vector<uint32_t>              m_indexReorder;
     std::vector<uint32_t>              m_dupVerts;
 
     std::vector<hlsl::float3>          m_positionReorder;
