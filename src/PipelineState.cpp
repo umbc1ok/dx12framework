@@ -30,7 +30,7 @@ PipelineState::PipelineState(std::wstring vs_name, std::wstring ps_name)
 
         CD3DX12_RASTERIZER_DESC rasterizer_desc = {};
         rasterizer_desc.FillMode = D3D12_FILL_MODE_SOLID; // Use D3D12_FILL_MODE_WIREFRAME for wireframe mode
-        rasterizer_desc.CullMode = D3D12_CULL_MODE_NONE;  // Use D3D12_CULL_MODE_NONE or D3D12_CULL_MODE_FRONT as needed
+        rasterizer_desc.CullMode = D3D12_CULL_MODE_FRONT;  // Use D3D12_CULL_MODE_NONE or D3D12_CULL_MODE_FRONT as needed
         rasterizer_desc.FrontCounterClockwise = FALSE;
         rasterizer_desc.DepthBias = D3D12_DEFAULT_DEPTH_BIAS;
         rasterizer_desc.DepthBiasClamp = D3D12_DEFAULT_DEPTH_BIAS_CLAMP;
