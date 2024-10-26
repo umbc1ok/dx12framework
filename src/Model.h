@@ -31,6 +31,7 @@ public:
     void set_constant_buffer();
     void draw();
     void update() override;
+    void draw_editor() override;
 private:
     void load_model(std::string const& model_path);
     void proccess_node(aiNode const* node, aiScene const* scene);
@@ -49,5 +50,11 @@ private:
     SceneConstantBuffer m_constant_buffer_data;
     Microsoft::WRL::ComPtr<ID3D12Resource> m_constant_buffer;
     UINT8* m_cbv_data_begin = nullptr;
+
+
+    // STATS FOR EDITOR
+    int m_vertex_count = 0;
+    int m_triangle_count = 0;
+    int m_meshlets_count = 0;
 };
 

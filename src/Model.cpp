@@ -97,6 +97,14 @@ void Model::update()
     draw();
 }
 
+void Model::draw_editor()
+{
+    Component::draw_editor();
+    ImGui::Text("Triangle count: %i", m_triangle_count);
+    ImGui::Text("Vertex count: %i", m_vertex_count);
+    ImGui::Text("Meshlet count: %i", m_meshlets_count);
+}
+
 void Model::load_model(std::string const& path)
 {
     Assimp::Importer importer;
@@ -120,6 +128,7 @@ void Model::proccess_node(aiNode const* node, aiScene const* scene)
     {
         aiMesh const* mesh = scene->mMeshes[node->mMeshes[i]];
         m_meshes.emplace_back(proccess_mesh(mesh, scene));
+        m_meshlets_count += m_meshes.back()->m_meshlets.size();
     }
 
     for (u32 i = 0; i < node->mNumChildren; ++i)
@@ -181,6 +190,10 @@ Mesh* Model::proccess_mesh(aiMesh const* mesh, aiScene const* scene)
         load_material_textures(assimp_material, aiTextureType_DIFFUSE, TextureType::Diffuse);
     textures.insert(textures.end(), diffuse_maps.begin(), diffuse_maps.end());
 
+    // STATS //////////////////////////////
+    m_vertex_count += vertices.size();
+    m_triangle_count += indices.size() / 3;
+    ///////////////////////////////////////
     return new Mesh(vertices, indices, textures, positions, normals, UVs, attributes);
 }
 
