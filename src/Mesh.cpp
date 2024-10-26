@@ -4,14 +4,14 @@
 #include <utils/ErrorHandler.h>
 #include <utility>
 
-Mesh::Mesh(std::vector<Vertex> const& vertices , std::vector<u16> const& indices, std::vector<Texture*> const& textures, std::vector<hlsl::float3> const& positions, std::vector<hlsl::float3> const& normals, std::vector<hlsl::float2> const& UVS, std::vector<u32> attributes)
+Mesh::Mesh(std::vector<Vertex> const& vertices , std::vector<u32> const& indices, std::vector<Texture*> const& textures, std::vector<hlsl::float3> const& positions, std::vector<hlsl::float3> const& normals, std::vector<hlsl::float2> const& UVS, std::vector<u32> attributes)
 {
     m_vertices = vertices;
     m_indices = indices;
     m_textures = textures;
     m_UVs = UVS;
-    m_vertex_buffer = new VertexBuffer(m_vertices.data(), m_vertices.size());
-    m_index_buffer = new IndexBuffer(m_indices.data(), m_indices.size());
+    //m_vertex_buffer = new VertexBuffer(m_vertices.data(), m_vertices.size());
+    //m_index_buffer = new IndexBuffer(m_indices.data(), m_indices.size());
     m_positions = positions;
     m_normals = normals;
     m_UVs = UVS;
