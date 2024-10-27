@@ -51,7 +51,7 @@ void Model::set_constant_buffer()
     m_constant_buffer_data.World = hlsl::transpose(world);
     m_constant_buffer_data.WorldView = hlsl::transpose(world * view);
     m_constant_buffer_data.WorldViewProj = hlsl::transpose(mvpMatrix);
-    m_constant_buffer_data.DrawMeshlets = true;
+    m_constant_buffer_data.DrawFlag = Renderer::get_instance()->get_debug_mode();
 
     memcpy(m_cbv_data_begin + sizeof(SceneConstantBuffer) * Renderer::get_instance()->frame_index, &m_constant_buffer_data, sizeof(m_constant_buffer_data));
     commandList->SetGraphicsRootConstantBufferView(0, m_constant_buffer->GetGPUVirtualAddress() + sizeof(SceneConstantBuffer) * Renderer::get_instance()->frame_index);

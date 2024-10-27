@@ -157,6 +157,12 @@ void Renderer::on_window_resize()
         static_cast<float>(width), static_cast<float>(height));
 }
 
+void Renderer::set_wireframe(const bool& wireframe)
+{
+    m_pipeline_state->set_wireframe(wireframe);
+    
+}
+
 bool Renderer::create_device_d3d(HWND hWnd)
 {
     RECT rect;

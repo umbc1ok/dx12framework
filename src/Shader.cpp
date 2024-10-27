@@ -2,7 +2,7 @@
 
 #include <d3dcommon.h>
 #include <d3dcompiler.h>
-
+#include <dxcapi.h>
 
 
 #include <fstream>
@@ -20,6 +20,7 @@ Shader::Shader(std::wstring name, ShaderType type)
 {
     m_type = type;
     m_path = L"./res/shaders/" + name;
+    m_filename = name;
     switch (m_type)
     {
     case ShaderType::VERTEX:
@@ -40,7 +41,9 @@ Shader::Shader(std::wstring name, ShaderType type)
     AssertFailed(hr);
     hr = DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&compiler));
     AssertFailed(hr);
-    hr = library->CreateIncludeHandler(&include_handler);
+    IDxcUtils* utils;
+    DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&utils));
+    hr = utils->CreateDefaultIncludeHandler(&include_handler);
     AssertFailed(hr);
 
     load_shader_dxc();
@@ -101,15 +104,8 @@ void Shader::load_shader_dxc()
     uint32_t codePage = CP_UTF8;
     IDxcBlobEncoding* sourceBlob;
     HRESULT hr;
-
-    if(m_type == ShaderType::MESH)
-        hr = library->CreateBlobFromFile(L"./res/shaders/mesh_pipeline/MS_BASIC.hlsl", &codePage, &sourceBlob);
-    else if (m_type == ShaderType::VERTEX)
-        hr = library->CreateBlobFromFile(L"./res/shaders/vs.hlsl", &codePage, &sourceBlob);
-    else if (m_type == ShaderType::PIXEL)
-        hr = library->CreateBlobFromFile(L"./res/shaders/mesh_pipeline/PS_BASIC.hlsl", &codePage, &sourceBlob);
+    hr = library->CreateBlobFromFile(m_path.c_str(), &codePage, &sourceBlob);
     AssertFailed(hr);
-
     
     IDxcOperationResult* result;
 
