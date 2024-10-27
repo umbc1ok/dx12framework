@@ -15,6 +15,7 @@ public:
     static void create();
     static Input* get_instance() { return m_instance; }
     hlsl::float2 get_mouse_delta() const { return m_mouse_delta; }
+    bool get_key_pressed();
     void update();
     DirectX::Keyboard* m_keyboard;
     DirectX::Mouse* m_mouse;

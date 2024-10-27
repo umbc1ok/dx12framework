@@ -20,11 +20,10 @@ class Shader
 public:
     Shader(std::wstring name, ShaderType type);
 
-    void load_shader();
     void load_shader_dxc();
     char* read_hlsl_shader_from_file(std::wstring const& path, size_t* p_size);
-    bool read_file_to_blob(std::wstring const& path, ID3DBlob** pp_blob);
-    bool save_compiled_shader(std::wstring const& path, ID3DBlob* p_blob);
+    //bool read_file_to_blob(std::wstring const& path, IDxcBlob** pp_blob);
+    bool save_compiled_shader(std::wstring const& path, IDxcBlob* p_blob);
     ID3DBlob* get_blob();
     IDxcBlob* dxc_blob;
 
@@ -38,7 +37,8 @@ private:
     ID3DBlob* shader_blob;
 
     Microsoft::WRL::ComPtr<IDxcLibrary> library;
-    Microsoft::WRL::ComPtr<IDxcCompiler> compiler;
+    Microsoft::WRL::ComPtr<IDxcCompiler3> compiler;
     Microsoft::WRL::ComPtr<IDxcIncludeHandler> include_handler;
+    Microsoft::WRL::ComPtr<IDxcUtils> utils;
 };
 

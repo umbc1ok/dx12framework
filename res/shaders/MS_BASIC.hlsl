@@ -45,7 +45,6 @@ struct VertexOut
     float3 Normal       : NORMAL0;
     uint   MeshletIndex : COLOR0;
     uint   TriangleIndex : COLOR1;
-
 };
 
 struct Meshlet
@@ -133,7 +132,7 @@ void ms_main(
     {
         tris[gtid] = GetPrimitive(m, gtid);
     }
-
+    
     if (gtid < m.VertCount)
     {
         uint vertexIndex = GetVertexIndex(m, gtid);

@@ -6,6 +6,7 @@
 #include "assimp/scene.h"
 #include "spdlog/details/synchronous_factory.h"
 #include "Component.h"
+#include "PipelineState.h"
 #include "utils/maths.h"
 #include "../res/shaders/shared/shared_cb.h"
 class Mesh;
@@ -22,6 +23,7 @@ public:
     void draw();
     void update() override;
     void draw_editor() override;
+    std::vector<Texture*> m_loaded_textures;
 private:
     void load_model(std::string const& model_path);
     void proccess_node(aiNode const* node, aiScene const* scene);
@@ -33,7 +35,6 @@ private:
 
     std::vector<Mesh*> m_meshes;
     std::string m_directory;
-    std::vector<Texture*> m_loaded_textures;
 
 
     SceneConstantBuffer m_constant_buffer_data;
@@ -44,5 +45,7 @@ private:
     int m_vertex_count = 0;
     int m_triangle_count = 0;
     int m_meshlets_count = 0;
+
+    PipelineState* m_pipeline_state;
 };
 

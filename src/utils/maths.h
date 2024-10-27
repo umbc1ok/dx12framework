@@ -537,4 +537,11 @@ namespace hlsl
         return float3(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
     }
 
+    inline float2 normalize(const float2& value)
+    {
+        float len = length(value);
+        if (len > 0.0f)
+            return value / len;
+        return float2(0.0f, 0.0f);
+    }
 } // namespace hlsl
