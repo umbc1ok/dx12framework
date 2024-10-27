@@ -1,5 +1,5 @@
 #ifdef __cplusplus
-using namespace hlsl;
+using float4x4 = hlsl::float4x4;
 using uint = unsigned int;
 #endif
 
