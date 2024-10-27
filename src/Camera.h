@@ -21,7 +21,7 @@ public:
 private:
 	inline static Camera* m_main_camera;
 
-	float m_movement_speed = 0.2f;
+	float m_movement_speed = 0.05f;
 	hlsl::float4x4 m_projection;
 	float width = 1920.0f;
 	float height = 1080.0f;
@@ -34,5 +34,6 @@ private:
 	float far_plane = 1000.0f;
 
 	bool m_dirty = true;
+    bool m_RMB_pressed = false;
 };
 

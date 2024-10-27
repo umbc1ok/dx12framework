@@ -43,31 +43,32 @@ LRESULT Window::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         ::PostQuitMessage(0);
         return 0;
     case WM_KEYDOWN:
-        DirectX::Keyboard::ProcessMessage(msg, wParam, lParam);
-        break;
     case WM_KEYUP:
+        DirectX::Keyboard::ProcessMessage(msg, wParam, lParam);
         DirectX::Keyboard::ProcessMessage(msg, wParam, lParam);
         break;
     case WM_MOUSEMOVE:
-        DirectX::Mouse::ProcessMessage(msg, wParam, lParam);
-        break;
     case WM_MOUSEHWHEEL:
-        DirectX::Mouse::ProcessMessage(msg, wParam, lParam);
-        break;
     case WM_MOUSEWHEEL:
-        DirectX::Mouse::ProcessMessage(msg, wParam, lParam);
-        break;
     case WM_MBUTTONDOWN:
-        cursor_visible = !cursor_visible;
-        change_mouse_mode();
+    case WM_MBUTTONUP:
+    case WM_RBUTTONDOWN:
+    case WM_RBUTTONUP:
+        DirectX::Mouse::ProcessMessage(msg, wParam, lParam);
         break;
     }
     return ::DefWindowProcW(hWnd, msg, wParam, lParam);
 }
 
-void Window::change_mouse_mode()
+void Window::change_mouse_mode(bool cursor_visible)
 {
-    if (cursor_visible)
+    if (cursor_visible == m_cursor_visible)
+    {
+        return;
+    }
+
+    m_cursor_visible = cursor_visible;
+    if (m_cursor_visible)
     {
         ::ShowCursor(true);
         ImGui::GetIO().ConfigFlags &= ~ImGuiConfigFlags_NoMouse;
