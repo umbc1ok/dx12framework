@@ -34,6 +34,7 @@ private:
     std::wstring m_compiled_path = L"./res/shaders/compiled/";
     std::wstring m_main_function_name = {};
     std::wstring shader_model = {};
+    std::wstring m_filename = {};
     ID3DBlob* shader_blob;
 
     Microsoft::WRL::ComPtr<IDxcLibrary> library;

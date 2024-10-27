@@ -459,9 +459,20 @@ void Editor::draw_debug_window(EditorWindow* const& window)
 
     draw_window_menu_bar(window);
 
-    ImGui::Checkbox("Polygon mode", &m_polygon_mode_active);
-    ImGui::SameLine();
     ImGui::Text("Application average %.3f ms/frame", m_average_ms_per_frame);
+    if(ImGui::Checkbox("Polygon mode", &m_polygon_mode_active))
+    {
+        Renderer::get_instance()->set_wireframe(m_polygon_mode_active);
+    }
+    const char* items[] = { "NONE", "MESHLET VIEW", "TRIANGLE VIEW" };
+    {
+        ImGui::Text("Wybierz opcje:");
+        // Tworzenie drop-down listy
+        if (ImGui::Combo("MESHLET DEBUG MODE", &m_current_debug_mode, items, IM_ARRAYSIZE(items)))
+        {
+            Renderer::get_instance()->set_debug_mode(m_current_debug_mode);
+        }
+    }
 
     // TODO: Implement scene saving
     //draw_scene_save();

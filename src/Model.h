@@ -7,18 +7,8 @@
 #include "spdlog/details/synchronous_factory.h"
 #include "Component.h"
 #include "utils/maths.h"
-
+#include "../res/shaders/shared/shared_cb.h"
 class Mesh;
-
-
-
-_declspec(align(256u)) struct SceneConstantBuffer
-{
-    hlsl::float4x4 World;
-    hlsl::float4x4 WorldView;
-    hlsl::float4x4 WorldViewProj;
-    uint32_t   DrawMeshlets;
-};
 
 
 class Model : public Component
@@ -38,7 +28,6 @@ private:
     Mesh* proccess_mesh(aiMesh const* mesh, aiScene const* scene);
     void create_CBV();
 
-
     void uploadGPUResources();
     std::vector<Texture*> load_material_textures(aiMaterial const* material, aiTextureType type, TextureType type_name);
 
@@ -50,7 +39,6 @@ private:
     SceneConstantBuffer m_constant_buffer_data;
     Microsoft::WRL::ComPtr<ID3D12Resource> m_constant_buffer;
     UINT8* m_cbv_data_begin = nullptr;
-
 
     // STATS FOR EDITOR
     int m_vertex_count = 0;

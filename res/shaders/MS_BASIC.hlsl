@@ -8,6 +8,7 @@
 // PURPOSE, MERCHANTABILITY, OR NON-INFRINGEMENT.
 //
 //*********************************************************
+#include "shared/shared_cb.h"
 
 #define ROOT_SIG "CBV(b0), \
                   RootConstants(b1, num32bitconstants=2), \
@@ -16,13 +17,13 @@
                   SRV(t2), \
                   SRV(t3)"
 
-struct Constants
-{
-    float4x4 World;
-    float4x4 WorldView;
-    float4x4 WorldViewProj;
-    uint     DrawMeshlets;
-};
+// struct Constants
+// {
+//     float4x4 World;
+//     float4x4 WorldView;
+//     float4x4 WorldViewProj;
+//     uint     DrawMeshlets;
+// };
 
 struct MeshInfo
 {
@@ -55,7 +56,7 @@ struct Meshlet
     uint PrimOffset;
 };
 
-ConstantBuffer<Constants> Globals             : register(b0);
+ConstantBuffer<SceneConstantBuffer> Globals   : register(b0);
 ConstantBuffer<MeshInfo>  MeshInfo            : register(b1);
 
 StructuredBuffer<Vertex>  Vertices            : register(t0);
