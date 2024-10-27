@@ -12,10 +12,7 @@ class Entity;
 void Camera::update()
 {
     Component::update();
-    if(!Window::get_cursor_visible())
-    {
-        handle_input();
-    }
+    handle_input();
 }
 
 void Camera::create()
@@ -55,53 +52,60 @@ void Camera::handle_input()
     auto mouse_state = Input::get_instance()->m_mouse->GetState();
     hlsl::float2 mouse_delta = Input::get_instance()->get_mouse_delta();
     auto position = entity->transform->get_position();
-    auto rotation = entity->transform->get_euler_angles();
-
-    if(mouse_state.scrollWheelValue > 0)
-        m_movement_speed += 0.01f;
-    else if (mouse_state.scrollWheelValue < 0)
-        m_movement_speed -= 0.01f;
-
-    if (m_movement_speed < 0.01f)
-        m_movement_speed = 0.01f;
-    mouse->ResetScrollWheelValue();
-
-    if (kb.W)
+    if(m_RMB_pressed != mouse_state.rightButton)
     {
-        entity->transform->set_local_position(position + entity->transform->get_forward() * m_movement_speed);
-    }
-    if (kb.S)
-    {
-        entity->transform->set_local_position(position - entity->transform->get_forward() * m_movement_speed);
-    }
-    if (kb.A)
-    {
-        entity->transform->set_local_position(position - entity->transform->get_right() * m_movement_speed);
-    }
-    if (kb.D)
-    {
-        entity->transform->set_local_position(position + entity->transform->get_right() * m_movement_speed);
-    }
-    if (kb.E)
-    {
-        entity->transform->set_local_position(position + entity->transform->get_up() * m_movement_speed);
-    }
-    if (kb.Q)
-    {
-        entity->transform->set_local_position(position - entity->transform->get_up() * m_movement_speed);
+        m_RMB_pressed = mouse_state.rightButton;
+        Window::get_instance()->change_mouse_mode(!mouse_state.rightButton);
     }
 
+    if(m_RMB_pressed)
     {
-        mouse_delta.y = -mouse_delta.y;
+        if(mouse_state.scrollWheelValue > 0)
+            m_movement_speed += 0.01f;
+        else if (mouse_state.scrollWheelValue < 0)
+            m_movement_speed -= 0.01f;
 
-        mouse_delta *= 0.3f;
+        if (m_movement_speed < 0.01f)
+            m_movement_speed = 0.01f;
+        mouse->ResetScrollWheelValue();
 
-        m_yaw += mouse_delta.x;
-        m_pitch = std::clamp(m_pitch + mouse_delta.y, -89.0f, 89.0f);
+        if (kb.W)
+        {
+            entity->transform->set_local_position(position + entity->transform->get_forward() * m_movement_speed);
+        }
+        if (kb.S)
+        {
+            entity->transform->set_local_position(position - entity->transform->get_forward() * m_movement_speed);
+        }
+        if (kb.A)
+        {
+            entity->transform->set_local_position(position - entity->transform->get_right() * m_movement_speed);
+        }
+        if (kb.D)
+        {
+            entity->transform->set_local_position(position + entity->transform->get_right() * m_movement_speed);
+        }
+        if (kb.E)
+        {
+            entity->transform->set_local_position(position + entity->transform->get_up() * m_movement_speed);
+        }
+        if (kb.Q)
+        {
+            entity->transform->set_local_position(position - entity->transform->get_up() * m_movement_speed);
+        }
 
-        entity->transform->set_local_euler_angles(hlsl::float3(m_pitch, -m_yaw, 0.0f));
+        {
+            mouse_delta.y = -mouse_delta.y;
 
+            mouse_delta *= 0.3f;
+
+            m_yaw += mouse_delta.x;
+            m_pitch = std::clamp(m_pitch + mouse_delta.y, -89.0f, 89.0f);
+
+            entity->transform->set_local_euler_angles(hlsl::float3(m_pitch, -m_yaw, 0.0f));
+
+        }
+        update_internals();
     }
-    update_internals();
 }
 
