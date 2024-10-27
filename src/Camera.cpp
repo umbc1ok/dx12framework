@@ -51,33 +51,44 @@ void Camera::update_internals()
 void Camera::handle_input()
 {
     auto kb = Input::get_instance()->m_keyboard->GetState();
+    auto mouse = Input::get_instance()->m_mouse;
+    auto mouse_state = Input::get_instance()->m_mouse->GetState();
     hlsl::float2 mouse_delta = Input::get_instance()->get_mouse_delta();
     auto position = entity->transform->get_position();
     auto rotation = entity->transform->get_euler_angles();
-    float movement_speed = 0.2f;
+
+    if(mouse_state.scrollWheelValue > 0)
+        m_movement_speed += 0.01f;
+    else if (mouse_state.scrollWheelValue < 0)
+        m_movement_speed -= 0.01f;
+
+    if (m_movement_speed < 0.01f)
+        m_movement_speed = 0.01f;
+    mouse->ResetScrollWheelValue();
+
     if (kb.W)
     {
-        entity->transform->set_local_position(position + entity->transform->get_forward() * movement_speed);
+        entity->transform->set_local_position(position + entity->transform->get_forward() * m_movement_speed);
     }
     if (kb.S)
     {
-        entity->transform->set_local_position(position - entity->transform->get_forward() * movement_speed);
+        entity->transform->set_local_position(position - entity->transform->get_forward() * m_movement_speed);
     }
     if (kb.A)
     {
-        entity->transform->set_local_position(position - entity->transform->get_right() * movement_speed);
+        entity->transform->set_local_position(position - entity->transform->get_right() * m_movement_speed);
     }
     if (kb.D)
     {
-        entity->transform->set_local_position(position + entity->transform->get_right() * movement_speed);
+        entity->transform->set_local_position(position + entity->transform->get_right() * m_movement_speed);
     }
     if (kb.E)
     {
-        entity->transform->set_local_position(position + entity->transform->get_up() * movement_speed);
+        entity->transform->set_local_position(position + entity->transform->get_up() * m_movement_speed);
     }
     if (kb.Q)
     {
-        entity->transform->set_local_position(position - entity->transform->get_up() * movement_speed);
+        entity->transform->set_local_position(position - entity->transform->get_up() * m_movement_speed);
     }
 
     {
