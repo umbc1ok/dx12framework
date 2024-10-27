@@ -8,6 +8,9 @@
 #include "utils/Utils.h"
 #include <Camera.h>
 
+#include "Input.h"
+#include "Keyboard.h"
+
 Renderer* Renderer::m_instance;
 
 Renderer::Renderer()
@@ -29,7 +32,7 @@ void Renderer::create()
     m_instance->m_Viewport = CD3DX12_VIEWPORT(0.0f, 0.0f,
         static_cast<float>(width), static_cast<float>(height));
     m_instance->m_ScissorRect = CD3DX12_RECT(0, 0, LONG_MAX, LONG_MAX);
-    m_instance->m_pipeline_state = new PipelineState(L"MS_BASIC.hlsl", L"PS_BASIC.hlsl");
+    //
 }
 
 void Renderer::start_frame()
@@ -45,6 +48,7 @@ void Renderer::start_frame()
 
 void Renderer::render()
 {
+
     auto cmd_list = g_pd3dCommandList;
     auto rtv = get_current_rtv();
     auto dsv = get_dsv_heap()->GetCPUDescriptorHandleForHeapStart();
@@ -53,8 +57,6 @@ void Renderer::render()
     clear_rtv(cmd_list, rtv, clearColor);
     clear_depth(cmd_list, dsv, 1.0f);
 
-    cmd_list->SetGraphicsRootSignature(m_pipeline_state->get_root_signature());
-    cmd_list->SetPipelineState(m_pipeline_state->get_pipeline_state());
     cmd_list->RSSetViewports(1, &m_Viewport);
     cmd_list->RSSetScissorRects(1, &m_ScissorRect);
 
@@ -73,7 +75,7 @@ void Renderer::end_frame()
     g_fencevalues[g_pSwapChain->GetCurrentBackBufferIndex()] = m_DirectCommandQueue->execute_command_list(command_list);
     m_DirectCommandQueue->wait_for_fence_value(g_fencevalues[index]);
 
-    HRESULT hr = g_pSwapChain->Present(0, 0); // Present without vsync (set first parameter to 1 to enable)
+    HRESULT hr = g_pSwapChain->Present(1, 0); // Present without vsync (set first parameter to 1 to enable)
     AssertFailed(hr);
 }
 

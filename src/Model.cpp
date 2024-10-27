@@ -18,6 +18,8 @@
 #include <Windows.ApplicationModel.DataTransfer.ShareTarget.h>
 #include <utils/ErrorHandler.h>
 #include <random>
+
+#include "Input.h"
 using namespace Microsoft::WRL;
 
 using namespace DirectX;
@@ -35,6 +37,7 @@ Model* Model::create(std::string const& model_path)
     model->load_model(model_path);
     model->set_can_tick(true);
     model->create_CBV();
+    model->m_pipeline_state = new PipelineState(L"MS_BASIC.hlsl", L"PS_BASIC.hlsl");
     return model;
 }
 
@@ -83,6 +86,14 @@ void Model::create_CBV()
 
 void Model::draw()
 {
+    auto cmd_list = Renderer::get_instance()->g_pd3dCommandList;
+    auto kb = Input::get_instance()->m_keyboard->GetState();
+    if (kb.F5)
+    {
+        m_pipeline_state = new PipelineState(L"MS_BASIC.hlsl", L"PS_BASIC.hlsl");
+    }
+    cmd_list->SetGraphicsRootSignature(m_pipeline_state->get_root_signature());
+    cmd_list->SetPipelineState(m_pipeline_state->get_pipeline_state());
     set_constant_buffer();
     for (auto& mesh : m_meshes)
     {
@@ -324,6 +335,7 @@ void Model::uploadGPUResources()
             meshInfoUpload->Unmap(0, nullptr);
         }
 
+        // Populate our command list
         // Populate our command list
         cmdQueue->flush();
 

@@ -18,6 +18,12 @@ void Input::create()
     m_instance = new Input();
 }
 
+bool Input::get_key_pressed()
+{
+    auto kb = m_keyboard->GetState();
+    return kb.Escape;
+}
+
 void Input::update()
 {
     auto mouse_state = m_mouse->GetState();
