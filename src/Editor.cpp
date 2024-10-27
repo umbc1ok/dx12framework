@@ -17,6 +17,7 @@ void Editor::create()
     m_instance = new Editor();
     m_instance->add_scene_hierarchy();
     m_instance->add_inspector();
+    m_instance->add_debug_window();
 }
 
 Editor::Editor()

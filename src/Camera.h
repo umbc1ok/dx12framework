@@ -21,7 +21,7 @@ public:
 private:
 	inline static Camera* m_main_camera;
 
-
+	float m_movement_speed = 0.2f;
 	hlsl::float4x4 m_projection;
 	float width = 1920.0f;
 	float height = 1080.0f;

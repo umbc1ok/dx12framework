@@ -51,6 +51,12 @@ LRESULT Window::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_MOUSEMOVE:
         DirectX::Mouse::ProcessMessage(msg, wParam, lParam);
         break;
+    case WM_MOUSEHWHEEL:
+        DirectX::Mouse::ProcessMessage(msg, wParam, lParam);
+        break;
+    case WM_MOUSEWHEEL:
+        DirectX::Mouse::ProcessMessage(msg, wParam, lParam);
+        break;
     case WM_MBUTTONDOWN:
         cursor_visible = !cursor_visible;
         change_mouse_mode();
