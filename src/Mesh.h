@@ -33,37 +33,7 @@ struct MeshInfo
     uint32_t LastMeshletVertCount;
     uint32_t LastMeshletPrimCount;
 };
-/*
 
-struct Subset
-{
-    uint32_t Offset;
-    uint32_t Count;
-};
-
-
-struct Meshlet
-{
-    uint32_t VertCount;
-    uint32_t VertOffset;
-    uint32_t PrimCount;
-    uint32_t PrimOffset;
-};
-
-struct PackedTriangle
-{
-    uint32_t i0 : 10;
-    uint32_t i1 : 10;
-    uint32_t i2 : 10;
-};
-
-struct CullData
-{
-    hlsl::float4 BoundingSphere; // xyz = center, w = radius
-    uint8_t           NormalCone[4];  // xyz = axis, w = -cos(a + 90)
-    float             ApexOffset;     // apex = center - axis * offset
-};
-*/
 inline uint32_t AddAttribute(uint32_t base, Attribute::EType add) { return base | (1 << add); }
 
 class Mesh
@@ -77,8 +47,10 @@ public:
     void dispatch();
 
     void meshletize();
+    void meshletize_meshoptimizer();
     std::vector<Vertex> m_vertices;
     std::vector<u32> m_indices;
+    std::vector<unsigned char> m_meshletTriangles;
     std::vector<Texture*> m_textures;
 
     std::vector<uint32_t>              m_vertexRemap;
@@ -114,13 +86,14 @@ public:
     Microsoft::WRL::ComPtr<ID3D12Resource>              PrimitiveIndexResource;
     Microsoft::WRL::ComPtr<ID3D12Resource>              CullDataResource;
     Microsoft::WRL::ComPtr<ID3D12Resource>              MeshInfoResource;
+    Microsoft::WRL::ComPtr<ID3D12Resource>              MeshletTriangleIndicesResource;
 
     std::vector<D3D12_VERTEX_BUFFER_VIEW>  VBViews;
     D3D12_INDEX_BUFFER_VIEW                IBView;
 
     MeshInfo mesh_info;
     int32_t MeshletMaxVerts = 64;
-    int32_t MeshletMaxPrims = 126;
+    int32_t MeshletMaxPrims = 124;
 private:
     VertexBuffer* m_vertex_buffer;
     IndexBuffer* m_index_buffer;

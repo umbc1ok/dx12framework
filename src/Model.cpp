@@ -37,7 +37,7 @@ Model* Model::create(std::string const& model_path)
     model->load_model(model_path);
     model->set_can_tick(true);
     model->create_CBV();
-    model->m_pipeline_state = new PipelineState(L"MS_BASIC.hlsl", L"PS_BASIC.hlsl");
+    model->m_pipeline_state = new PipelineState(L"MS_MESHOPT.hlsl", L"PS_BASIC.hlsl");
     return model;
 }
 
@@ -90,7 +90,7 @@ void Model::draw()
     auto kb = Input::get_instance()->m_keyboard->GetState();
     if (kb.F5)
     {
-        m_pipeline_state = new PipelineState(L"MS_BASIC.hlsl", L"PS_BASIC.hlsl");
+        m_pipeline_state = new PipelineState(L"MS_MESHOPT.hlsl", L"PS_BASIC.hlsl");
     }
     cmd_list->SetGraphicsRootSignature(m_pipeline_state->get_root_signature());
     cmd_list->SetPipelineState(m_pipeline_state->get_pipeline_state());
@@ -223,16 +223,13 @@ void Model::uploadGPUResources()
         auto cullDataDesc = CD3DX12_RESOURCE_DESC::Buffer(m->m_cullData.size() * sizeof(m->m_cullData[0]));
         // gowno
         auto vertexIndexDesc = CD3DX12_RESOURCE_DESC::Buffer(m->m_uniqueVertexIndices.size());
-        auto primitiveDesc = CD3DX12_RESOURCE_DESC::Buffer(m->m_primitiveIndices.size() * sizeof(m->m_primitiveIndices[0]));
+        auto primitiveDesc = CD3DX12_RESOURCE_DESC::Buffer(m->m_meshletTriangles.size());
         auto meshInfoDesc = CD3DX12_RESOURCE_DESC::Buffer(sizeof(MeshInfo));
 
         auto defaultHeap = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
         AssertFailed(device->CreateCommittedResource(&defaultHeap, D3D12_HEAP_FLAG_NONE, &indexDesc, D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&m->IndexResource)));
         AssertFailed(device->CreateCommittedResource(&defaultHeap, D3D12_HEAP_FLAG_NONE, &meshletDesc, D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&m->MeshletResource)));
-        AssertFailed(device->CreateCommittedResource(&defaultHeap, D3D12_HEAP_FLAG_NONE, &cullDataDesc, D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&m->CullDataResource)));
-        AssertFailed(device->CreateCommittedResource(&defaultHeap, D3D12_HEAP_FLAG_NONE, &vertexIndexDesc, D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&m->UniqueVertexIndexResource)));
-        AssertFailed(device->CreateCommittedResource(&defaultHeap, D3D12_HEAP_FLAG_NONE, &primitiveDesc, D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&m->PrimitiveIndexResource)));
-        AssertFailed(device->CreateCommittedResource(&defaultHeap, D3D12_HEAP_FLAG_NONE, &meshInfoDesc, D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&m->MeshInfoResource)));
+        AssertFailed(device->CreateCommittedResource(&defaultHeap, D3D12_HEAP_FLAG_NONE, &primitiveDesc, D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&m->MeshletTriangleIndicesResource)));
 
 
         m->IBView.BufferLocation = m->IndexResource->GetGPUVirtualAddress();
@@ -266,10 +263,7 @@ void Model::uploadGPUResources()
         auto uploadHeap = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
         AssertFailed(device->CreateCommittedResource(&uploadHeap, D3D12_HEAP_FLAG_NONE, &indexDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&indexUpload)));
         AssertFailed(device->CreateCommittedResource(&uploadHeap, D3D12_HEAP_FLAG_NONE, &meshletDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&meshletUpload)));
-        AssertFailed(device->CreateCommittedResource(&uploadHeap, D3D12_HEAP_FLAG_NONE, &cullDataDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&cullDataUpload)));
-        AssertFailed(device->CreateCommittedResource(&uploadHeap, D3D12_HEAP_FLAG_NONE, &vertexIndexDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&uniqueVertexIndexUpload)));
         AssertFailed(device->CreateCommittedResource(&uploadHeap, D3D12_HEAP_FLAG_NONE, &primitiveDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&primitiveIndexUpload)));
-        AssertFailed(device->CreateCommittedResource(&uploadHeap, D3D12_HEAP_FLAG_NONE, &meshInfoDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&meshInfoUpload)));
 
         // Map & copy memory to upload heap
         vertexUploads.resize(1);
@@ -301,41 +295,11 @@ void Model::uploadGPUResources()
 
         {
             uint8_t* memory = nullptr;
-            cullDataUpload->Map(0, nullptr, reinterpret_cast<void**>(&memory));
-            std::memcpy(memory, m->m_cullData.data(), m->m_cullData.size() * sizeof(m->m_cullData[0]));
-            cullDataUpload->Unmap(0, nullptr);
-        }
-
-        {
-            uint8_t* memory = nullptr;
-            uniqueVertexIndexUpload->Map(0, nullptr, reinterpret_cast<void**>(&memory));
-
-            std::memcpy(memory, m->m_uniqueVertexIndices.data(), m->m_uniqueVertexIndices.size());
-            uniqueVertexIndexUpload->Unmap(0, nullptr);
-        }
-
-        {
-            uint8_t* memory = nullptr;
             primitiveIndexUpload->Map(0, nullptr, reinterpret_cast<void**>(&memory));
-            std::memcpy(memory, m->m_primitiveIndices.data(), m->m_primitiveIndices.size() * sizeof(m->m_primitiveIndices[0]));
+            std::memcpy(memory, m->m_meshletTriangles.data(), m->m_meshletTriangles.size());
             primitiveIndexUpload->Unmap(0, nullptr);
         }
 
-        {
-            MeshInfo info = {};
-            info.IndexSize = m->mesh_info.IndexSize;
-            info.MeshletCount = static_cast<uint32_t>(m->m_meshlets.size());
-            info.LastMeshletVertCount = m->m_meshlets.back().VertCount;
-            info.LastMeshletPrimCount = m->m_meshlets.back().PrimCount;
-
-
-            uint8_t* memory = nullptr;
-            meshInfoUpload->Map(0, nullptr, reinterpret_cast<void**>(&memory));
-            std::memcpy(memory, &info, sizeof(MeshInfo));
-            meshInfoUpload->Unmap(0, nullptr);
-        }
-
-        // Populate our command list
         // Populate our command list
         cmdQueue->flush();
 
@@ -346,7 +310,7 @@ void Model::uploadGPUResources()
             cmdList->ResourceBarrier(1, &barrier);
         }
 
-        D3D12_RESOURCE_BARRIER postCopyBarriers[6];
+        D3D12_RESOURCE_BARRIER postCopyBarriers[3];
 
         cmdList->CopyResource(m->IndexResource.Get(), indexUpload.Get());
         postCopyBarriers[0] = CD3DX12_RESOURCE_BARRIER::Transition(m->IndexResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
@@ -354,17 +318,8 @@ void Model::uploadGPUResources()
         cmdList->CopyResource(m->MeshletResource.Get(), meshletUpload.Get());
         postCopyBarriers[1] = CD3DX12_RESOURCE_BARRIER::Transition(m->MeshletResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
-        cmdList->CopyResource(m->CullDataResource.Get(), cullDataUpload.Get());
-        postCopyBarriers[2] = CD3DX12_RESOURCE_BARRIER::Transition(m->CullDataResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-
-        cmdList->CopyResource(m->UniqueVertexIndexResource.Get(), uniqueVertexIndexUpload.Get());
-        postCopyBarriers[3] = CD3DX12_RESOURCE_BARRIER::Transition(m->UniqueVertexIndexResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-
-        cmdList->CopyResource(m->PrimitiveIndexResource.Get(), primitiveIndexUpload.Get());
-        postCopyBarriers[4] = CD3DX12_RESOURCE_BARRIER::Transition(m->PrimitiveIndexResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-
-        cmdList->CopyResource(m->MeshInfoResource.Get(), meshInfoUpload.Get());
-        postCopyBarriers[5] = CD3DX12_RESOURCE_BARRIER::Transition(m->MeshInfoResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+        cmdList->CopyResource(m->MeshletTriangleIndicesResource.Get(), primitiveIndexUpload.Get());
+        postCopyBarriers[2] = CD3DX12_RESOURCE_BARRIER::Transition(m->MeshletTriangleIndicesResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
         cmdList->ResourceBarrier(ARRAYSIZE(postCopyBarriers), postCopyBarriers);
 

@@ -49,10 +49,10 @@ struct VertexOut
 
 struct Meshlet
 {
-    uint VertCount;
     uint VertOffset;
-    uint PrimCount;
     uint PrimOffset;
+    uint VertCount;
+    uint PrimCount;
 };
 
 ConstantBuffer<SceneConstantBuffer> Globals   : register(b0);
@@ -120,12 +120,12 @@ VertexOut GetVertexAttributes(uint meshletIndex, uint vertexIndex)
 void ms_main(
     uint gtid : SV_GroupThreadID,
     uint gid : SV_GroupID,
-    out indices uint3 tris[126],
+    out indices uint3 tris[124],
     out vertices VertexOut verts[64]
 )
 {
     Meshlet m = Meshlets[MeshInfo.MeshletOffset + gid];
-
+    
     SetMeshOutputCounts(m.VertCount, m.PrimCount);
 
     if (gtid < m.PrimCount)
