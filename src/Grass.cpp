@@ -12,6 +12,8 @@
 Grass::Grass()
 {
     set_can_tick(true);
+    m_constant_buffer = new ConstantBuffer<SceneConstantBuffer>();
+    m_WindConstantBuffer = new ConstantBuffer<Wind>();
 }
 
 void Grass::start()
@@ -20,7 +22,7 @@ void Grass::start()
     m_pipeline_state = new PipelineState(L"MS_GRASS.hlsl", L"PS_GRASS.hlsl");
 
     generate_blades();
-    create_CBV();
+    //create_CBV();
     upload_GPU_resources();
 
 }
@@ -136,58 +138,56 @@ void Grass::generate_blades()
 
 }
 
-void Grass::create_CBV()
-{
-    {
-        int frameCount = 3;
-        const UINT64 constantBufferSize = sizeof(SceneConstantBuffer) * frameCount;
-
-        const CD3DX12_HEAP_PROPERTIES constantBufferHeapProps(D3D12_HEAP_TYPE_UPLOAD);
-        const CD3DX12_RESOURCE_DESC constantBufferDesc = CD3DX12_RESOURCE_DESC::Buffer(constantBufferSize);
-
-        AssertFailed(Renderer::get_instance()->get_device()->CreateCommittedResource(
-            &constantBufferHeapProps,
-            D3D12_HEAP_FLAG_NONE,
-            &constantBufferDesc,
-            D3D12_RESOURCE_STATE_GENERIC_READ,
-            nullptr,
-            IID_PPV_ARGS(&m_constant_buffer)));
-
-        // Map and initialize the constant buffer. We don't unmap this until the
-        // app closes. Keeping things mapped for the lifetime of the resource is okay.
-        CD3DX12_RANGE readRange(0, 0);        // We do not intend to read from this resource on the CPU.
-
-        AssertFailed(m_constant_buffer->Map(0, &readRange, reinterpret_cast<void**>(&m_cbv_data_begin)));
-    }
-
-    {
-        int frameCount = 3;
-        const UINT64 constantBufferSize = sizeof(Wind) * frameCount;
-
-        const CD3DX12_HEAP_PROPERTIES constantBufferHeapProps(D3D12_HEAP_TYPE_UPLOAD);
-        const CD3DX12_RESOURCE_DESC constantBufferDesc = CD3DX12_RESOURCE_DESC::Buffer(constantBufferSize);
-
-        AssertFailed(Renderer::get_instance()->get_device()->CreateCommittedResource(
-            &constantBufferHeapProps,
-            D3D12_HEAP_FLAG_NONE,
-            &constantBufferDesc,
-            D3D12_RESOURCE_STATE_GENERIC_READ,
-            nullptr,
-            IID_PPV_ARGS(&m_wind_constant_buffer)));
-
-        // Map and initialize the constant buffer. We don't unmap this until the
-        // app closes. Keeping things mapped for the lifetime of the resource is okay.
-        CD3DX12_RANGE readRange(0, 0);        // We do not intend to read from this resource on the CPU.
-
-        AssertFailed(m_wind_constant_buffer->Map(0, &readRange, reinterpret_cast<void**>(&m_cbv_wind_data_begin)));
-    }
-
-}
+//void Grass::create_CBV()
+//{
+//    {
+//        int frameCount = 3;
+//        const UINT64 constantBufferSize = sizeof(SceneConstantBuffer) * frameCount;
+//
+//        const CD3DX12_HEAP_PROPERTIES constantBufferHeapProps(D3D12_HEAP_TYPE_UPLOAD);
+//        const CD3DX12_RESOURCE_DESC constantBufferDesc = CD3DX12_RESOURCE_DESC::Buffer(constantBufferSize);
+//
+//        AssertFailed(Renderer::get_instance()->get_device()->CreateCommittedResource(
+//            &constantBufferHeapProps,
+//            D3D12_HEAP_FLAG_NONE,
+//            &constantBufferDesc,
+//            D3D12_RESOURCE_STATE_GENERIC_READ,
+//            nullptr,
+//            IID_PPV_ARGS(&m_constant_buffer)));
+//
+//        // Map and initialize the constant buffer. We don't unmap this until the
+//        // app closes. Keeping things mapped for the lifetime of the resource is okay.
+//        CD3DX12_RANGE readRange(0, 0);        // We do not intend to read from this resource on the CPU.
+//
+//        AssertFailed(m_constant_buffer->Map(0, &readRange, reinterpret_cast<void**>(&m_cbv_data_begin)));
+//    }
+//
+//    {
+//        int frameCount = 3;
+//        const UINT64 constantBufferSize = sizeof(Wind) * frameCount;
+//
+//        const CD3DX12_HEAP_PROPERTIES constantBufferHeapProps(D3D12_HEAP_TYPE_UPLOAD);
+//        const CD3DX12_RESOURCE_DESC constantBufferDesc = CD3DX12_RESOURCE_DESC::Buffer(constantBufferSize);
+//
+//        AssertFailed(Renderer::get_instance()->get_device()->CreateCommittedResource(
+//            &constantBufferHeapProps,
+//            D3D12_HEAP_FLAG_NONE,
+//            &constantBufferDesc,
+//            D3D12_RESOURCE_STATE_GENERIC_READ,
+//            nullptr,
+//            IID_PPV_ARGS(&m_wind_constant_buffer)));
+//
+//        // Map and initialize the constant buffer. We don't unmap this until the
+//        // app closes. Keeping things mapped for the lifetime of the resource is okay.
+//        CD3DX12_RANGE readRange(0, 0);        // We do not intend to read from this resource on the CPU.
+//
+//        AssertFailed(m_wind_constant_buffer->Map(0, &readRange, reinterpret_cast<void**>(&m_cbv_wind_data_begin)));
+//    }
+//
+//}
 
 void Grass::set_constant_buffer()
 {
-    auto commandList = Renderer::get_instance()->g_pd3dCommandList;
-
     hlsl::float4x4 view = Camera::get_main_camera()->get_view_matrix();
     hlsl::float4x4 projection = Camera::get_main_camera()->get_projection_matrix();
     hlsl::float4x4 world = entity->transform->get_model_matrix();
@@ -200,11 +200,11 @@ void Grass::set_constant_buffer()
     m_constant_buffer_data.DrawFlag = Renderer::get_instance()->get_debug_mode();
 
     m_constant_buffer_data.time = ImGui::GetTime();
-    memcpy(m_cbv_data_begin + sizeof(SceneConstantBuffer) * Renderer::get_instance()->frame_index, &m_constant_buffer_data, sizeof(m_constant_buffer_data));
-    commandList->SetGraphicsRootConstantBufferView(0, m_constant_buffer->GetGPUVirtualAddress() + sizeof(SceneConstantBuffer) * Renderer::get_instance()->frame_index);
+    m_constant_buffer->uploadData(m_constant_buffer_data);
+    m_constant_buffer->setConstantBuffer(0);
 
-    memcpy(m_cbv_wind_data_begin + sizeof(Wind) * Renderer::get_instance()->frame_index, wind, sizeof(m_constant_buffer_data));
-    commandList->SetGraphicsRootConstantBufferView(1, m_wind_constant_buffer->GetGPUVirtualAddress() + sizeof(Wind) * Renderer::get_instance()->frame_index);
+    m_WindConstantBuffer->uploadData(*wind);
+    m_WindConstantBuffer->setConstantBuffer(1);
 }
 
 void Grass::dispatch()
