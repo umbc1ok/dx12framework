@@ -8,6 +8,7 @@
 #include <d3d12.h>
 
 #include "PipelineState.h"
+#include "DX12Wrappers/ConstantBuffer.h"
 
 
 class Grass :
@@ -20,7 +21,7 @@ public:
     void start() override;
     void draw_editor() override;
     void generate_blades();
-    void create_CBV();
+    //void create_CBV();
     void upload_GPU_resources();
 private:
     void set_constant_buffer();
@@ -41,19 +42,15 @@ private:
     bool m_pulsationRising = true;
 
 
-    Wind* wind;
     std::vector<Blade> m_blades;
 
     SceneConstantBuffer m_constant_buffer_data;
-    Microsoft::WRL::ComPtr<ID3D12Resource> m_constant_buffer;
-    Microsoft::WRL::ComPtr<ID3D12Resource> m_wind_constant_buffer;
+    ConstantBuffer<SceneConstantBuffer>* m_constant_buffer;
 
-    UINT8* m_cbv_data_begin = nullptr;
-    UINT8* m_cbv_wind_data_begin = nullptr;
+    Wind* wind;
+    ConstantBuffer<Wind>* m_WindConstantBuffer;
 
-    Microsoft::WRL::ComPtr<ID3D12Resource>              m_bladesResource;
-
-    Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_uavHeap;
+    Microsoft::WRL::ComPtr<ID3D12Resource>  m_bladesResource;
 
     PipelineState* m_pipeline_state;
 };
