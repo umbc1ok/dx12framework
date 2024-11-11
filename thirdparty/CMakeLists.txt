@@ -37,6 +37,7 @@ CPMAddPackage("gh:gabime/spdlog@1.10.0")
 CPMAddPackage("gh:microsoft/DirectXTK12#sep2024")
 CPMAddPackage("gh:microsoft/DirectXTex#sep2024")
 CPMAddPackage("gh:microsoft/DirectXMesh#sep2024")
+CPMAddPackage("gh:zeux/meshoptimizer#v0.22")
 
 set(imgui_SOURCE_DIR ${imgui_SOURCE_DIR} CACHE INTERNAL "")
 add_library(imgui STATIC ${imgui_SOURCE_DIR}/imgui.cpp
@@ -53,6 +54,7 @@ set_target_properties(stb_image
               DirectXTK12
               DirectXTex
               DirectXMesh
+              meshoptimizer
                       spdlog PROPERTIES FOLDER "thirdparty")
 
 if (TARGET zlibstatic)

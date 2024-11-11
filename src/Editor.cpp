@@ -468,7 +468,7 @@ void Editor::draw_debug_window(EditorWindow* const& window)
     const char* items[] = { "NONE", "MESHLET VIEW", "TRIANGLE VIEW" };
     {
         ImGui::Text("Wybierz opcje:");
-        // Tworzenie drop-down listy
+
         if (ImGui::Combo("MESHLET DEBUG MODE", &m_current_debug_mode, items, IM_ARRAYSIZE(items)))
         {
             Renderer::get_instance()->set_debug_mode(m_current_debug_mode);

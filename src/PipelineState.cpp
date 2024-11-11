@@ -131,7 +131,7 @@ void PipelineState::compilePSO()
         rasterizer_desc.MultisampleEnable = FALSE;
         rasterizer_desc.AntialiasedLineEnable = FALSE;
         rasterizer_desc.ForcedSampleCount = 0;
-        rasterizer_desc.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
+        rasterizer_desc.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_ON;
 
         CD3DX12_BLEND_DESC blend_desc;
         blend_desc = CD3DX12_BLEND_DESC(CD3DX12_DEFAULT());
@@ -184,11 +184,11 @@ ID3D12PipelineState* PipelineState::get_pipeline_state() const
 
 void PipelineState::set_wireframe(const bool& wireframe)
 {
-    if(wireframe != m_wireframe_active)
+    /*if(wireframe != m_wireframe_active)
     {
         m_wireframe_active = wireframe;
         compilePSO();
-    }
+    }*/
 }
 
 // This is very basic, using it only to render a cube for now

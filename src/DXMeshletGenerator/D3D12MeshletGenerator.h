@@ -27,10 +27,10 @@ struct Subset
 
 struct Meshlet
 {
-    uint32_t VertCount;
     uint32_t VertOffset;
-    uint32_t PrimCount;
     uint32_t PrimOffset;
+    uint32_t VertCount;
+    uint32_t PrimCount;
 };
 
 union PackedTriangle
