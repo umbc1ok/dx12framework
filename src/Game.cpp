@@ -5,7 +5,7 @@
 #include "Grass.h"
 void Game::init()
 {
-    auto entity1 = Entity::create("Plane");
+    auto entity1 = Entity::create("Model");
     //auto model = Model::create("./res/models/plane.obj");
     auto model = Model::create("./res/models/bunny/bunny.obj");
     entity1->add_component(model);

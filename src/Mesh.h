@@ -8,6 +8,8 @@
 #include "Texture.h"
 #include <d3d12.h>
 #include <wrl/client.h>
+
+#include "DX12Wrappers/Resource.h"
 #include "DXMeshletGenerator/D3D12MeshletGenerator.h"
 
 struct Attribute
@@ -34,7 +36,6 @@ struct MeshInfo
     uint32_t LastMeshletPrimCount;
 };
 
-inline uint32_t AddAttribute(uint32_t base, Attribute::EType add) { return base | (1 << add); }
 
 class Mesh
 {
@@ -46,16 +47,15 @@ public:
     void bind_textures();
     void dispatch();
 
-    void meshletize();
+    void meshletize_dxmesh();
     void meshletize_meshoptimizer();
+
     std::vector<Vertex> m_vertices;
     std::vector<u32> m_indices;
     std::vector<unsigned char> m_meshletTriangles;
+
     std::vector<Texture*> m_textures;
 
-    std::vector<uint32_t>              m_vertexRemap;
-    std::vector<uint32_t>              m_indexReorder;
-    std::vector<uint32_t>              m_dupVerts;
 
     std::vector<hlsl::float3>          m_positionReorder;
     std::vector<hlsl::float3>          m_normalReorder;
@@ -69,35 +69,15 @@ public:
     std::vector<hlsl::float3> m_normals;
     std::vector<hlsl::float2> m_UVs;
 
-    std::vector<Subset>                     m_meshletSubsets;
     std::vector<Meshlet>                    m_meshlets;
-    std::vector<uint8_t>                    m_uniqueVertexIndices;
-    std::vector<PackedTriangle>             m_primitiveIndices;
-    std::vector<CullData>                   m_cullData;
-    std::vector<Subset>                     m_indexSubsets;
 
-    std::vector<hlsl::float3>          m_tangents;
-    std::vector<hlsl::float3>          m_bitangents;
+    Resource*              VertexResource;
+    Resource*              IndexResource;
+    Resource*              MeshletResource;
+    Resource*              MeshletTriangleIndicesResource;
 
-    std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> VertexResources;
-    Microsoft::WRL::ComPtr<ID3D12Resource>              IndexResource;
-    Microsoft::WRL::ComPtr<ID3D12Resource>              MeshletResource;
-    Microsoft::WRL::ComPtr<ID3D12Resource>              UniqueVertexIndexResource;
-    Microsoft::WRL::ComPtr<ID3D12Resource>              PrimitiveIndexResource;
-    Microsoft::WRL::ComPtr<ID3D12Resource>              CullDataResource;
-    Microsoft::WRL::ComPtr<ID3D12Resource>              MeshInfoResource;
-    Microsoft::WRL::ComPtr<ID3D12Resource>              MeshletTriangleIndicesResource;
-
-    std::vector<D3D12_VERTEX_BUFFER_VIEW>  VBViews;
-    D3D12_INDEX_BUFFER_VIEW                IBView;
-
-    MeshInfo mesh_info;
-    int32_t MeshletMaxVerts = 64;
-    int32_t MeshletMaxPrims = 124;
-private:
-    VertexBuffer* m_vertex_buffer;
-    IndexBuffer* m_index_buffer;
-
+    int32_t m_MeshletMaxVerts = 64;
+    int32_t m_MeshletMaxPrims = 124;
 
 };
 
