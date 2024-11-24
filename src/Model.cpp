@@ -15,7 +15,6 @@
 #include "Camera.h"
 #include <d3d12.h>
 #include <d3dx12.h>
-#include <Windows.ApplicationModel.DataTransfer.ShareTarget.h>
 #include <utils/ErrorHandler.h>
 #include <random>
 
@@ -166,7 +165,6 @@ Mesh* Model::proccess_mesh(aiMesh const* mesh, aiScene const* scene)
         if (mesh->HasNormals())
         {
             vertex.normal = hlsl::float3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
-            //m_type = AddAttribute(m_type, Attribute::Position);
         }
 
         if (mesh->mTextureCoords[0] != nullptr)
@@ -187,8 +185,6 @@ Mesh* Model::proccess_mesh(aiMesh const* mesh, aiScene const* scene)
     for (u32 i = 0; i < mesh->mNumFaces; ++i)
     {
         aiFace const face = mesh->mFaces[i];
-        //gowno
-        attributes.push_back(mesh->mMaterialIndex);
         for (u32 k = 0; k < face.mNumIndices; k++)
         {
             indices.push_back(face.mIndices[k]);
@@ -214,120 +210,18 @@ void Model::uploadGPUResources()
     auto cmdQueue = Renderer::get_instance()->get_cmd_queue(D3D12_COMMAND_LIST_TYPE_DIRECT);
     for (uint32_t i = 0; i < m_meshes.size(); ++i)
     {
-        auto cmdList = cmdQueue->get_command_list();
         auto& m = m_meshes[i];
+        m->IndexResource = new Resource();
+        m->IndexResource->create(m->m_indices.size() * sizeof(u32), m->m_indices.data());
 
-        // Create committed D3D resources of proper sizes
-        auto indexDesc = CD3DX12_RESOURCE_DESC::Buffer(m->m_indices.size() * sizeof(u32));
-        auto meshletDesc = CD3DX12_RESOURCE_DESC::Buffer(m->m_meshlets.size() * sizeof(m->m_meshlets[0]));
-        auto cullDataDesc = CD3DX12_RESOURCE_DESC::Buffer(m->m_cullData.size() * sizeof(m->m_cullData[0]));
-        // gowno
-        auto vertexIndexDesc = CD3DX12_RESOURCE_DESC::Buffer(m->m_uniqueVertexIndices.size());
-        auto primitiveDesc = CD3DX12_RESOURCE_DESC::Buffer(m->m_meshletTriangles.size());
-        auto meshInfoDesc = CD3DX12_RESOURCE_DESC::Buffer(sizeof(MeshInfo));
+        m->MeshletResource = new Resource();
+        m->MeshletResource->create(m->m_meshlets.size() * sizeof(m->m_meshlets[0]), m->m_meshlets.data());
 
-        auto defaultHeap = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-        AssertFailed(device->CreateCommittedResource(&defaultHeap, D3D12_HEAP_FLAG_NONE, &indexDesc, D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&m->IndexResource)));
-        AssertFailed(device->CreateCommittedResource(&defaultHeap, D3D12_HEAP_FLAG_NONE, &meshletDesc, D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&m->MeshletResource)));
-        AssertFailed(device->CreateCommittedResource(&defaultHeap, D3D12_HEAP_FLAG_NONE, &primitiveDesc, D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&m->MeshletTriangleIndicesResource)));
+        m->MeshletTriangleIndicesResource = new Resource();
+        m->MeshletTriangleIndicesResource->create(m->m_meshletTriangles.size(), m->m_meshletTriangles.data());
 
-
-        m->IBView.BufferLocation = m->IndexResource->GetGPUVirtualAddress();
-        m->mesh_info.IndexSize = sizeof(u32);
-        m->IBView.Format = m->mesh_info.IndexSize == 4 ? DXGI_FORMAT_R32_UINT : DXGI_FORMAT_R16_UINT;
-        m->IBView.SizeInBytes = m->m_indices.size() * m->mesh_info.IndexSize;
-        // gowno gowno gowno
-        m->VertexResources.resize(1);
-        m->VBViews.resize(1);
-
-        //for (uint32_t j = 0; j < m->m_meshlets.size(); ++j)
-        {
-            auto vertexDesc = CD3DX12_RESOURCE_DESC::Buffer(m->m_vertices.size() * sizeof(Vertex));
-            device->CreateCommittedResource(&defaultHeap, D3D12_HEAP_FLAG_NONE, &vertexDesc, D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&m->VertexResources[0]));
-
-            m->VBViews[0].BufferLocation = m->VertexResources[0]->GetGPUVirtualAddress();
-            // this line is weird in the other implementation, check if that makes any sense at all
-            m->VBViews[0].SizeInBytes = m->m_vertices.size() * sizeof(Vertex);
-            m->VBViews[0].StrideInBytes = sizeof(Vertex);
-        }
-
-        // Create upload resources
-        std::vector<ComPtr<ID3D12Resource>> vertexUploads;
-        ComPtr<ID3D12Resource>              indexUpload;
-        ComPtr<ID3D12Resource>              meshletUpload;
-        ComPtr<ID3D12Resource>              cullDataUpload;
-        ComPtr<ID3D12Resource>              uniqueVertexIndexUpload;
-        ComPtr<ID3D12Resource>              primitiveIndexUpload;
-        ComPtr<ID3D12Resource>              meshInfoUpload;
-
-        auto uploadHeap = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-        AssertFailed(device->CreateCommittedResource(&uploadHeap, D3D12_HEAP_FLAG_NONE, &indexDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&indexUpload)));
-        AssertFailed(device->CreateCommittedResource(&uploadHeap, D3D12_HEAP_FLAG_NONE, &meshletDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&meshletUpload)));
-        AssertFailed(device->CreateCommittedResource(&uploadHeap, D3D12_HEAP_FLAG_NONE, &primitiveDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&primitiveIndexUpload)));
-
-        // Map & copy memory to upload heap
-        vertexUploads.resize(1);
-        for (uint32_t j = 0; j < 1; ++j)
-        {
-            auto vertexDesc = CD3DX12_RESOURCE_DESC::Buffer(m->m_vertices.size() * sizeof(Vertex));
-            AssertFailed(device->CreateCommittedResource(&uploadHeap, D3D12_HEAP_FLAG_NONE, &vertexDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&vertexUploads[j])));
-
-            uint8_t* memory = nullptr;
-            vertexUploads[j]->Map(0, nullptr, reinterpret_cast<void**>(&memory));
-            /// KURWAAA TUTAJ NIE MESHLETS TYLKO VERTICES
-            std::memcpy(memory, &m->m_vertices[j], m->m_vertices.size() * sizeof(Vertex));
-            vertexUploads[j]->Unmap(0, nullptr);
-        }
-
-        {
-            uint8_t* memory = nullptr;
-            indexUpload->Map(0, nullptr, reinterpret_cast<void**>(&memory));
-            std::memcpy(memory, m->m_indices.data(), m->m_indices.size() * sizeof(u32));
-            indexUpload->Unmap(0, nullptr);
-        }
-
-        {
-            uint8_t* memory = nullptr;
-            meshletUpload->Map(0, nullptr, reinterpret_cast<void**>(&memory));
-            std::memcpy(memory, m->m_meshlets.data(), m->m_meshlets.size() * sizeof(m->m_meshlets[0]));
-            meshletUpload->Unmap(0, nullptr);
-        }
-
-        {
-            uint8_t* memory = nullptr;
-            primitiveIndexUpload->Map(0, nullptr, reinterpret_cast<void**>(&memory));
-            std::memcpy(memory, m->m_meshletTriangles.data(), m->m_meshletTriangles.size());
-            primitiveIndexUpload->Unmap(0, nullptr);
-        }
-
-        // Populate our command list
-        cmdQueue->flush();
-
-        //for (uint32_t j = 0; j < m->m_meshlets.size(); ++j)
-        {
-            cmdList->CopyResource(m->VertexResources[0].Get(), vertexUploads[0].Get());
-            const auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m->VertexResources[0].Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-            cmdList->ResourceBarrier(1, &barrier);
-        }
-
-        D3D12_RESOURCE_BARRIER postCopyBarriers[3];
-
-        cmdList->CopyResource(m->IndexResource.Get(), indexUpload.Get());
-        postCopyBarriers[0] = CD3DX12_RESOURCE_BARRIER::Transition(m->IndexResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-
-        cmdList->CopyResource(m->MeshletResource.Get(), meshletUpload.Get());
-        postCopyBarriers[1] = CD3DX12_RESOURCE_BARRIER::Transition(m->MeshletResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-
-        cmdList->CopyResource(m->MeshletTriangleIndicesResource.Get(), primitiveIndexUpload.Get());
-        postCopyBarriers[2] = CD3DX12_RESOURCE_BARRIER::Transition(m->MeshletTriangleIndicesResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-
-        cmdList->ResourceBarrier(ARRAYSIZE(postCopyBarriers), postCopyBarriers);
-
-
-        cmdQueue->execute_command_list(cmdList);
-
-        auto fence_value = cmdQueue->signal();
-        cmdQueue->wait_for_fence_value(fence_value);
+        m->VertexResource = new Resource();
+        m->VertexResource->create(m->m_vertices.size() * sizeof(Vertex), m->m_vertices.data());
     }
 
 }
