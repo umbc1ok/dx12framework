@@ -17,14 +17,6 @@
                   SRV(t2), \
                   SRV(t3)"
 
-// struct Constants
-// {
-//     float4x4 World;
-//     float4x4 WorldView;
-//     float4x4 WorldViewProj;
-//     uint     DrawMeshlets;
-// };
-
 struct MeshInfo
 {
     uint IndexBytes;
@@ -82,7 +74,7 @@ uint GetVertexIndex(Meshlet m, uint localIndex)
 {
     localIndex = m.VertOffset + localIndex;
 
-    if (MeshInfo.IndexBytes == 4) // 32-bit Vertex Indices
+    if (MeshInfo.IndexBytes != 4) // 32-bit Vertex Indices
     {
         return UniqueVertexIndices.Load(localIndex * 4);
     }
@@ -116,7 +108,7 @@ VertexOut GetVertexAttributes(uint meshletIndex, uint vertexIndex)
 
 [RootSignature(ROOT_SIG)]
 [OutputTopology("triangle")]
-[NumThreads(128, 1, 1)]
+[NumThreads(124, 1, 1)]
 void ms_main(
     uint gtid : SV_GroupThreadID,
     uint gid : SV_GroupID,

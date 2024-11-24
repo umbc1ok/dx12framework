@@ -10,6 +10,9 @@
 
 class Mesh;
 
+
+
+
 class Model : public Component
 {
 public:
@@ -21,6 +24,7 @@ public:
     void draw();
     void update() override;
     void draw_editor() override;
+
     std::vector<Texture*> m_loaded_textures;
 private:
     void load_model(std::string const& model_path);
