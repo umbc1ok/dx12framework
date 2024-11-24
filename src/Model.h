@@ -1,16 +1,14 @@
 #pragma once
 
-#include <wrl/client.h>
-
 #include "Texture.h"
 #include "assimp/scene.h"
-#include "spdlog/details/synchronous_factory.h"
 #include "Component.h"
 #include "PipelineState.h"
 #include "utils/maths.h"
 #include "../res/shaders/shared/shared_cb.h"
-class Mesh;
+#include "DX12Wrappers/ConstantBuffer.h"
 
+class Mesh;
 
 class Model : public Component
 {
@@ -28,7 +26,6 @@ private:
     void load_model(std::string const& model_path);
     void proccess_node(aiNode const* node, aiScene const* scene);
     Mesh* proccess_mesh(aiMesh const* mesh, aiScene const* scene);
-    void create_CBV();
 
     void uploadGPUResources();
     std::vector<Texture*> load_material_textures(aiMaterial const* material, aiTextureType type, TextureType type_name);
@@ -37,9 +34,8 @@ private:
     std::string m_directory;
 
 
+    ConstantBuffer<SceneConstantBuffer>* m_constant_buffer;
     SceneConstantBuffer m_constant_buffer_data;
-    Microsoft::WRL::ComPtr<ID3D12Resource> m_constant_buffer;
-    UINT8* m_cbv_data_begin = nullptr;
 
     // STATS FOR EDITOR
     int m_vertex_count = 0;

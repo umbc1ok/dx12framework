@@ -1,6 +1,5 @@
 #pragma once
 #include <cstdint>
-#include <wrl/client.h>
 #include <d3d12.h>
 #include "Renderer.h"
 #include "utils/ErrorHandler.h"
@@ -17,7 +16,7 @@ public:
 
 private:
     uint8_t* m_cbv_data_begin = nullptr;
-    Microsoft::WRL::ComPtr<ID3D12Resource> m_d3d12_constant_buffer;
+    ID3D12Resource* m_d3d12_constant_buffer;
 };
 
 
@@ -49,7 +48,7 @@ template <typename T>
 void ConstantBuffer<T>::setConstantBuffer(uint32_t rootParameterIndex) const
 {
     auto commandList = Renderer::get_instance()->g_pd3dCommandList;
-    commandList->SetGraphicsRootConstantBufferView(rootParameterIndex, m_d3d12_constant_buffer->GetGPUVirtualAddress() + sizeof(SceneConstantBuffer) * Renderer::get_instance()->frame_index);
+    commandList->SetGraphicsRootConstantBufferView(rootParameterIndex, m_d3d12_constant_buffer->GetGPUVirtualAddress() + sizeof(T) * Renderer::get_instance()->frame_index);
 }
 
 template <typename T>

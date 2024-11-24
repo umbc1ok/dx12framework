@@ -2,7 +2,6 @@
 
 #include <d3dx12.h>
 #include <imgui.h>
-#include <intsafe.h>
 
 #include "Camera.h"
 #include "Input.h"
