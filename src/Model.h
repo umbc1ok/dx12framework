@@ -7,11 +7,9 @@
 #include "utils/maths.h"
 #include "../res/shaders/shared/shared_cb.h"
 #include "DX12Wrappers/ConstantBuffer.h"
+#include "MeshletStructs.h"
 
 class Mesh;
-
-
-
 
 class Model : public Component
 {
@@ -24,6 +22,7 @@ public:
     void draw();
     void update() override;
     void draw_editor() override;
+
 
     std::vector<Texture*> m_loaded_textures;
 private:
@@ -45,6 +44,8 @@ private:
     int m_vertex_count = 0;
     int m_triangle_count = 0;
     int m_meshlets_count = 0;
+
+    int m_TypeIndex = 1;
 
     PipelineState* m_pipeline_state;
 };

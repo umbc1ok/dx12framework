@@ -30,7 +30,11 @@ Model* Model::create(std::string const& model_path)
     model->load_model(model_path);
     model->set_can_tick(true);
     model->uploadGPUResources();
-    model->m_pipeline_state = new PipelineState(L"MS_MESHOPT.hlsl", L"PS_BASIC.hlsl");
+    if(model->m_TypeIndex == 0)
+        model->m_pipeline_state = new PipelineState(L"MS_MESHOPT.hlsl", L"PS_BASIC.hlsl");
+    else
+        model->m_pipeline_state = new PipelineState(L"MS_BASIC.hlsl", L"PS_BASIC.hlsl");
+
     model->m_constant_buffer = new ConstantBuffer<SceneConstantBuffer>();
     return model;
 }
@@ -61,7 +65,10 @@ void Model::draw()
     auto kb = Input::get_instance()->m_keyboard->GetState();
     if (kb.F5)
     {
-        m_pipeline_state = new PipelineState(L"MS_MESHOPT.hlsl", L"PS_BASIC.hlsl");
+        if (m_TypeIndex == 0)
+            m_pipeline_state = new PipelineState(L"MS_BASIC.hlsl", L"PS_BASIC.hlsl");
+        else
+            m_pipeline_state = new PipelineState(L"MS_MESHOPT.hlsl", L"PS_BASIC.hlsl");
     }
     cmd_list->SetGraphicsRootSignature(m_pipeline_state->get_root_signature());
     cmd_list->SetPipelineState(m_pipeline_state->get_pipeline_state());
@@ -85,6 +92,26 @@ void Model::draw_editor()
     ImGui::Text("Triangle count: %i", m_triangle_count);
     ImGui::Text("Vertex count: %i", m_vertex_count);
     ImGui::Text("Meshlet count: %i", m_meshlets_count);
+
+    const char* items[] = { "MESHOPTIMIZER", "DXMESH"};
+    {
+        ImGui::Text("Wybierz opcje:");
+
+        if (ImGui::Combo("MESHLET DEBUG MODE", &m_TypeIndex, items, IM_ARRAYSIZE(items)))
+        {
+            MeshletizerType type = m_TypeIndex == 0 ? MESHOPT : DXMESH;
+            if (type == DXMESH)
+                m_pipeline_state = new PipelineState(L"MS_BASIC.hlsl", L"PS_BASIC.hlsl");
+            else
+                m_pipeline_state = new PipelineState(L"MS_MESHOPT.hlsl", L"PS_BASIC.hlsl");
+
+            for (auto& mesh : m_meshes)
+            {
+                mesh->changeMeshletizerType(type);
+                uploadGPUResources();
+            }
+        }
+    }
 }
 
 void Model::load_model(std::string const& path)
@@ -174,7 +201,7 @@ Mesh* Model::proccess_mesh(aiMesh const* mesh, aiScene const* scene)
     m_vertex_count += vertices.size();
     m_triangle_count += indices.size() / 3;
     ///////////////////////////////////////
-    return new Mesh(vertices, indices, textures, positions, normals, UVs, attributes);
+    return new Mesh(vertices, indices, textures, positions, normals, UVs, attributes, m_TypeIndex == 0 ? MESHOPT : DXMESH);
 }
 
 void Model::uploadGPUResources()
