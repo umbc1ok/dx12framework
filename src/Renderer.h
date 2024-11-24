@@ -54,6 +54,8 @@ public:
 
     void set_debug_mode(const u32& mode) { m_debug_mode = mode; }
     u32 get_debug_mode() const { return m_debug_mode; }
+
+    void register_pipeline_state(PipelineState* pipeline_state);
 private:
 
     // Create
@@ -100,6 +102,9 @@ private:
 	ID3D12Debug3* pdx12Debug = nullptr;
 	IDXGIDebug1* pDXGIDebug = nullptr;
     ID3D12InfoQueue* pInfoQueue = nullptr;
+
+    std::vector<PipelineState*> mRegisteredPipelineStates;
+
 
     u32 m_debug_mode = 0;
     static Renderer* m_instance;

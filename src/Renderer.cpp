@@ -161,8 +161,15 @@ void Renderer::on_window_resize()
 
 void Renderer::set_wireframe(const bool& wireframe)
 {
-    m_pipeline_state->set_wireframe(wireframe);
-    
+    for (auto pipeline_state : mRegisteredPipelineStates)
+    {
+        pipeline_state->set_wireframe(wireframe);
+    }
+}
+
+void Renderer::register_pipeline_state(PipelineState* const pipeline_state)
+{
+    mRegisteredPipelineStates.push_back(pipeline_state);
 }
 
 bool Renderer::create_device_d3d(HWND hWnd)

@@ -12,6 +12,7 @@ PipelineState::PipelineState(std::wstring vs_name, std::wstring ps_name)
     m_vs_name = vs_name;
     m_ps_name = ps_name;
     compilePSO();
+    Renderer::get_instance()->register_pipeline_state(this);
 }
 
 void PipelineState::compilePSO()
@@ -50,7 +51,10 @@ void PipelineState::compilePSO()
     rasterizer_desc.AntialiasedLineEnable = TRUE;
 
     //rasterizer_desc.ForcedSampleCount = 0;
-    rasterizer_desc.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_ON;
+    if (m_wireframe_active)
+        rasterizer_desc.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
+    else
+        rasterizer_desc.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_ON;
 
     CD3DX12_BLEND_DESC blend_desc;
     blend_desc = CD3DX12_BLEND_DESC(CD3DX12_DEFAULT());
