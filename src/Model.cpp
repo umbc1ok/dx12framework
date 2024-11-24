@@ -157,6 +157,7 @@ Mesh* Model::proccess_mesh(aiMesh const* mesh, aiScene const* scene)
     for (u32 i = 0; i < mesh->mNumFaces; ++i)
     {
         aiFace const face = mesh->mFaces[i];
+        attributes.push_back(mesh->mMaterialIndex);
         for (u32 k = 0; k < face.mNumIndices; k++)
         {
             indices.push_back(face.mIndices[k]);
@@ -183,19 +184,40 @@ void Model::uploadGPUResources()
     for (uint32_t i = 0; i < m_meshes.size(); ++i)
     {
         auto& m = m_meshes[i];
-        m->IndexResource = new Resource();
-        m->IndexResource->create(m->m_indices.size() * sizeof(u32), m->m_indices.data());
+        if (m->m_indices.size() != 0)
+        {
+            m->IndexResource = new Resource();
+            m->IndexResource->create(m->m_indices.size() * sizeof(u32), m->m_indices.data());
+        }
 
-        m->MeshletResource = new Resource();
-        m->MeshletResource->create(m->m_meshlets.size() * sizeof(m->m_meshlets[0]), m->m_meshlets.data());
+        if (m->m_meshlets.size() != 0)
+        {
+            m->MeshletResource = new Resource();
+            m->MeshletResource->create(m->m_meshlets.size() * sizeof(m->m_meshlets[0]), m->m_meshlets.data());
+        }
+        if (m->m_meshletTriangles.size() != 0)
+        {
+            m->MeshletTriangleIndicesResource = new Resource();
+            m->MeshletTriangleIndicesResource->create(m->m_meshletTriangles.size(), m->m_meshletTriangles.data());
+        }
 
-        m->MeshletTriangleIndicesResource = new Resource();
-        m->MeshletTriangleIndicesResource->create(m->m_meshletTriangles.size(), m->m_meshletTriangles.data());
+        if (m->m_vertices.size() != 0)
+        {
+            m->VertexResource = new Resource();
+            m->VertexResource->create(m->m_vertices.size() * sizeof(Vertex), m->m_vertices.data());
+        }
+        if(m->m_uniqueVertexIndices.size() != 0)
+        {
+            m->UniqueVertexIndexResource = new Resource();
+            m->UniqueVertexIndexResource->create(m->m_uniqueVertexIndices.size(), m->m_uniqueVertexIndices.data());
+        }
 
-        m->VertexResource = new Resource();
-        m->VertexResource->create(m->m_vertices.size() * sizeof(Vertex), m->m_vertices.data());
+        if(m->m_primitiveIndices.size() != 0)
+        {
+            m->PrimitiveIndexResource = new Resource();
+            m->PrimitiveIndexResource->create(m->m_primitiveIndices.size() * sizeof(PackedTriangle), m->m_primitiveIndices.data());
+        }
     }
-
 }
 
 std::vector<Texture*> Model::load_material_textures(aiMaterial const* material, aiTextureType const type,

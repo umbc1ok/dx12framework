@@ -36,6 +36,12 @@ struct MeshInfo
     uint32_t LastMeshletPrimCount;
 };
 
+enum MeshletizerType
+{
+    MESHOPT,
+    DXMESH
+};
+
 
 class Mesh
 {
@@ -54,16 +60,13 @@ public:
     std::vector<u32> m_indices;
     std::vector<unsigned char> m_meshletTriangles;
 
+    // Needed for DXMESH
+    std::vector<PackedTriangle> m_primitiveIndices;
+    std::vector<uint8_t> m_uniqueVertexIndices;
+
+
     std::vector<Texture*> m_textures;
-
-
-    std::vector<hlsl::float3>          m_positionReorder;
-    std::vector<hlsl::float3>          m_normalReorder;
-    std::vector<hlsl::float2>          m_uvReorder;
-
-    std::vector<uint32_t>              m_faceRemap;
-
-    std::vector<uint32_t>               m_attributes;
+    std::vector<uint32_t> m_attributes;
 
     std::vector<hlsl::float3> m_positions;
     std::vector<hlsl::float3> m_normals;
@@ -76,8 +79,13 @@ public:
     Resource*              MeshletResource;
     Resource*              MeshletTriangleIndicesResource;
 
+    Resource*              UniqueVertexIndexResource;
+    Resource*              PrimitiveIndexResource;
+
     int32_t m_MeshletMaxVerts = 64;
     int32_t m_MeshletMaxPrims = 124;
+
+    MeshletizerType type = MESHOPT;
 
 };
 
