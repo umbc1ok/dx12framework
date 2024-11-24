@@ -11,6 +11,5 @@ inline void AssertFailed(HRESULT hr)
     {
         printf("Error: %ld\n", hr);
         throw std::exception("some shit, check in debugger");
-        FAILED(Renderer::get_instance()->get_device()->GetDeviceRemovedReason()) == true;
     }
 }
