@@ -6,7 +6,7 @@
 
 #include "meshoptimizer.h"
 
-Mesh::Mesh(std::vector<Vertex> const& vertices , std::vector<u32> const& indices, std::vector<Texture*> const& textures, std::vector<hlsl::float3> const& positions, std::vector<hlsl::float3> const& normals, std::vector<hlsl::float2> const& UVS, std::vector<u32> attributes)
+Mesh::Mesh(std::vector<Vertex> const& vertices , std::vector<u32> const& indices, std::vector<Texture*> const& textures, std::vector<hlsl::float3> const& positions, std::vector<hlsl::float3> const& normals, std::vector<hlsl::float2> const& UVS, std::vector<u32> attributes, MeshletizerType meshletizerType)
 {
     m_vertices = vertices;
     m_indices = indices;
@@ -16,8 +16,8 @@ Mesh::Mesh(std::vector<Vertex> const& vertices , std::vector<u32> const& indices
     m_normals = normals;
     m_UVs = UVS;
     m_attributes = attributes;
-
-    if(type == MESHOPT)
+    m_type = meshletizerType;
+    if(m_type == MESHOPT)
         meshletize_meshoptimizer();
     else
         meshletize_dxmesh();
@@ -52,7 +52,7 @@ void Mesh::dispatch()
     auto cmd_list = Renderer::get_instance()->g_pd3dCommandList;
     cmd_list->SetGraphicsRootShaderResourceView(2, VertexResource->GetGPUVirtualAddress());
     cmd_list->SetGraphicsRootShaderResourceView(3, MeshletResource->GetGPUVirtualAddress());
-    if (type == MESHOPT)
+    if (m_type == MESHOPT)
     {
         cmd_list->SetGraphicsRootShaderResourceView(4, IndexResource->GetGPUVirtualAddress());
         cmd_list->SetGraphicsRootShaderResourceView(5, MeshletTriangleIndicesResource->GetGPUVirtualAddress());
@@ -103,7 +103,6 @@ void Mesh::meshletize_dxmesh()
     // Use DirectXMesh to optimize our vertex buffer data
 
     // Clean the mesh, sort faces by material, and reorder
-    // atributes are wrong
 
 
     AssertFailed(DirectX::Clean(m_indices.data(), triCount, vertexCount, nullptr, m_attributes.data(), dupVerts, true));
@@ -119,6 +118,7 @@ void Mesh::meshletize_dxmesh()
     std::swap(m_indices, indexReorder);
 
     // Optimize our vertex data
+    // This line crashes when switching to DXMESH (but not when starting up with it)
     AssertFailed(DirectX::OptimizeVertices(m_indices.data(), triCount, vertexCount, vertexRemap.data()));
 
     // Finalize the index & vertex buffers (potential reordering)
@@ -201,7 +201,6 @@ void Mesh::meshletize_dxmesh()
 
 void Mesh::meshletize_meshoptimizer()
 {
-
     const float cone_weight = 0.0f;
 
     size_t max_meshlets = meshopt_buildMeshletsBound(m_indices.size(), m_MeshletMaxVerts, m_MeshletMaxPrims);
@@ -247,4 +246,22 @@ void Mesh::meshletize_meshoptimizer()
     }
 
     m_meshletTriangles = final_meshlet_triangles;
+}
+
+void Mesh::changeMeshletizerType(MeshletizerType type)
+{
+    if (type == m_type)
+        return;
+
+    m_type = type;
+
+    m_meshletTriangles.clear();
+    m_primitiveIndices.clear();
+    m_uniqueVertexIndices.clear();
+    m_meshlets.clear();
+
+    if (type == MESHOPT)
+        meshletize_meshoptimizer();
+    else
+        meshletize_dxmesh();
 }

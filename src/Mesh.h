@@ -2,13 +2,13 @@
 #include <vector>
 
 
-#include "DX12Wrappers/IndexBuffer.h"
 #include "DX12Wrappers/Vertex.h"
 #include "DX12Wrappers/VertexBuffer.h"
 #include "Texture.h"
 #include <d3d12.h>
 #include <wrl/client.h>
 
+#include "MeshletStructs.h"
 #include "DX12Wrappers/Resource.h"
 #include "DXMeshletGenerator/D3D12MeshletGenerator.h"
 
@@ -36,17 +36,13 @@ struct MeshInfo
     uint32_t LastMeshletPrimCount;
 };
 
-enum MeshletizerType
-{
-    MESHOPT,
-    DXMESH
-};
+
 
 
 class Mesh
 {
 public:
-    Mesh(std::vector<Vertex> const& vertices, std::vector<u32> const& indices, std::vector<Texture*> const& textures, std::vector<hlsl::float3> const& positions, std::vector<hlsl::float3> const& normals, std::vector<hlsl::float2> const& UVS, std::vector<u32> attributes);
+    Mesh(std::vector<Vertex> const& vertices, std::vector<u32> const& indices, std::vector<Texture*> const& textures, std::vector<hlsl::float3> const& positions, std::vector<hlsl::float3> const& normals, std::vector<hlsl::float2> const& UVS, std::vector<u32> attributes, MeshletizerType meshletizerType);
     ~Mesh() = default;
 
     void draw();
@@ -56,8 +52,14 @@ public:
     void meshletize_dxmesh();
     void meshletize_meshoptimizer();
 
+    void changeMeshletizerType(MeshletizerType type);
+
+
     std::vector<Vertex> m_vertices;
     std::vector<u32> m_indices;
+
+
+    std::vector<Meshlet> m_meshlets;
     std::vector<unsigned char> m_meshletTriangles;
 
     // Needed for DXMESH
@@ -72,7 +74,6 @@ public:
     std::vector<hlsl::float3> m_normals;
     std::vector<hlsl::float2> m_UVs;
 
-    std::vector<Meshlet>                    m_meshlets;
 
     Resource*              VertexResource;
     Resource*              IndexResource;
@@ -85,7 +86,7 @@ public:
     int32_t m_MeshletMaxVerts = 64;
     int32_t m_MeshletMaxPrims = 124;
 
-    MeshletizerType type = MESHOPT;
+    MeshletizerType m_type = MESHOPT;
 
 };
 
