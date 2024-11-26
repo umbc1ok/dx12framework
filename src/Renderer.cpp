@@ -16,6 +16,7 @@ Renderer* Renderer::m_instance;
 Renderer::Renderer()
 {
     create_device_d3d(Window::get_hwnd());
+    m_profiler = new GPUProfiler();
 }
 
 void Renderer::create()
@@ -44,6 +45,7 @@ void Renderer::start_frame()
 	g_pd3dCommandList = command_list;
     transition_resource(command_list, get_current_back_buffer(),
         D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_RENDER_TARGET);
+    m_profiler->startRecording(command_list);
 }
 
 void Renderer::render()
@@ -68,14 +70,18 @@ void Renderer::render()
 void Renderer::end_frame()
 {
     auto command_list = g_pd3dCommandList;
+    m_profiler->insertTimeStamp(command_list);
+
     transition_resource(command_list, get_current_back_buffer(),
         D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 
+    m_profiler->endRecording(command_list);
     auto index = g_pSwapChain->GetCurrentBackBufferIndex();
     g_fencevalues[g_pSwapChain->GetCurrentBackBufferIndex()] = m_DirectCommandQueue->execute_command_list(command_list);
     m_DirectCommandQueue->wait_for_fence_value(g_fencevalues[index]);
 
-    HRESULT hr = g_pSwapChain->Present(1, 0); // Present without vsync (set first parameter to 1 to enable)
+    HRESULT hr = g_pSwapChain->Present(1, 0); // Present without vsync (set first parameter to 1 to enable
+    m_profiler->collectData();
     AssertFailed(hr);
 }
 

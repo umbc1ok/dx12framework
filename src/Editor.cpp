@@ -18,6 +18,7 @@ void Editor::create()
     m_instance->add_scene_hierarchy();
     m_instance->add_inspector();
     m_instance->add_debug_window();
+    m_instance->add_profiler_window();
 }
 
 Editor::Editor()
@@ -91,6 +92,9 @@ void Editor::update()
             break;
         case EditorWindowType::Inspector:
             draw_inspector(window);
+            break;
+        case EditorWindowType::Profiler:
+            draw_profiler(window);
             break;
         case EditorWindowType::Custom:
             printf("Custom Editor windows are currently not supported.\n");
@@ -574,6 +578,12 @@ void Editor::add_debug_window()
     m_editor_windows.emplace_back(debug_window);
 }
 
+void Editor::add_profiler_window()
+{
+    auto profiler_window = new EditorWindow(m_last_window_id, ImGuiWindowFlags_MenuBar, EditorWindowType::Profiler);
+    m_editor_windows.emplace_back(profiler_window);
+}
+
 void Editor::set_docking_space()
 {
     ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
@@ -607,7 +617,10 @@ void Editor::draw_window_menu_bar(EditorWindow* const& window)
                 {
                     add_debug_window();
                 }
-
+                if (ImGui::MenuItem("Profiler"))
+                {
+                    add_profiler_window();
+                }
                 ImGui::EndMenu();
             }
 
@@ -629,6 +642,15 @@ void Editor::draw_window_menu_bar(EditorWindow* const& window)
 
         ImGui::EndMenuBar();
     }
+}
+
+void Editor::draw_profiler(EditorWindow* const& window)
+{
+    bool is_still_open = true;
+    ImGui::Begin(window->get_name().c_str(), &is_still_open, window->flags);
+    float time = Renderer::get_instance()->get_profiler()->frameTime();
+    ImGui::Text("Frame time: %.3f ms", time);
+    ImGui::End();
 }
 
 

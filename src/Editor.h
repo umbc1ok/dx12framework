@@ -14,6 +14,7 @@ enum class EditorWindowType
     Game,
     Inspector,
     Hierarchy,
+    Profiler
 };
 
 struct LockData
@@ -47,6 +48,9 @@ public:
             break;
         case EditorWindowType::Inspector:
             m_name = "Inspector##" + std::to_string(m_id);
+            break;
+        case EditorWindowType::Profiler:
+            m_name = "Profiler##" + std::to_string(m_id);
             break;
         case EditorWindowType::Custom:
             m_name = "Custom##" + std::to_string(m_id);
@@ -143,6 +147,7 @@ public:
     void add_content_browser();
     void add_scene_hierarchy();
     void add_debug_window();
+    void add_profiler_window();
     void set_docking_space();
 
 
@@ -152,6 +157,8 @@ private:
     void draw_scene_hierarchy(EditorWindow* const& window);
     void draw_entity_recursively(Transform* const& transform);
     void draw_window_menu_bar(EditorWindow* const& window);
+    void draw_profiler(EditorWindow* const& window);
+
     void add_child_entity() const;
     void copy_selected_entity() const;
     void delete_selected_entity() const;
