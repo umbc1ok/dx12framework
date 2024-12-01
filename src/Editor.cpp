@@ -1,4 +1,4 @@
-#include "Editor.h"
+﻿#include "Editor.h"
 
 #include <algorithm>
 #include <ctime>
@@ -647,9 +647,33 @@ void Editor::draw_window_menu_bar(EditorWindow* const& window)
 void Editor::draw_profiler(EditorWindow* const& window)
 {
     bool is_still_open = true;
+    auto profiler = Renderer::get_instance()->get_profiler();
     ImGui::Begin(window->get_name().c_str(), &is_still_open, window->flags);
-    float time = Renderer::get_instance()->get_profiler()->frameTime();
-    ImGui::Text("Frame time: %.3f ms", time);
+    profiler->collectData();
+    bool useMicroSeconds = profiler->useMicroSeconds();
+    if (ImGui::Checkbox("Use Microseconds", &useMicroSeconds))
+    {
+        profiler->setDisplayMode(useMicroSeconds);
+    }
+
+    for (int i = 0; i < profiler->numEntries(); i++)
+    {
+        auto resolvedEntry = profiler->getEntryTime(i);
+        for (uint32_t j = 0; j < resolvedEntry.nesting; j++)
+        {
+            ImGui::Indent();
+        }
+        if (useMicroSeconds)
+            ImGui::Text("* %s: %.3f us", resolvedEntry.name.c_str(), resolvedEntry.time);
+        else 
+            ImGui::Text("* %s: %.3f ms", resolvedEntry.name.c_str(), resolvedEntry.time);
+
+        for (uint32_t j = 0; j < resolvedEntry.nesting; j++)
+        {
+            ImGui::Unindent();
+        }
+    }
+    Renderer::get_instance()->get_profiler()->unmap();
     ImGui::End();
 }
 

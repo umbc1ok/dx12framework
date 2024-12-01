@@ -47,6 +47,8 @@ private:
 
     int m_TypeIndex = 1;
 
+    std::string m_path;
+
     PipelineState* m_pipeline_state;
 };
 

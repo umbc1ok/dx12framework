@@ -86,7 +86,7 @@ public:
     int32_t m_MeshletMaxVerts = 64;
     int32_t m_MeshletMaxPrims = 124;
 
-    MeshletizerType m_type = MESHOPT;
+    MeshletizerType m_type = DXMESH;
 
 };
 

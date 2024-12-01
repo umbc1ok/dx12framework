@@ -26,15 +26,14 @@ using namespace DirectX;
 Model* Model::create(std::string const& model_path)
 {
     Model* model = new Model();
-
+    model->m_path = model_path;
     model->load_model(model_path);
     model->set_can_tick(true);
     model->uploadGPUResources();
-    if(model->m_TypeIndex == 0)
+    if (model->m_TypeIndex == 0)
         model->m_pipeline_state = new PipelineState(L"MS_MESHOPT.hlsl", L"PS_BASIC.hlsl");
     else
         model->m_pipeline_state = new PipelineState(L"MS_BASIC.hlsl", L"PS_BASIC.hlsl");
-
     model->m_constant_buffer = new ConstantBuffer<SceneConstantBuffer>();
     return model;
 }
@@ -62,21 +61,25 @@ void Model::set_constant_buffer()
 void Model::draw()
 {
     auto cmd_list = Renderer::get_instance()->g_pd3dCommandList;
-    auto kb = Input::get_instance()->m_keyboard->GetState();
-    if (kb.F5)
+    auto const entry = Renderer::get_instance()->get_profiler()->startEntry(cmd_list, "Model Draw");
     {
-        if (m_TypeIndex == 0)
-            m_pipeline_state = new PipelineState(L"MS_BASIC.hlsl", L"PS_BASIC.hlsl");
-        else
-            m_pipeline_state = new PipelineState(L"MS_MESHOPT.hlsl", L"PS_BASIC.hlsl");
-    }
-    cmd_list->SetGraphicsRootSignature(m_pipeline_state->get_root_signature());
-    cmd_list->SetPipelineState(m_pipeline_state->get_pipeline_state());
-    set_constant_buffer();
-    for (auto& mesh : m_meshes)
-    {
-        mesh->dispatch();
-    }
+        
+        auto kb = Input::get_instance()->m_keyboard->GetState();
+        if (kb.F5)
+        {
+            if (m_TypeIndex == 0)
+                m_pipeline_state = new PipelineState(L"MS_BASIC.hlsl", L"PS_BASIC.hlsl");
+            else
+                m_pipeline_state = new PipelineState(L"MS_MESHOPT.hlsl", L"PS_BASIC.hlsl");
+        }
+        cmd_list->SetGraphicsRootSignature(m_pipeline_state->get_root_signature());
+        cmd_list->SetPipelineState(m_pipeline_state->get_pipeline_state());
+        set_constant_buffer();
+        for (auto& mesh : m_meshes)
+        {
+            mesh->dispatch();
+        }
+    } Renderer::get_instance()->get_profiler()->endEntry(cmd_list, entry);
 }
 
 void Model::update()
@@ -107,7 +110,11 @@ void Model::draw_editor()
 
             for (auto& mesh : m_meshes)
             {
-                mesh->changeMeshletizerType(type);
+                m_meshes.clear();
+                m_vertex_count = 0;
+                m_triangle_count = 0;
+                m_meshlets_count = 0;
+                load_model(m_path);
                 uploadGPUResources();
             }
         }
@@ -117,7 +124,7 @@ void Model::draw_editor()
 void Model::load_model(std::string const& path)
 {
     Assimp::Importer importer;
-    aiScene const* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
+    aiScene const* scene = importer.ReadFile(path, aiProcess_FlipUVs);
 
     if (scene == nullptr || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || scene->mRootNode == nullptr)
     {
