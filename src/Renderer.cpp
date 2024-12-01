@@ -16,7 +16,6 @@ Renderer* Renderer::m_instance;
 Renderer::Renderer()
 {
     create_device_d3d(Window::get_hwnd());
-    m_profiler = new GPUProfiler();
 }
 
 void Renderer::create()
@@ -33,6 +32,8 @@ void Renderer::create()
     m_instance->m_Viewport = CD3DX12_VIEWPORT(0.0f, 0.0f,
         static_cast<float>(width), static_cast<float>(height));
     m_instance->m_ScissorRect = CD3DX12_RECT(0, 0, LONG_MAX, LONG_MAX);
+    m_instance->m_profiler = new GPUProfiler();
+    m_instance->m_profiler->startRecording();
     //
 }
 
@@ -45,32 +46,40 @@ void Renderer::start_frame()
 	g_pd3dCommandList = command_list;
     transition_resource(command_list, get_current_back_buffer(),
         D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_RENDER_TARGET);
-    m_profiler->startRecording(command_list);
+
 }
 
 void Renderer::render()
 {
-
     auto cmd_list = g_pd3dCommandList;
+    m_profiler->startFrame();
     auto rtv = get_current_rtv();
-    auto dsv = get_dsv_heap()->GetCPUDescriptorHandleForHeapStart();
-    FLOAT clearColor[] = { 0.4f, 0.6f, 0.9f, 1.0f };
+    ProfilerEntry* const profilerEntry = m_profiler->startEntry(cmd_list, "Frame");
+    {
+        ProfilerEntry* const profilerEntrySettingFrameSettings = m_profiler->startEntry(cmd_list, "Setup frame");
+        {
+            auto dsv = get_dsv_heap()->GetCPUDescriptorHandleForHeapStart();
+            FLOAT clearColor[] = { 0.4f, 0.6f, 0.9f, 1.0f };
+            clear_rtv(cmd_list, rtv, clearColor);
+            clear_depth(cmd_list, dsv, 1.0f);
 
-    clear_rtv(cmd_list, rtv, clearColor);
-    clear_depth(cmd_list, dsv, 1.0f);
+            cmd_list->RSSetViewports(1, &m_Viewport);
+            cmd_list->RSSetScissorRects(1, &m_ScissorRect);
 
-    cmd_list->RSSetViewports(1, &m_Viewport);
-    cmd_list->RSSetScissorRects(1, &m_ScissorRect);
+            cmd_list->OMSetRenderTargets(1, &rtv, FALSE, &dsv);
+        } m_profiler->endEntry(cmd_list, profilerEntrySettingFrameSettings);
+        ProfilerEntry* const profilerEntryDrawAll = m_profiler->startEntry(cmd_list, "Draw all objects");
+        {
+            MainScene::get_instance()->run_frame();
+        } m_profiler->endEntry(cmd_list, profilerEntryDrawAll);
 
-    cmd_list->OMSetRenderTargets(1, &rtv, FALSE, &dsv);
+    } m_profiler->endEntry(cmd_list, profilerEntry);
 
-    MainScene::get_instance()->run_frame();
 }
 
 void Renderer::end_frame()
 {
     auto command_list = g_pd3dCommandList;
-    m_profiler->insertTimeStamp(command_list);
 
     transition_resource(command_list, get_current_back_buffer(),
         D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
@@ -81,7 +90,6 @@ void Renderer::end_frame()
     m_DirectCommandQueue->wait_for_fence_value(g_fencevalues[index]);
 
     HRESULT hr = g_pSwapChain->Present(1, 0); // Present without vsync (set first parameter to 1 to enable
-    m_profiler->collectData();
     AssertFailed(hr);
 }
 
