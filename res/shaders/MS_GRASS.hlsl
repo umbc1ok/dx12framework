@@ -35,7 +35,7 @@ VertexOut TransformVertex(float3 position, float stiffness)
 
 [RootSignature(ROOT_SIG)]
 [OutputTopology("triangle")]
-[NumThreads(1, 1, 1)]
+[NumThreads(128, 1, 1)]
 void ms_main(
     uint gtid : SV_GroupThreadID,
     uint gid : SV_GroupID,
@@ -43,15 +43,20 @@ void ms_main(
     out indices uint3 tris[12]
 )
 {
+    // 1/60s
     float FRAME_TIME  = 0.01666;
-    float GRASS_POINT_MASS = 1;
-    float BLADE_SURFACE = 0.1;
+    // 1 / 1000 kg
+    float GRASS_POINT_MASS = 0.001;
+    // This is just a coefficient basically
+    float BLADE_SURFACE = 0.0004;
     // Top position is the point where the tip should be if it wasnt for wind
     float3 top_position = blades[gid].m_root_position + float3(0.0f, blades[gid].m_height, 0.0f);
     float3 middle_position = blades[gid].m_root_position + float3(0.0f, blades[gid].m_height / 2.0f, 0.0f);
 
-    float3 wind_force = float3(wind_data.force * wind_data.direction.x * BLADE_SURFACE, 0.0f, wind_data.force * wind_data.direction.y * BLADE_SURFACE);
+    // This is not real resistance. It's wind force * blade_surface, which can be treated as a coefficient.
+    float3 wind_resistance = float3(wind_data.force * wind_data.direction.x * BLADE_SURFACE, 0.0f, wind_data.force * wind_data.direction.y * BLADE_SURFACE);
 
+    // Restoration force is not physically based
     float3 tip_restoration_force = 0.0f;
     float3 mid_restoration_force = 0.0f;
     if(length(blades[gid].m_tip_position - top_position) != 0.0f)
@@ -63,8 +68,8 @@ void ms_main(
         mid_restoration_force =  blades[gid].m_tip_stiffness * (middle_position - blades[gid].m_middle_position) * wind_data.restoration_strength * 2.5f;
     }
     
-    float3 tip_force = wind_force + tip_restoration_force;
-    float3 mid_force = wind_force + mid_restoration_force;
+    float3 tip_force = wind_resistance + tip_restoration_force;
+    float3 mid_force = wind_resistance + mid_restoration_force;
     float3 tip_acceleration = tip_force.xyz / GRASS_POINT_MASS;
     float3 mid_acceleration = mid_force.xyz / GRASS_POINT_MASS;
 
@@ -72,7 +77,9 @@ void ms_main(
     blades[gid].m_tip_position = blades[gid].m_tip_position + blades[gid].movement_speed_tip * FRAME_TIME;
     blades[gid].movement_speed_middle = blades[gid].movement_speed_middle + FRAME_TIME * mid_acceleration;
     blades[gid].movement_speed_tip = blades[gid].movement_speed_tip + FRAME_TIME * tip_acceleration;
-    float damping = 0.98f;  // Adjust damping factor as needed
+
+    // Damp so the force doesn't rise infinetely
+    float damping = 0.85f;
     blades[gid].movement_speed_middle *= damping;
     blades[gid].movement_speed_tip *= damping;
     

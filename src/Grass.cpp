@@ -31,17 +31,17 @@ void Grass::draw_editor()
     ImGui::SliderFloat2("Wind Direction", &wind->direction.x, -1, 1);
     wind->direction = hlsl::normalize(wind->direction);
     ImGui::SliderFloat("Wind Strength", &m_base_force,0,500);
-    ImGui::SliderFloat("Restoration strength factor", &wind->restoration_strength,0, 50);
+    ImGui::SliderFloat("Restoration strength factor", &wind->restoration_strength,0, 0.5);
 
     ImGui::Text("OSCILLATION");
     ImGui::Checkbox("Wind oscillations", &m_oscilateWind);
     ImGui::SliderFloat("Oscilations strength", &m_oscilationsStrength, 0, 100);
-    ImGui::SliderFloat("Oscilation delta per frame", &m_oscillationsSpeed, 1, 5);
+    ImGui::SliderFloat("Oscilation delta per frame", &m_oscillationsSpeed, 0, 5);
 
     ImGui::Text("PULSATION");
     ImGui::Checkbox("Pulsations", &m_pulsateWind);
     ImGui::SliderFloat("Pulsation strength", &m_pulsationStrength, 0, 100);
-    ImGui::SliderFloat("Pulsation delta per frame", &m_pulsationSpeed, 1, 5);
+    ImGui::SliderFloat("Pulsation delta per frame", &m_pulsationSpeed, 0, 5);
 }
 
 void Grass::update()
@@ -132,7 +132,7 @@ void Grass::generate_blades()
     wind = new Wind();
     wind->direction = hlsl::float2(1.0f, 0.0f);
     wind->force = 0.1f;
-    wind->restoration_strength = 50.0f;
+    wind->restoration_strength = 0.35f;
 
 }
 

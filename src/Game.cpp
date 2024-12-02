@@ -16,7 +16,7 @@ void Game::init()
     //entity2->add_component(model2);
 
     auto entity1 = Entity::create("Plane");
-    entity1->transform->set_position(hlsl::float3(20.0f, 0.0f, 20.0f));
+    entity1->transform->set_position(hlsl::float3(-20.0f, 0.0f, -20.0f));
     entity1->transform->set_scale(hlsl::float3(22, 0.0f, 22));
     entity1->transform->set_scale(hlsl::float3(1000, 0.0f, 
      1000));
