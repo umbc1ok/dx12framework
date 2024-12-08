@@ -6,7 +6,7 @@
 
 #include "meshoptimizer.h"
 
-Mesh::Mesh(std::vector<Vertex> const& vertices , std::vector<u32> const& indices, std::vector<Texture*> const& textures, std::vector<hlsl::float3> const& positions, std::vector<hlsl::float3> const& normals, std::vector<hlsl::float2> const& UVS, std::vector<u32> attributes, MeshletizerType meshletizerType)
+Mesh::Mesh(std::vector<Vertex> const& vertices, std::vector<u32> const& indices, std::vector<Texture*> const& textures, std::vector<hlsl::float3> const& positions, std::vector<hlsl::float3> const& normals, std::vector<hlsl::float2> const& UVS, std::vector<u32> const& attributes, MeshletizerType meshletizerType)
 {
     m_vertices = vertices;
     m_indices = indices;
@@ -206,12 +206,13 @@ void Mesh::meshletize_meshoptimizer()
     size_t max_meshlets = meshopt_buildMeshletsBound(m_indices.size(), m_MeshletMaxVerts, m_MeshletMaxPrims);
     std::vector<meshopt_Meshlet> meshlets(max_meshlets);
     // vertex index data, so every entry in that vector is a global index of a vertex
-    std::vector<unsigned int> meshlet_vertices(max_meshlets * m_MeshletMaxVerts);
+
+    m_indices_mapping.resize(max_meshlets * m_MeshletMaxVerts);
     std::vector<unsigned char> meshlet_triangles(max_meshlets * m_MeshletMaxPrims * 3);
 
     size_t meshlet_count = meshopt_buildMeshlets(
         meshlets.data(),
-        meshlet_vertices.data(),
+        m_indices_mapping.data(),
         meshlet_triangles.data(),
         m_indices.data(),
         m_indices.size(),
@@ -222,7 +223,9 @@ void Mesh::meshletize_meshoptimizer()
         m_MeshletMaxPrims,
         cone_weight);
 
+    m_meshlets.clear();
     m_meshlets.resize(meshlet_count);
+    uint32_t offset = 0;
     for (int i = 0; i < meshlet_count; i++)
     {
         m_meshlets[i].VertCount = meshlets[i].vertex_count;
@@ -231,18 +234,17 @@ void Mesh::meshletize_meshoptimizer()
         m_meshlets[i].PrimOffset = meshlets[i].triangle_offset;
     }
 
-    m_indices = meshlet_vertices;
-    std::vector<unsigned char> final_meshlet_triangles(max_meshlets * m_MeshletMaxPrims * 4);
+    std::vector<uint32_t> final_meshlet_triangles(max_meshlets * m_MeshletMaxPrims * 3);
 
-    for (size_t i = 0; i < meshlet_triangles.size(); i += 3)
+    size_t triangle_count = meshlet_triangles.size() / 3;
+    for (size_t i = 0; i < triangle_count; ++i)
     {
-        // Copy three bytes from meshlet_triangles
-        final_meshlet_triangles[i * 4 / 3 + 0] = meshlet_triangles[i + 0];
-        final_meshlet_triangles[i * 4 / 3 + 1] = meshlet_triangles[i + 1];
-        final_meshlet_triangles[i * 4 / 3 + 2] = meshlet_triangles[i + 2];
+        size_t src_idx = i * 3;  // Index in meshlet_triangles
+        size_t dst_idx = i * 3;  // Index in final_meshlet_triangles
 
-        // Add the padding byte (fourth byte)
-        final_meshlet_triangles[i * 4 / 3 + 3] = 0; // or another value if needed
+        final_meshlet_triangles[dst_idx + 0] = static_cast<uint32_t>(meshlet_triangles[src_idx + 0]);
+        final_meshlet_triangles[dst_idx + 1] = static_cast<uint32_t>(meshlet_triangles[src_idx + 1]);
+        final_meshlet_triangles[dst_idx + 2] = static_cast<uint32_t>(meshlet_triangles[src_idx + 2]);
     }
 
     m_meshletTriangles = final_meshlet_triangles;

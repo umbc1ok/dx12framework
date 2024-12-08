@@ -42,7 +42,7 @@ struct MeshInfo
 class Mesh
 {
 public:
-    Mesh(std::vector<Vertex> const& vertices, std::vector<u32> const& indices, std::vector<Texture*> const& textures, std::vector<hlsl::float3> const& positions, std::vector<hlsl::float3> const& normals, std::vector<hlsl::float2> const& UVS, std::vector<u32> attributes, MeshletizerType meshletizerType);
+    Mesh(std::vector<Vertex> const& vertices, std::vector<u32> const&  indices, std::vector<Texture*> const& textures, std::vector<hlsl::float3> const& positions, std::vector<hlsl::float3> const& normals, std::vector<hlsl::float2> const& UVS, std::vector<u32> const& attributes, MeshletizerType meshletizerType);
     ~Mesh() = default;
 
     void draw();
@@ -57,10 +57,11 @@ public:
 
     std::vector<Vertex> m_vertices;
     std::vector<u32> m_indices;
+    std::vector<u32> m_indices_mapping;
 
 
     std::vector<Meshlet> m_meshlets;
-    std::vector<unsigned char> m_meshletTriangles;
+    std::vector<uint32_t> m_meshletTriangles;
 
     // Needed for DXMESH
     std::vector<PackedTriangle> m_primitiveIndices;
@@ -86,7 +87,7 @@ public:
     int32_t m_MeshletMaxVerts = 64;
     int32_t m_MeshletMaxPrims = 124;
 
-    MeshletizerType m_type = DXMESH;
+    MeshletizerType m_type = MESHOPT;
 
 };
 

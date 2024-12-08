@@ -175,6 +175,6 @@ private:
     double m_average_ms_per_frame = 0.0;
     static Editor* m_instance;
 
-    int m_current_debug_mode = 0;
+    int m_current_debug_mode = 1;
     std::string m_search_filter = {};
 };

@@ -124,7 +124,7 @@ void Model::draw_editor()
 void Model::load_model(std::string const& path)
 {
     Assimp::Importer importer;
-    aiScene const* scene = importer.ReadFile(path, aiProcess_FlipUVs);
+    aiScene const* scene = importer.ReadFile(path, aiProcess_FlipUVs | aiProcess_ForceGenNormals | aiProcess_FixInfacingNormals | aiProcess_JoinIdenticalVertices);
 
     if (scene == nullptr || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || scene->mRootNode == nullptr)
     {
@@ -171,6 +171,10 @@ Mesh* Model::proccess_mesh(aiMesh const* mesh, aiScene const* scene)
         if (mesh->HasNormals())
         {
             vertex.normal = hlsl::float3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
+        }
+        else
+        {
+            vertex.normal = hlsl::float3(0.0f, 0.0f, 0.0f);
         }
 
         if (mesh->mTextureCoords[0] != nullptr)
@@ -221,7 +225,7 @@ void Model::uploadGPUResources()
         if (m->m_indices.size() != 0)
         {
             m->IndexResource = new Resource();
-            m->IndexResource->create(m->m_indices.size() * sizeof(u32), m->m_indices.data());
+            m->IndexResource->create(m->m_indices_mapping.size() * sizeof(u32), m->m_indices_mapping.data());
         }
 
         if (m->m_meshlets.size() != 0)
@@ -232,7 +236,7 @@ void Model::uploadGPUResources()
         if (m->m_meshletTriangles.size() != 0)
         {
             m->MeshletTriangleIndicesResource = new Resource();
-            m->MeshletTriangleIndicesResource->create(m->m_meshletTriangles.size(), m->m_meshletTriangles.data());
+            m->MeshletTriangleIndicesResource->create(m->m_meshletTriangles.size() * sizeof(m->m_meshletTriangles[0]), m->m_meshletTriangles.data());
         }
 
         if (m->m_vertices.size() != 0)
