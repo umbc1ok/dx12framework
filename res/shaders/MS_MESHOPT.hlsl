@@ -12,8 +12,12 @@ struct MeshInfo
 struct Vertex
 {
     float3 Position;
+    float padding;
     float3 Normal;
+    float padding2;
     float2 UV;
+    float pad;
+    float pad2;
 };
 
 struct VertexOut
@@ -31,6 +35,14 @@ struct Meshlet
     uint PrimOffset;
     uint VertCount;
     uint PrimCount;
+};
+
+struct Triangle
+{
+    uint first;
+    uint second;
+    uint third;
+    uint fourth;
 };
 
 ConstantBuffer<SceneConstantBuffer> Globals       : register(b0);
@@ -55,11 +67,13 @@ StructuredBuffer<uint>    MeshletTriangleIndices  : register(t3);
 uint3 GetPrimitive(Meshlet m, uint index)
 {
     uint3 primitive;
-    // i have so many fucking questions
-    uint packedPrimitive = MeshletTriangleIndices[index];
-    primitive.z = (packedPrimitive >> 0) & 0xFF;  // Least significant byte
-    primitive.y = (packedPrimitive >> 8) & 0xFF;  // Second byte
-    primitive.x = (packedPrimitive >> 16) & 0xFF; // Third byte
+    primitive.z = MeshletTriangleIndices[m.PrimOffset + index];
+    primitive.y = MeshletTriangleIndices[m.PrimOffset + index + 1];
+    primitive.x = MeshletTriangleIndices[m.PrimOffset + index + 2];
+    // uint packedPrimitive = MeshletTriangleIndices[m.PrimOffset + index];
+    // primitive.x = (packedPrimitive >> 8) & 0xFF;  // Least significant byte
+    // primitive.y = (packedPrimitive >> 16) & 0xFF;  // Second byte
+    // primitive.z = (packedPrimitive >> 24) & 0xFF; // Third byte
     return primitive.xyz;
 }
 
@@ -90,9 +104,9 @@ void ms_main(
     
     SetMeshOutputCounts(m.VertCount, m.PrimCount);
 
-    if(gtid < m.PrimCount)
+    if(gtid < m.PrimCount * 3)
     {
-        tris[gtid] = GetPrimitive(m, gtid);
+        tris[gtid] = GetPrimitive(m, gtid * 3);
     }
 
     if (gtid < m.VertCount)
