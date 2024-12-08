@@ -35,7 +35,7 @@ VertexOut TransformVertex(float3 position, float stiffness)
 
 [RootSignature(ROOT_SIG)]
 [OutputTopology("triangle")]
-[NumThreads(128, 1, 1)]
+[NumThreads(1, 1, 1)]
 void ms_main(
     uint gtid : SV_GroupThreadID,
     uint gid : SV_GroupID,
@@ -47,66 +47,74 @@ void ms_main(
     float FRAME_TIME  = 0.01666;
     // 1 / 1000 kg
     float GRASS_POINT_MASS = 0.001;
-    // This is just a coefficient basically
-    float BLADE_SURFACE = 0.0004;
+    // This is just a drag coefficient
+    float DRAG_COEFFICIENT = 0.0004;
     // Top position is the point where the tip should be if it wasnt for wind
     float3 top_position = blades[gid].m_root_position + float3(0.0f, blades[gid].m_height, 0.0f);
     float3 middle_position = blades[gid].m_root_position + float3(0.0f, blades[gid].m_height / 2.0f, 0.0f);
 
-    // This is not real resistance. It's wind force * blade_surface, which can be treated as a coefficient.
-    float3 wind_resistance = float3(wind_data.force * wind_data.direction.x * BLADE_SURFACE, 0.0f, wind_data.force * wind_data.direction.y * BLADE_SURFACE);
+    // This is not real resistance, it's a simplification of it
+    float3 wind_resistance_force = float3(wind_data.force * wind_data.direction.x * DRAG_COEFFICIENT, 0.0f, wind_data.force * wind_data.direction.y * DRAG_COEFFICIENT);
 
-    // Restoration force is not physically based
+
     float3 tip_restoration_force = 0.0f;
     float3 mid_restoration_force = 0.0f;
-    if(length(blades[gid].m_tip_position - top_position) != 0.0f)
+    // Calculate restoration force
     {
-        tip_restoration_force =  blades[gid].m_tip_stiffness * (top_position - blades[gid].m_tip_position) * wind_data.restoration_strength;
-    }
-    if(length(blades[gid].m_middle_position - middle_position) != 0.0f)
-    {
-        mid_restoration_force =  blades[gid].m_tip_stiffness * (middle_position - blades[gid].m_middle_position) * wind_data.restoration_strength * 2.5f;
+        if(length(blades[gid].m_tip_position - top_position) != 0.0f)
+        {
+            tip_restoration_force =  blades[gid].m_tip_stiffness * (top_position - blades[gid].m_tip_position) * wind_data.restoration_strength;
+        }
+        if(length(blades[gid].m_middle_position - middle_position) != 0.0f)
+        {
+            mid_restoration_force =  blades[gid].m_tip_stiffness * (middle_position - blades[gid].m_middle_position) * wind_data.restoration_strength * 2.5f;
+        }
     }
     
-    float3 tip_force = wind_resistance + tip_restoration_force;
-    float3 mid_force = wind_resistance + mid_restoration_force;
+    // Calculate force and accelaration
+    float3 tip_force = wind_resistance_force + tip_restoration_force;
+    float3 mid_force = wind_resistance_force + mid_restoration_force;
     float3 tip_acceleration = tip_force.xyz / GRASS_POINT_MASS;
     float3 mid_acceleration = mid_force.xyz / GRASS_POINT_MASS;
 
-    blades[gid].m_middle_position = blades[gid].m_middle_position + blades[gid].movement_speed_middle * FRAME_TIME;
-    blades[gid].m_tip_position = blades[gid].m_tip_position + blades[gid].movement_speed_tip * FRAME_TIME;
-    blades[gid].movement_speed_middle = blades[gid].movement_speed_middle + FRAME_TIME * mid_acceleration;
-    blades[gid].movement_speed_tip = blades[gid].movement_speed_tip + FRAME_TIME * tip_acceleration;
+    // Euler method
+    {
+        blades[gid].m_middle_position = blades[gid].m_middle_position + blades[gid].movement_speed_middle * FRAME_TIME;
+        blades[gid].m_tip_position = blades[gid].m_tip_position + blades[gid].movement_speed_tip * FRAME_TIME;
+        blades[gid].movement_speed_middle = blades[gid].movement_speed_middle + FRAME_TIME * mid_acceleration;
+        blades[gid].movement_speed_tip = blades[gid].movement_speed_tip + FRAME_TIME * tip_acceleration;
+    }
 
     // Damp so the force doesn't rise infinetely
-    float damping = 0.85f;
-    blades[gid].movement_speed_middle *= damping;
-    blades[gid].movement_speed_tip *= damping;
+    {
+        float damping = 0.85f;
+        blades[gid].movement_speed_middle *= damping;
+        blades[gid].movement_speed_tip *= damping;
+    }
     
 
-    // PBD-like restrains
-    float3 root_to_mid = blades[gid].m_root_position - blades[gid].m_middle_position;
-    float current_distance = length(root_to_mid);
-    float target_distance = blades[gid].m_height / 2.0f;
-
-
-    if (current_distance != target_distance)
+    // Restraints
     {
-        float3 direction = normalize(root_to_mid);
-        blades[gid].m_middle_position += direction * (current_distance - target_distance);
+        float3 root_to_mid = blades[gid].m_root_position - blades[gid].m_middle_position;
+        float current_distance = length(root_to_mid);
+        float target_distance = blades[gid].m_height / 2.0f;
+
+
+        if (current_distance != target_distance)
+        {
+            float3 direction = normalize(root_to_mid);
+            blades[gid].m_middle_position += direction * (current_distance - target_distance);
+        }
+
+        float3 mid_to_tip = blades[gid].m_middle_position - blades[gid].m_tip_position;
+        float current_distance_mid_to_tip = length(mid_to_tip);
+
+        if (current_distance_mid_to_tip != target_distance)
+        {
+            float3 direction = normalize(mid_to_tip);
+            blades[gid].m_tip_position += direction * (current_distance_mid_to_tip - target_distance);
+        }
     }
-
-    float3 mid_to_tip = blades[gid].m_middle_position - blades[gid].m_tip_position;
-    float current_distance_mid_to_tip = length(mid_to_tip);
-
-    if (current_distance_mid_to_tip != target_distance)
-    {
-        float3 direction = normalize(mid_to_tip);
-        blades[gid].m_tip_position += direction * (current_distance_mid_to_tip - target_distance);
-    }
-    ////
-
-
 
     // Output vertices
     SetMeshOutputCounts(11, 12);

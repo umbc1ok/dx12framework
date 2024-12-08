@@ -79,6 +79,6 @@ float4 ps_main(VertexOut input) : SV_TARGET
     {
         finalColor = diffuseColor;
     }
-    return float4(0.5f, 0.3f, 0.1f, 1);
+    return float4(0.3f, 0.4f, 0.1f, 1);
     //return float4(finalColor,1.0f);
 }
