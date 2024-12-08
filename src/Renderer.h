@@ -110,7 +110,7 @@ private:
     GPUProfiler* m_profiler;
 
 
-    u32 m_debug_mode = 0;
+    u32 m_debug_mode = 1;
     static Renderer* m_instance;
 };
 
