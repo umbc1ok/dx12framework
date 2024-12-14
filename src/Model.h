@@ -45,7 +45,7 @@ private:
     int m_triangle_count = 0;
     int m_meshlets_count = 0;
 
-    int m_TypeIndex = 0;
+    int m_TypeIndex = 1;
 
     std::string m_path;
 

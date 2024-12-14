@@ -26,8 +26,12 @@ struct MeshInfo
 struct Vertex
 {
     float3 Position;
+    float padding;
     float3 Normal;
+    float padding2;
     float2 UV;
+    float pad;
+    float pad2;
 };
 
 struct VertexOut
@@ -93,7 +97,7 @@ VertexOut GetVertexAttributes(uint meshletIndex, uint vertexIndex)
 
 [RootSignature(ROOT_SIG)]
 [OutputTopology("triangle")]
-[NumThreads(124, 1, 1)]
+[NumThreads(128, 1, 1)]
 void ms_main(
     uint gtid : SV_GroupThreadID,
     uint gid : SV_GroupID,
@@ -101,7 +105,7 @@ void ms_main(
     out vertices VertexOut verts[64]
 )
 {
-    Meshlet m = Meshlets[MeshInfo.MeshletOffset + gid];
+    Meshlet m = Meshlets[gid];
     
     SetMeshOutputCounts(m.VertCount, m.PrimCount);
 
