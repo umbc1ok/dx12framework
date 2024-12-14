@@ -5,6 +5,7 @@
 #include <utility>
 
 #include "meshoptimizer.h"
+#include "utils/Utils.h"
 
 Mesh::Mesh(std::vector<Vertex> const& vertices, std::vector<u32> const& indices, std::vector<Texture*> const& textures, std::vector<hlsl::float3> const& positions, std::vector<hlsl::float3> const& normals, std::vector<hlsl::float2> const& UVS, std::vector<u32> const& attributes, MeshletizerType meshletizerType)
 {
@@ -234,17 +235,14 @@ void Mesh::meshletize_meshoptimizer()
         m_meshlets[i].PrimOffset = meshlets[i].triangle_offset;
     }
 
-    std::vector<uint32_t> final_meshlet_triangles(max_meshlets * m_MeshletMaxPrims * 3);
+    std::vector<uint32_t> final_meshlet_triangles(max_meshlets * m_MeshletMaxPrims);
 
+    // We could move the packing to a seperate function
+    // However, it could result 
     size_t triangle_count = meshlet_triangles.size() / 3;
     for (size_t i = 0; i < triangle_count; ++i)
     {
-        size_t src_idx = i * 3;  // Index in meshlet_triangles
-        size_t dst_idx = i * 3;  // Index in final_meshlet_triangles
-
-        final_meshlet_triangles[dst_idx + 0] = static_cast<uint32_t>(meshlet_triangles[src_idx + 0]);
-        final_meshlet_triangles[dst_idx + 1] = static_cast<uint32_t>(meshlet_triangles[src_idx + 1]);
-        final_meshlet_triangles[dst_idx + 2] = static_cast<uint32_t>(meshlet_triangles[src_idx + 2]);
+        final_meshlet_triangles[i] = olej_utils::pack_triangle(meshlet_triangles[i * 3 + 0], meshlet_triangles[i * 3 + 1], meshlet_triangles[i * 3 + 2]);
     }
 
     m_meshletTriangles = final_meshlet_triangles;
