@@ -75,8 +75,6 @@ void Mesh::dispatch()
 
 void Mesh::meshletize_dxmesh()
 {
-    // Add the DXMESH Implementation here
-        // Pull out some final counts for readability
     const uint32_t vertexCount = static_cast<uint32_t>(m_vertices.size());
     const uint32_t triCount = m_indices.size() / 3;
 
@@ -112,38 +110,38 @@ void Mesh::meshletize_dxmesh()
 
     std::swap(m_indices, indexReorder);
 
-    // Optimize triangle faces and reorder
+    //// Optimize triangle faces and reorder
     AssertFailed(DirectX::OptimizeFacesLRU((m_indices.data()), triCount, faceRemap.data()));
     AssertFailed(DirectX::ReorderIB((m_indices.data()), triCount, faceRemap.data(), indexReorder.data()));
 
     std::swap(m_indices, indexReorder);
 
-    // Optimize our vertex data
-    // This line crashes when switching to DXMESH (but not when starting up with it)
-    AssertFailed(DirectX::OptimizeVertices(m_indices.data(), triCount, vertexCount, vertexRemap.data()));
+    // tu sie cos jebie
+    // assimp should be doing that already, so comment out for now
+    //AssertFailed(DirectX::OptimizeVertices(m_indices.data(), triCount, vertexCount, vertexRemap.data()));
 
-    // Finalize the index & vertex buffers (potential reordering)
-    AssertFailed(DirectX::FinalizeIB(m_indices.data(), triCount, vertexRemap.data(), vertexCount, indexReorder.data()));
-    AssertFailed(DirectX::FinalizeVB(m_positions.data(), sizeof(hlsl::float3), vertexCount, dupVerts.data(), dupVerts.size(), vertexRemap.data(), positionReorder.data()));
+    //// Finalize the index & vertex buffers (potential reordering)
+    //AssertFailed(DirectX::FinalizeIB(m_indices.data(), triCount, vertexRemap.data(), vertexCount, indexReorder.data()));
+    //AssertFailed(DirectX::FinalizeVB(m_vertices.data(), sizeof(Vertex), vertexCount, dupVerts.data(), dupVerts.size(), vertexRemap.data(), positionReorder.data()));
 
-    std::swap(m_indices, indexReorder);
-    std::swap(m_positions, positionReorder);
+    //std::swap(m_indices, indexReorder);
+    //std::swap(m_vertices, vertex);
 
-    //if (HasAttribute(m_type, Attribute::Normal))
-    {
-        normalReorder.resize(vertexCount);
-        AssertFailed(DirectX::FinalizeVB(m_normals.data(), sizeof(hlsl::float3), vertexCount, dupVerts.data(), dupVerts.size(), vertexRemap.data(), normalReorder.data()));
+    ////if (HasAttribute(m_type, Attribute::Normal))
+    //{
+    //    normalReorder.resize(vertexCount);
+    //    AssertFailed(DirectX::FinalizeVB(m_normals.data(), sizeof(hlsl::float3), vertexCount, dupVerts.data(), dupVerts.size(), vertexRemap.data(), normalReorder.data()));
 
-        std::swap(m_normals, normalReorder);
-    }
+    //    std::swap(m_normals, normalReorder);
+    //}
 
-    //if (HasAttribute(m_type, Attribute::TexCoord))
-    {
-        uvReorder.resize(vertexCount);
-        AssertFailed(DirectX::FinalizeVB(m_UVs.data(), sizeof(hlsl::float2), vertexCount, dupVerts.data(), dupVerts.size(), vertexRemap.data(), uvReorder.data()));
+    ////if (HasAttribute(m_type, Attribute::TexCoord))
+    //{
+    //    uvReorder.resize(vertexCount);
+    //    AssertFailed(DirectX::FinalizeVB(m_UVs.data(), sizeof(hlsl::float2), vertexCount, dupVerts.data(), dupVerts.size(), vertexRemap.data(), uvReorder.data()));
 
-        std::swap(m_UVs, uvReorder);
-    }
+    //    std::swap(m_UVs, uvReorder);
+    //}
 
     // Populate material subset data
     auto subsets = DirectX::ComputeSubsets(m_attributes.data(), m_attributes.size());
@@ -185,6 +183,29 @@ void Mesh::meshletize_dxmesh()
         m_uniqueVertexIndices,
         m_primitiveIndices
     ));
+
+
+    //m_meshletTriangles.resize(m_primitiveIndices.size());
+
+    //for (int i = 0; i < m_primitiveIndices.size(); i++)
+    //{
+    //    m_meshletTriangles[i] = olej_utils::pack_triangle(static_cast<uint8_t>(m_primitiveIndices[i].indices.i0), static_cast<uint8_t>(m_primitiveIndices[i].indices.i1), static_cast<uint8_t>(m_primitiveIndices[i].indices.i2));
+    //}
+
+    //for(int i = 0; i < m_uniqueVertexIndices.size(); i+=4)
+    //{
+    //    uint32_t packed =
+    //        static_cast<uint32_t>(m_uniqueVertexIndices[i + 0]) << 0 |
+    //        static_cast<uint32_t>(m_uniqueVertexIndices[i + 1]) << 8 |
+    //        static_cast<uint32_t>(m_uniqueVertexIndices[i + 2]) << 16 |
+    //        static_cast<uint32_t>(m_uniqueVertexIndices[i + 3]) << 24;
+
+    //    m_indices_mapping.push_back(packed);
+    //}
+
+
+
+
 
     //m_cullData.resize(m_meshlets.size());
 
@@ -259,6 +280,7 @@ void Mesh::changeMeshletizerType(MeshletizerType type)
     m_primitiveIndices.clear();
     m_uniqueVertexIndices.clear();
     m_meshlets.clear();
+    m_indices_mapping.clear();
 
     if (type == MESHOPT)
         meshletize_meshoptimizer();
