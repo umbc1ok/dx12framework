@@ -28,7 +28,8 @@ set(dx12dir ${CMAKE_CURRENT_LIST_DIR}/directx)
 add_library(dx12 INTERFACE)
 target_include_directories(dx12 INTERFACE ${dx12dir})
 
-
+# assimp settings
+SET (ASSIMP_BUILD_PLY_IMPORTER ON)
 
 # other
 CPMAddPackage("gh:assimp/assimp@5.2.5")
