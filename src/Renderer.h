@@ -2,9 +2,9 @@
 #include <dxgi1_4.h>
 #include <dxgidebug.h>
 
-#include "DrawableCube.h"
 #include "DX12Wrappers/CommandQueue.h"
 #include "Tools/GPUProfiler.h"
+#include "utils/Types.h"
 #define DX12_ENABLE_DEBUG_LAYER 
 
 class PipelineState;
