@@ -54,7 +54,7 @@ void PipelineState::compilePSO()
     if (m_wireframe_active)
         rasterizer_desc.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
     else
-        rasterizer_desc.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_ON;
+        rasterizer_desc.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
 
     CD3DX12_BLEND_DESC blend_desc;
     blend_desc = CD3DX12_BLEND_DESC(CD3DX12_DEFAULT());
