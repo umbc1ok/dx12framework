@@ -115,5 +115,13 @@ namespace olej_utils
         return wsTmp;
     }
 
+    inline uint32_t pack_triangle(uint8_t x, uint8_t y, uint8_t z)
+    {
+        uint32_t packed_triangle =
+            (static_cast<uint32_t>(x) << 0)
+            | (static_cast<uint32_t>(y) << 8)
+            | (static_cast<uint32_t>(z) << 16);
+        return packed_triangle;
+    }
 
 }
