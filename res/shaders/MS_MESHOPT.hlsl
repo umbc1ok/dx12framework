@@ -37,22 +37,13 @@ struct Meshlet
     uint PrimCount;
 };
 
-struct Triangle
-{
-    uint first;
-    uint second;
-    uint third;
-    uint fourth;
-};
 
 ConstantBuffer<SceneConstantBuffer> Globals       : register(b0);
 ConstantBuffer<MeshInfo>  MeshInfo                : register(b1);
 
 StructuredBuffer<Vertex>  Vertices                : register(t0);
 StructuredBuffer<Meshlet> Meshlets                : register(t1);
-// has global indices for every meshlet
 StructuredBuffer<uint>    MeshletIndexBuffer      : register(t2);
-
 StructuredBuffer<uint>    MeshletTriangleIndices  : register(t3);
 
 
