@@ -67,13 +67,35 @@ StructuredBuffer<uint>    MeshletTriangleIndices  : register(t3);
 uint3 GetPrimitive(Meshlet m, uint index)
 {
     uint3 primitive;
-    primitive.z = MeshletTriangleIndices[m.PrimOffset + index];
-    primitive.y = MeshletTriangleIndices[m.PrimOffset + index + 1];
-    primitive.x = MeshletTriangleIndices[m.PrimOffset + index + 2];
-    // uint packedPrimitive = MeshletTriangleIndices[m.PrimOffset + index];
-    // primitive.x = (packedPrimitive >> 8) & 0xFF;  // Least significant byte
-    // primitive.y = (packedPrimitive >> 16) & 0xFF;  // Second byte
-    // primitive.z = (packedPrimitive >> 24) & 0xFF; // Third byte
+    int test = m.PrimOffset / 3;
+    int val = 0;
+    // It seems like meshoptimizer likes to reuse indices from previous primitives
+    // so if for example one triangle is ABC, second one is CDE
+    // it will not make a duplicate index, but will jest set the primitive offset to the place where C is in the first triangle
+    // lot of branching here, need to sort this out.
+    if(test * 3 == m.PrimOffset)
+    {
+        uint packedPrimitive = MeshletTriangleIndices[(m.PrimOffset + val) / 3 + index];
+        primitive.x = (packedPrimitive >> 0) & 0xFF;
+        primitive.y = (packedPrimitive >> 8) & 0xFF;
+        primitive.z = (packedPrimitive >> 16) & 0xFF;
+    }
+    else if(test * 3 + 1 == m.PrimOffset)
+    {
+        uint packedPrimitive1 = MeshletTriangleIndices[m.PrimOffset / 3 + index];
+        uint packedPrimitive2 = MeshletTriangleIndices[m.PrimOffset / 3 + index + 1];
+        primitive.x = (packedPrimitive1 >> 8) & 0xFF;
+        primitive.y = (packedPrimitive1 >> 16) & 0xFF;
+        primitive.z = (packedPrimitive2 >> 0) & 0xFF;
+    }
+    else
+    {
+        uint packedPrimitive1 = MeshletTriangleIndices[m.PrimOffset / 3 + index];
+        uint packedPrimitive2 = MeshletTriangleIndices[m.PrimOffset / 3 + index + 1];
+        primitive.x = (packedPrimitive1 >> 16) & 0xFF;
+        primitive.y = (packedPrimitive2 >> 0) & 0xFF;
+        primitive.z = (packedPrimitive2 >> 8) & 0xFF;
+    }
     return primitive.xyz;
 }
 
@@ -104,9 +126,9 @@ void ms_main(
     
     SetMeshOutputCounts(m.VertCount, m.PrimCount);
 
-    if(gtid < m.PrimCount * 3)
+    if(gtid < m.PrimCount)
     {
-        tris[gtid] = GetPrimitive(m, gtid * 3);
+        tris[gtid] = GetPrimitive(m, gtid);
     }
 
     if (gtid < m.VertCount)
