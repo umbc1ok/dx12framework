@@ -67,7 +67,7 @@ void Model::draw()
         auto kb = Input::get_instance()->m_keyboard->GetState();
         if (kb.F5)
         {
-            if (m_TypeIndex == 0)
+            if (m_TypeIndex == 1)
                 m_pipeline_state = new PipelineState(L"MS_BASIC.hlsl", L"PS_BASIC.hlsl");
             else
                 m_pipeline_state = new PipelineState(L"MS_MESHOPT.hlsl", L"PS_BASIC.hlsl");
@@ -124,7 +124,7 @@ void Model::draw_editor()
 void Model::load_model(std::string const& path)
 {
     Assimp::Importer importer;
-    aiScene const* scene = importer.ReadFile(path, aiProcess_FlipUVs | aiProcess_ForceGenNormals | aiProcess_FixInfacingNormals | aiProcess_JoinIdenticalVertices);
+    aiScene const* scene = importer.ReadFile(path, aiProcess_FlipUVs | aiProcess_ForceGenNormals | aiProcess_JoinIdenticalVertices);
 
     if (scene == nullptr || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || scene->mRootNode == nullptr)
     {
