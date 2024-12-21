@@ -217,8 +217,6 @@ Mesh* Model::proccess_mesh(aiMesh const* mesh, aiScene const* scene)
 
 void Model::uploadGPUResources()
 {
-    auto device = Renderer::get_instance()->get_device();
-    auto cmdQueue = Renderer::get_instance()->get_cmd_queue(D3D12_COMMAND_LIST_TYPE_DIRECT);
     for (uint32_t i = 0; i < m_meshes.size(); ++i)
     {
         auto& m = m_meshes[i];
@@ -248,17 +246,6 @@ void Model::uploadGPUResources()
         {
             m->VertexResource = new Resource();
             m->VertexResource->create(m->m_vertices.size() * sizeof(Vertex), m->m_vertices.data());
-        }
-        if(m->m_uniqueVertexIndices.size() != 0)
-        {
-            m->UniqueVertexIndexResource = new Resource();
-            m->UniqueVertexIndexResource->create(m->m_uniqueVertexIndices.size(), m->m_uniqueVertexIndices.data());
-        }
-
-        if(m->m_primitiveIndices.size() != 0)
-        {
-            m->PrimitiveIndexResource = new Resource();
-            m->PrimitiveIndexResource->create(m->m_primitiveIndices.size() * sizeof(PackedTriangle), m->m_primitiveIndices.data());
         }
     }
 }

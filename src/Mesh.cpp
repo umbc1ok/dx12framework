@@ -53,16 +53,9 @@ void Mesh::dispatch()
     auto cmd_list = Renderer::get_instance()->g_pd3dCommandList;
     cmd_list->SetGraphicsRootShaderResourceView(2, VertexResource->GetGPUVirtualAddress());
     cmd_list->SetGraphicsRootShaderResourceView(3, MeshletResource->GetGPUVirtualAddress());
-    if (m_type == MESHOPT)
-    {
-        cmd_list->SetGraphicsRootShaderResourceView(4, IndexResource->GetGPUVirtualAddress());
-        cmd_list->SetGraphicsRootShaderResourceView(5, MeshletTriangleIndicesResource->GetGPUVirtualAddress());
-    }
-    else
-    {
-        cmd_list->SetGraphicsRootShaderResourceView(4, UniqueVertexIndexResource->GetGPUVirtualAddress());
-        cmd_list->SetGraphicsRootShaderResourceView(5, PrimitiveIndexResource->GetGPUVirtualAddress());
-    }
+    cmd_list->SetGraphicsRootShaderResourceView(4, IndexResource->GetGPUVirtualAddress());
+    cmd_list->SetGraphicsRootShaderResourceView(5, MeshletTriangleIndicesResource->GetGPUVirtualAddress());
+
 
     // TODO: Add subsets
     //for (auto& subset : m_meshletSubsets)
@@ -87,6 +80,8 @@ void Mesh::meshletize_dxmesh()
     std::vector<uint32_t> dupVerts;
     std::vector<Subset> indexSubsets;
     std::vector<Subset> m_meshletSubsets;
+    std::vector<uint8_t> m_uniqueVertexIndices;
+    std::vector<PackedTriangle> m_primitiveIndices;
 
     std::vector<hlsl::float3> tangents;
     std::vector<hlsl::float3> bitangents;
@@ -185,27 +180,23 @@ void Mesh::meshletize_dxmesh()
     ));
 
 
-    //m_meshletTriangles.resize(m_primitiveIndices.size());
+    m_meshletTriangles.resize(m_primitiveIndices.size());
 
-    //for (int i = 0; i < m_primitiveIndices.size(); i++)
-    //{
-    //    m_meshletTriangles[i] = olej_utils::pack_triangle(static_cast<uint8_t>(m_primitiveIndices[i].indices.i0), static_cast<uint8_t>(m_primitiveIndices[i].indices.i1), static_cast<uint8_t>(m_primitiveIndices[i].indices.i2));
-    //}
+    for (int i = 0; i < m_primitiveIndices.size(); i++)
+    {
+        m_meshletTriangles[i] = m_primitiveIndices[i].packed;
+    }
 
-    //for(int i = 0; i < m_uniqueVertexIndices.size(); i+=4)
-    //{
-    //    uint32_t packed =
-    //        static_cast<uint32_t>(m_uniqueVertexIndices[i + 0]) << 0 |
-    //        static_cast<uint32_t>(m_uniqueVertexIndices[i + 1]) << 8 |
-    //        static_cast<uint32_t>(m_uniqueVertexIndices[i + 2]) << 16 |
-    //        static_cast<uint32_t>(m_uniqueVertexIndices[i + 3]) << 24;
+    for(int i = 0; i < m_uniqueVertexIndices.size(); i += 4)
+    {
+        uint32_t packed =
+            static_cast<uint32_t>(m_uniqueVertexIndices[i + 0]) << 0 |
+            static_cast<uint32_t>(m_uniqueVertexIndices[i + 1]) << 8 |
+            static_cast<uint32_t>(m_uniqueVertexIndices[i + 2]) << 16 |
+            static_cast<uint32_t>(m_uniqueVertexIndices[i + 3]) << 24;
 
-    //    m_indices_mapping.push_back(packed);
-    //}
-
-
-
-
+        m_indices_mapping.push_back(packed);
+    }
 
     //m_cullData.resize(m_meshlets.size());
 
@@ -258,8 +249,7 @@ void Mesh::meshletize_meshoptimizer()
 
     std::vector<uint32_t> final_meshlet_triangles(max_meshlets * m_MeshletMaxPrims);
 
-    // We could move the packing to a seperate function
-    // However, it could result 
+
     size_t triangle_count = meshlet_triangles.size() / 3;
     for (size_t i = 0; i < triangle_count; ++i)
     {
@@ -277,8 +267,6 @@ void Mesh::changeMeshletizerType(MeshletizerType type)
     m_type = type;
 
     m_meshletTriangles.clear();
-    m_primitiveIndices.clear();
-    m_uniqueVertexIndices.clear();
     m_meshlets.clear();
     m_indices_mapping.clear();
 

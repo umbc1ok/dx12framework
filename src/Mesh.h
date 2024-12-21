@@ -63,11 +63,6 @@ public:
     std::vector<Meshlet> m_meshlets;
     std::vector<uint32_t> m_meshletTriangles;
 
-    // Needed for DXMESH
-    std::vector<PackedTriangle> m_primitiveIndices;
-    std::vector<uint8_t> m_uniqueVertexIndices;
-
-
     std::vector<Texture*> m_textures;
     std::vector<uint32_t> m_attributes;
 
@@ -81,8 +76,6 @@ public:
     Resource*              MeshletResource;
     Resource*              MeshletTriangleIndicesResource;
 
-    Resource*              UniqueVertexIndexResource;
-    Resource*              PrimitiveIndexResource;
 
     int32_t m_MeshletMaxVerts = 64;
     int32_t m_MeshletMaxPrims = 124;
