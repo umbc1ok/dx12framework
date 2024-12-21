@@ -56,7 +56,7 @@ ConstantBuffer<MeshInfo>  MeshInfo            : register(b1);
 
 StructuredBuffer<Vertex>  Vertices            : register(t0);
 StructuredBuffer<Meshlet> Meshlets            : register(t1);
-ByteAddressBuffer         UniqueVertexIndices : register(t2);
+StructuredBuffer<uint>    UniqueVertexIndices : register(t2);
 StructuredBuffer<uint>    PrimitiveIndices    : register(t3);
 
 
@@ -76,14 +76,14 @@ uint3 GetPrimitive(Meshlet m, uint index)
 
 uint GetVertexIndex(Meshlet m, uint localIndex)
 {
-    localIndex = m.VertOffset + localIndex;
+    uint globalIndex = m.VertOffset + localIndex;
 
-    return UniqueVertexIndices.Load(localIndex * 4);
+    return globalIndex;
 }
 
 VertexOut GetVertexAttributes(uint meshletIndex, uint vertexIndex)
 {
-    Vertex v = Vertices[vertexIndex];
+    Vertex v = Vertices[UniqueVertexIndices[vertexIndex]];
 
     VertexOut vout;
     vout.PositionVS = mul(float4(v.Position, 1), Globals.WorldView).xyz;
@@ -116,7 +116,7 @@ void ms_main(
     
     if (gtid < m.VertCount)
     {
-        uint vertexIndex = GetVertexIndex(m, gtid);
+        uint vertexIndex = m.VertOffset + gtid;
         verts[gtid] = GetVertexAttributes(gid, vertexIndex);
     }
 }
