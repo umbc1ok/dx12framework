@@ -79,9 +79,9 @@ void Mesh::meshletize_dxmesh()
     std::vector<uint32_t> vertexRemap;
     std::vector<uint32_t> dupVerts;
     std::vector<Subset> indexSubsets;
-    std::vector<Subset> m_meshletSubsets;
-    std::vector<uint8_t> m_uniqueVertexIndices;
-    std::vector<PackedTriangle> m_primitiveIndices;
+    std::vector<Subset> meshlet_subsets;
+    std::vector<uint8_t> unique_vertex_indices;
+    std::vector<PackedTriangle> primitive_indices;
 
     std::vector<hlsl::float3> tangents;
     std::vector<hlsl::float3> bitangents;
@@ -173,27 +173,27 @@ void Mesh::meshletize_dxmesh()
         static_cast<uint32_t>(indexSubsets.size()),
         reinterpret_cast<const DirectX::XMFLOAT3*>(m_positions.data()),
         static_cast<uint32_t>(m_positions.size()),
-        m_meshletSubsets,
+        meshlet_subsets,
         m_meshlets,
-        m_uniqueVertexIndices,
-        m_primitiveIndices
+        unique_vertex_indices,
+        primitive_indices
     ));
 
 
-    m_meshletTriangles.resize(m_primitiveIndices.size());
+    m_meshletTriangles.resize(primitive_indices.size());
 
-    for (int i = 0; i < m_primitiveIndices.size(); i++)
+    for (int i = 0; i < primitive_indices.size(); i++)
     {
         m_meshletTriangles[i] = m_primitiveIndices[i].packed;
     }
 
-    for(int i = 0; i < m_uniqueVertexIndices.size(); i += 4)
+    for(int i = 0; i < unique_vertex_indices.size(); i += 4)
     {
         uint32_t packed =
-            static_cast<uint32_t>(m_uniqueVertexIndices[i + 0]) << 0 |
-            static_cast<uint32_t>(m_uniqueVertexIndices[i + 1]) << 8 |
-            static_cast<uint32_t>(m_uniqueVertexIndices[i + 2]) << 16 |
-            static_cast<uint32_t>(m_uniqueVertexIndices[i + 3]) << 24;
+            static_cast<uint32_t>(unique_vertex_indices[i + 0]) << 0 |
+            static_cast<uint32_t>(unique_vertex_indices[i + 1]) << 8 |
+            static_cast<uint32_t>(unique_vertex_indices[i + 2]) << 16 |
+            static_cast<uint32_t>(unique_vertex_indices[i + 3]) << 24;
 
         m_indices_mapping.push_back(packed);
     }
