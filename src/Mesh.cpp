@@ -261,6 +261,7 @@ void Mesh::meshletize_meshoptimizer()
             assert(m_meshlets[i].PrimOffset % 3 == 0);
             addedElements++;
         }
+        m_meshlets[i].PrimOffset /= 3;
     }
 
     std::vector<uint32_t> final_meshlet_triangles(meshlet_triangles.size() / 3);

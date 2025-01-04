@@ -58,7 +58,7 @@ StructuredBuffer<uint>    MeshletTriangleIndices  : register(t3);
 uint3 GetPrimitive(Meshlet m, uint index)
 {
     uint3 primitive;
-    uint packedPrimitive = MeshletTriangleIndices[m.PrimOffset / 3 + index];
+    uint packedPrimitive = MeshletTriangleIndices[m.PrimOffset + index];
     primitive.x = (packedPrimitive >> 0) & 0xFF;
     primitive.y = (packedPrimitive >> 8) & 0xFF;
     primitive.z = (packedPrimitive >> 16) & 0xFF;
