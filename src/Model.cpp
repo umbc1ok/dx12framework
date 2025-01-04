@@ -30,10 +30,7 @@ Model* Model::create(std::string const& model_path)
     model->load_model(model_path);
     model->set_can_tick(true);
     model->uploadGPUResources();
-    if (model->m_TypeIndex == 0)
-        model->m_pipeline_state = new PipelineState(L"MS_MESHOPT.hlsl", L"PS_BASIC.hlsl");
-    else
-        model->m_pipeline_state = new PipelineState(L"MS_BASIC.hlsl", L"PS_BASIC.hlsl");
+    model->m_pipeline_state = new PipelineState(L"MS_MESHOPT.hlsl", L"PS_BASIC.hlsl");
     model->m_constant_buffer = new ConstantBuffer<SceneConstantBuffer>();
     return model;
 }
@@ -67,10 +64,7 @@ void Model::draw()
         auto kb = Input::get_instance()->m_keyboard->GetState();
         if (kb.F5)
         {
-            if (m_TypeIndex == 1)
-                m_pipeline_state = new PipelineState(L"MS_BASIC.hlsl", L"PS_BASIC.hlsl");
-            else
-                m_pipeline_state = new PipelineState(L"MS_MESHOPT.hlsl", L"PS_BASIC.hlsl");
+            m_pipeline_state = new PipelineState(L"MS_MESHOPT.hlsl", L"PS_BASIC.hlsl");
         }
         cmd_list->SetGraphicsRootSignature(m_pipeline_state->get_root_signature());
         cmd_list->SetPipelineState(m_pipeline_state->get_pipeline_state());
@@ -103,10 +97,7 @@ void Model::draw_editor()
         if (ImGui::Combo("MESHLET DEBUG MODE", &m_TypeIndex, items, IM_ARRAYSIZE(items)))
         {
             MeshletizerType type = m_TypeIndex == 0 ? MESHOPT : DXMESH;
-            if (type == DXMESH)
-                m_pipeline_state = new PipelineState(L"MS_BASIC.hlsl", L"PS_BASIC.hlsl");
-            else
-                m_pipeline_state = new PipelineState(L"MS_MESHOPT.hlsl", L"PS_BASIC.hlsl");
+            m_pipeline_state = new PipelineState(L"MS_MESHOPT.hlsl", L"PS_BASIC.hlsl");
 
             for (auto& mesh : m_meshes)
             {
