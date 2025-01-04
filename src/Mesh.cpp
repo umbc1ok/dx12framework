@@ -179,12 +179,11 @@ void Mesh::meshletize_dxmesh()
         primitive_indices
     ));
 
-
     m_meshletTriangles.resize(primitive_indices.size());
 
     for (int i = 0; i < primitive_indices.size(); i++)
     {
-        m_meshletTriangles[i] = primitive_indices[i].packed;
+        m_meshletTriangles[i] = olej_utils::pack_triangle(static_cast<uint8_t>(primitive_indices[i].indices.i0), static_cast<uint8_t>(primitive_indices[i].indices.i1), static_cast<uint8_t>(primitive_indices[i].indices.i2));
     }
 
     for(int i = 0; i < unique_vertex_indices.size(); i += 4)
