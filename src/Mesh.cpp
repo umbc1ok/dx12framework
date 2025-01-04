@@ -184,7 +184,7 @@ void Mesh::meshletize_dxmesh()
 
     for (int i = 0; i < primitive_indices.size(); i++)
     {
-        m_meshletTriangles[i] = m_primitiveIndices[i].packed;
+        m_meshletTriangles[i] = primitive_indices[i].packed;
     }
 
     for(int i = 0; i < unique_vertex_indices.size(); i += 4)
@@ -238,16 +238,32 @@ void Mesh::meshletize_meshoptimizer()
 
     m_meshlets.clear();
     m_meshlets.resize(meshlet_count);
-    uint32_t offset = 0;
+    int addedElements = 0;
     for (int i = 0; i < meshlet_count; i++)
     {
         m_meshlets[i].VertCount = meshlets[i].vertex_count;
         m_meshlets[i].PrimCount = meshlets[i].triangle_count;
         m_meshlets[i].VertOffset = meshlets[i].vertex_offset;
-        m_meshlets[i].PrimOffset = meshlets[i].triangle_offset;
+        m_meshlets[i].PrimOffset = meshlets[i].triangle_offset + addedElements;
+        if(m_meshlets[i].PrimOffset % 3 == 1)
+        {
+            meshlet_triangles.insert(meshlet_triangles.begin() + m_meshlets[i].PrimOffset, meshlet_triangles.at(m_meshlets[i].PrimOffset));
+            m_meshlets[i].PrimOffset++;
+            meshlet_triangles.insert(meshlet_triangles.begin() + m_meshlets[i].PrimOffset, meshlet_triangles.at(m_meshlets[i].PrimOffset));
+            m_meshlets[i].PrimOffset++;
+            assert(m_meshlets[i].PrimOffset % 3 == 0);
+            addedElements += 2;
+        }
+        else if (m_meshlets[i].PrimOffset % 3 == 2)
+        {
+            meshlet_triangles.insert(meshlet_triangles.begin() + m_meshlets[i].PrimOffset, meshlet_triangles.at(m_meshlets[i].PrimOffset));
+            m_meshlets[i].PrimOffset++;
+            assert(m_meshlets[i].PrimOffset % 3 == 0);
+            addedElements++;
+        }
     }
 
-    std::vector<uint32_t> final_meshlet_triangles(max_meshlets * m_MeshletMaxPrims);
+    std::vector<uint32_t> final_meshlet_triangles(meshlet_triangles.size() / 3);
 
 
     size_t triangle_count = meshlet_triangles.size() / 3;

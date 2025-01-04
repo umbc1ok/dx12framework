@@ -58,35 +58,11 @@ StructuredBuffer<uint>    MeshletTriangleIndices  : register(t3);
 uint3 GetPrimitive(Meshlet m, uint index)
 {
     uint3 primitive;
-    int test = m.PrimOffset / 3;
-    int val = 0;
-    // It seems like meshoptimizer likes to reuse indices from previous primitives
-    // so if for example one triangle is ABC, second one is CDE
-    // it will not make a duplicate index, but will jest set the primitive offset to the place where C is in the first triangle
-    // lot of branching here, need to sort this out.
-    if(test * 3 == m.PrimOffset)
-    {
-        uint packedPrimitive = MeshletTriangleIndices[(m.PrimOffset + val) / 3 + index];
-        primitive.x = (packedPrimitive >> 0) & 0xFF;
-        primitive.y = (packedPrimitive >> 8) & 0xFF;
-        primitive.z = (packedPrimitive >> 16) & 0xFF;
-    }
-    else if(test * 3 + 1 == m.PrimOffset)
-    {
-        uint packedPrimitive1 = MeshletTriangleIndices[m.PrimOffset / 3 + index];
-        uint packedPrimitive2 = MeshletTriangleIndices[m.PrimOffset / 3 + index + 1];
-        primitive.x = (packedPrimitive1 >> 8) & 0xFF;
-        primitive.y = (packedPrimitive1 >> 16) & 0xFF;
-        primitive.z = (packedPrimitive2 >> 0) & 0xFF;
-    }
-    else
-    {
-        uint packedPrimitive1 = MeshletTriangleIndices[m.PrimOffset / 3 + index];
-        uint packedPrimitive2 = MeshletTriangleIndices[m.PrimOffset / 3 + index + 1];
-        primitive.x = (packedPrimitive1 >> 16) & 0xFF;
-        primitive.y = (packedPrimitive2 >> 0) & 0xFF;
-        primitive.z = (packedPrimitive2 >> 8) & 0xFF;
-    }
+    uint packedPrimitive = MeshletTriangleIndices[m.PrimOffset / 3 + index];
+    primitive.x = (packedPrimitive >> 0) & 0xFF;
+    primitive.y = (packedPrimitive >> 8) & 0xFF;
+    primitive.z = (packedPrimitive >> 16) & 0xFF;
+
     return primitive.xyz;
 }
 
