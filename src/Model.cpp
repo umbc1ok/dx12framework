@@ -211,12 +211,7 @@ void Model::uploadGPUResources()
     for (uint32_t i = 0; i < m_meshes.size(); ++i)
     {
         auto& m = m_meshes[i];
-        if (m->m_indices_mapping.size() != 0)
-        {
-            m->IndexResource = new Resource();
-            m->IndexResource->create(m->m_indices_mapping.size() * sizeof(u32), m->m_indices_mapping.data());
-        }
-        else if (m->m_indices.size() != 0)
+        if (m->m_indices.size() != 0)
         {
             m->IndexResource = new Resource();
             m->IndexResource->create(m->m_indices.size() * sizeof(u32), m->m_indices.data());

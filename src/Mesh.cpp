@@ -82,6 +82,8 @@ void Mesh::meshletize_dxmesh()
     std::vector<Subset> meshlet_subsets;
     std::vector<uint8_t> unique_vertex_indices;
     std::vector<PackedTriangle> primitive_indices;
+    std::vector<u32> indices_mapping;
+
 
     std::vector<hlsl::float3> tangents;
     std::vector<hlsl::float3> bitangents;
@@ -194,9 +196,9 @@ void Mesh::meshletize_dxmesh()
             static_cast<uint32_t>(unique_vertex_indices[i + 2]) << 16 |
             static_cast<uint32_t>(unique_vertex_indices[i + 3]) << 24;
 
-        m_indices_mapping.push_back(packed);
+        indices_mapping.push_back(packed);
     }
-
+    m_indices = indices_mapping;
     //m_cullData.resize(m_meshlets.size());
 
     //AssertFailed(ComputeCullData(
@@ -217,14 +219,15 @@ void Mesh::meshletize_meshoptimizer()
 
     size_t max_meshlets = meshopt_buildMeshletsBound(m_indices.size(), m_MeshletMaxVerts, m_MeshletMaxPrims);
     std::vector<meshopt_Meshlet> meshlets(max_meshlets);
+    std::vector<u32> indices_mapping;
     // vertex index data, so every entry in that vector is a global index of a vertex
 
-    m_indices_mapping.resize(max_meshlets * m_MeshletMaxVerts);
+    indices_mapping.resize(max_meshlets * m_MeshletMaxVerts);
     std::vector<unsigned char> meshlet_triangles(max_meshlets * m_MeshletMaxPrims * 3);
 
     size_t meshlet_count = meshopt_buildMeshlets(
         meshlets.data(),
-        m_indices_mapping.data(),
+        indices_mapping.data(),
         meshlet_triangles.data(),
         m_indices.data(),
         m_indices.size(),
@@ -273,6 +276,8 @@ void Mesh::meshletize_meshoptimizer()
     }
 
     m_meshletTriangles = final_meshlet_triangles;
+    m_indices.clear();
+    m_indices = indices_mapping;
 }
 
 void Mesh::changeMeshletizerType(MeshletizerType type)
@@ -284,7 +289,6 @@ void Mesh::changeMeshletizerType(MeshletizerType type)
 
     m_meshletTriangles.clear();
     m_meshlets.clear();
-    m_indices_mapping.clear();
 
     if (type == MESHOPT)
         meshletize_meshoptimizer();

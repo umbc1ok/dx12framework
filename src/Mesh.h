@@ -57,7 +57,6 @@ public:
 
     std::vector<Vertex> m_vertices;
     std::vector<u32> m_indices;
-    std::vector<u32> m_indices_mapping;
 
 
     std::vector<Meshlet> m_meshlets;
