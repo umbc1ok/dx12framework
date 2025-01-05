@@ -18,10 +18,29 @@ Mesh::Mesh(std::vector<Vertex> const& vertices, std::vector<u32> const& indices,
     m_UVs = UVS;
     m_attributes = attributes;
     m_type = meshletizerType;
+
     if(m_type == MESHOPT)
         meshletize_meshoptimizer();
     else
         meshletize_dxmesh();
+}
+
+Mesh::Mesh(std::vector<Vertex> const& vertices, std::vector<u32> const& indices, std::vector<Texture*> const& textures,
+    std::vector<hlsl::float3> const& positions, std::vector<hlsl::float3> const& normals,
+    std::vector<hlsl::float2> const& UVS, std::vector<u32> const& attributes, MeshletizerType meshletizerType,
+    std::vector<Meshlet> const& meshlets, std::vector<u32> meshletTriangles)
+{
+    m_vertices = vertices;
+    m_indices = indices;
+    m_textures = textures;
+    m_UVs = UVS;
+    m_positions = positions;
+    m_normals = normals;
+    m_UVs = UVS;
+    m_attributes = attributes;
+    m_meshlets = meshlets;
+    m_type = meshletizerType;
+    m_meshletTriangles = meshletTriangles;
 }
 
 void Mesh::draw()

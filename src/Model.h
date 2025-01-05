@@ -22,7 +22,8 @@ public:
     void draw();
     void update() override;
     void draw_editor() override;
-
+    void serializeMeshes() const;
+    bool deserializeMeshes();
 
     std::vector<Texture*> m_loaded_textures;
 private:
