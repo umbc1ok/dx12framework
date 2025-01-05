@@ -100,7 +100,10 @@ void Model::draw_editor()
 
     const char* items[] = { "MESHOPTIMIZER", "DXMESH"};
     {
-        ImGui::Text("Wybierz opcje:");
+        ImGui::Separator();
+        ImGui::Text("Meshletizer settings:");
+        static bool force_reload = false;
+        ImGui::Checkbox("FORCE RELOAD", &force_reload);
 
         if (ImGui::Combo("MESHLET DEBUG MODE", &m_TypeIndex, items, IM_ARRAYSIZE(items)))
         {
@@ -109,7 +112,7 @@ void Model::draw_editor()
             m_vertex_count = 0;
             m_triangle_count = 0;
             m_meshlets_count = 0;
-            if (!deserializeMeshes())
+            if (force_reload || !deserializeMeshes())
             {
                 load_model(m_path);
                 serializeMeshes();
