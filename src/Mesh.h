@@ -5,8 +5,6 @@
 #include "DX12Wrappers/Vertex.h"
 #include "DX12Wrappers/VertexBuffer.h"
 #include "Texture.h"
-#include <d3d12.h>
-#include <wrl/client.h>
 
 #include "MeshletStructs.h"
 #include "DX12Wrappers/Resource.h"
@@ -36,6 +34,11 @@ struct MeshInfo
     uint32_t LastMeshletPrimCount;
 };
 
+struct MeshSubset
+{
+    uint32_t offset;
+    uint32_t size;
+};
 
 
 
@@ -70,6 +73,7 @@ public:
     std::vector<hlsl::float3> m_normals;
     std::vector<hlsl::float2> m_UVs;
 
+    std::vector<MeshSubset> m_subsets;
 
     Resource*              VertexResource;
     Resource*              IndexResource;
@@ -81,6 +85,7 @@ public:
     int32_t m_MeshletMaxPrims = 124;
 
     MeshletizerType m_type = MESHOPT;
-
+private:
+    void generateSubsets();
 };
 

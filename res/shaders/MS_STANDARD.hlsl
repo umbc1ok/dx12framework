@@ -89,7 +89,7 @@ void ms_main(
     out vertices VertexOut verts[64]
 )
 {
-    Meshlet m = Meshlets[gid];
+    Meshlet m = Meshlets[MeshInfo.MeshletOffset + gid];
     
     SetMeshOutputCounts(m.VertCount, m.PrimCount);
 
