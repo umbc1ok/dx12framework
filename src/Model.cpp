@@ -18,6 +18,8 @@
 #include <random>
 
 #include "Input.h"
+#include "Serialization/MeshSerializer.h"
+#include "utils/Utils.h"
 using namespace Microsoft::WRL;
 
 using namespace DirectX;
@@ -25,13 +27,19 @@ using namespace DirectX;
 
 Model* Model::create(std::string const& model_path)
 {
+
     Model* model = new Model();
     model->m_path = model_path;
-    model->load_model(model_path);
+    if (!model->deserializeMeshes())
+    {
+        model->load_model(model_path);
+        model->serializeMeshes();
+    }
     model->set_can_tick(true);
     model->uploadGPUResources();
     model->m_pipeline_state = new PipelineState(L"MS_STANDARD.hlsl", L"PS_BASIC.hlsl");
     model->m_constant_buffer = new ConstantBuffer<SceneConstantBuffer>();
+    model->serializeMeshes();
     return model;
 }
 
@@ -97,19 +105,87 @@ void Model::draw_editor()
         if (ImGui::Combo("MESHLET DEBUG MODE", &m_TypeIndex, items, IM_ARRAYSIZE(items)))
         {
             MeshletizerType type = m_TypeIndex == 0 ? MESHOPT : DXMESH;
-            m_pipeline_state = new PipelineState(L"MS_STANDARD.hlsl", L"PS_BASIC.hlsl");
-
-            for (auto& mesh : m_meshes)
+            m_meshes.clear();
+            m_vertex_count = 0;
+            m_triangle_count = 0;
+            m_meshlets_count = 0;
+            if (!deserializeMeshes())
             {
-                m_meshes.clear();
-                m_vertex_count = 0;
-                m_triangle_count = 0;
-                m_meshlets_count = 0;
                 load_model(m_path);
-                uploadGPUResources();
+                serializeMeshes();
             }
+            uploadGPUResources();
         }
     }
+}
+
+void Model::serializeMeshes() const
+{
+    int index = 0;
+
+    u32 hash = olej_utils::murmur_hash(reinterpret_cast<u8 const*>(m_path.data()), m_path.size(), 69);
+    for (auto& mesh : m_meshes)
+    {
+        serializers::serializeMesh(
+            mesh->m_vertices,
+            mesh->m_indices,
+            mesh->m_meshlets,
+            mesh->m_meshletTriangles,
+            mesh->m_attributes,
+            mesh->m_positions,
+            mesh->m_normals,
+            mesh->m_UVs,
+            mesh->m_MeshletMaxVerts,
+            mesh->m_MeshletMaxPrims,
+            mesh->m_type,
+            "../../cache/mesh/" + std::to_string(hash) + "_" + std::to_string(m_TypeIndex) +"_" + std::to_string(index) +  ".mesh");
+        index++;
+    }
+}
+
+bool Model::deserializeMeshes()
+{
+    u32 hash = olej_utils::murmur_hash(reinterpret_cast<u8 const*>(m_path.data()), m_path.size(), 69);
+    int index = 0;
+    for(;;)
+    {
+        std::string path = "../../cache/mesh/" + std::to_string(hash) + "_" + std::to_string(m_TypeIndex) + "_" + std::to_string(index) + ".mesh";
+        if (!std::filesystem::exists(path))
+        {
+            break;
+        }
+        std::vector<Vertex> vertices;
+        std::vector<u32> indices;
+        std::vector<Meshlet> meshlets;
+        std::vector<u32> meshletTriangles;
+        std::vector<u32> attributes;
+        std::vector<hlsl::float3> positions;
+        std::vector<hlsl::float3> normals;
+        std::vector<hlsl::float2> UVs;
+        int32_t MeshletMaxVerts = 1;
+        int32_t MeshletMaxPrims = 1;
+        MeshletizerType type;
+        serializers::deserializeMesh(
+            vertices,
+            indices,
+            meshlets,
+            meshletTriangles,
+            attributes,
+            positions,
+            normals,
+            UVs,
+            MeshletMaxVerts,
+            MeshletMaxPrims,
+            type,
+            path);
+
+        m_meshes.push_back(new Mesh(vertices, indices, {}, positions, normals, UVs, attributes, type, meshlets, meshletTriangles));
+        index++;
+    }
+
+    if (m_meshes.empty())
+        return false;
+    return true;
 }
 
 void Model::load_model(std::string const& path)

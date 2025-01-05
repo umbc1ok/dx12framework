@@ -43,6 +43,7 @@ class Mesh
 {
 public:
     Mesh(std::vector<Vertex> const& vertices, std::vector<u32> const&  indices, std::vector<Texture*> const& textures, std::vector<hlsl::float3> const& positions, std::vector<hlsl::float3> const& normals, std::vector<hlsl::float2> const& UVS, std::vector<u32> const& attributes, MeshletizerType meshletizerType);
+    Mesh(std::vector<Vertex> const& vertices, std::vector<u32> const&  indices, std::vector<Texture*> const& textures, std::vector<hlsl::float3> const& positions, std::vector<hlsl::float3> const& normals, std::vector<hlsl::float2> const& UVS, std::vector<u32> const& attributes, MeshletizerType meshletizerType, std::vector<Meshlet> const& meshlets, std::vector<u32> meshletTriangles);
     ~Mesh() = default;
 
     void draw();
