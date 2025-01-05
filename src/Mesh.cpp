@@ -23,6 +23,9 @@ Mesh::Mesh(std::vector<Vertex> const& vertices, std::vector<u32> const& indices,
         meshletize_meshoptimizer();
     else
         meshletize_dxmesh();
+
+    generateSubsets();
+
 }
 
 Mesh::Mesh(std::vector<Vertex> const& vertices, std::vector<u32> const& indices, std::vector<Texture*> const& textures,
@@ -41,6 +44,7 @@ Mesh::Mesh(std::vector<Vertex> const& vertices, std::vector<u32> const& indices,
     m_meshlets = meshlets;
     m_type = meshletizerType;
     m_meshletTriangles = meshletTriangles;
+    generateSubsets();
 }
 
 void Mesh::draw()
@@ -77,10 +81,12 @@ void Mesh::dispatch()
 
 
     // TODO: Add subsets
-    //for (auto& subset : m_meshletSubsets)
+    int subsetsNumber = (m_meshlets.size() / 65535) + 1;
+    
+    for (auto& subset : m_subsets)
     {
-        cmd_list->SetGraphicsRoot32BitConstant(1, 0, 1);
-        cmd_list->DispatchMesh(m_meshlets.size(), 1, 1);
+        cmd_list->SetGraphicsRoot32BitConstant(1, subset.offset, 1);
+        cmd_list->DispatchMesh(subset.size, 1, 1);
     }
     
 }
@@ -230,6 +236,7 @@ void Mesh::meshletize_dxmesh()
     //    DirectX::CNORM_DEFAULT,
     //    m_cullData.data()
     //));
+
 }
 
 void Mesh::meshletize_meshoptimizer()
@@ -297,6 +304,7 @@ void Mesh::meshletize_meshoptimizer()
     m_meshletTriangles = final_meshlet_triangles;
     m_indices.clear();
     m_indices = indices_mapping;
+
 }
 
 void Mesh::changeMeshletizerType(MeshletizerType type)
@@ -313,4 +321,19 @@ void Mesh::changeMeshletizerType(MeshletizerType type)
         meshletize_meshoptimizer();
     else
         meshletize_dxmesh();
+
+    generateSubsets();
+}
+
+void Mesh::generateSubsets()
+{
+    int meshletsNumber = m_meshlets.size();
+    int subsetsNumber = (meshletsNumber / 65535) + 1;
+    for (int i = 0; i < subsetsNumber; i++)
+    {
+        MeshSubset subset;
+        subset.offset = i * 65535;
+        subset.size = subset.offset + 65535 > meshletsNumber ? meshletsNumber - subset.offset : 65535;
+        m_subsets.push_back(subset);
+    }
 }
