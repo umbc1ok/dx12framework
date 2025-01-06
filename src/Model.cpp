@@ -98,7 +98,7 @@ void Model::draw_editor()
     ImGui::Text("Vertex count: %i", m_vertex_count);
     ImGui::Text("Meshlet count: %i", m_meshlets_count);
 
-    const char* items[] = { "MESHOPTIMIZER", "DXMESH"};
+    const char* items[] = { "MESHOPTIMIZER", "DXMESH", "GREEDY"};
     {
         ImGui::Separator();
         ImGui::Text("Meshletizer settings:");
@@ -107,7 +107,7 @@ void Model::draw_editor()
 
         if (ImGui::Combo("MESHLET DEBUG MODE", &m_TypeIndex, items, IM_ARRAYSIZE(items)))
         {
-            MeshletizerType type = m_TypeIndex == 0 ? MESHOPT : DXMESH;
+            MeshletizerType type = static_cast<MeshletizerType>(m_TypeIndex);
             m_meshes.clear();
             m_vertex_count = 0;
             m_triangle_count = 0;
@@ -282,7 +282,7 @@ Mesh* Model::proccess_mesh(aiMesh const* mesh, aiScene const* scene)
     m_vertex_count += vertices.size();
     m_triangle_count += indices.size() / 3;
     ///////////////////////////////////////
-    return new Mesh(vertices, indices, textures, positions, normals, UVs, attributes, m_TypeIndex == 0 ? MESHOPT : DXMESH);
+    return new Mesh(vertices, indices, textures, positions, normals, UVs, attributes, static_cast<MeshletizerType>(m_TypeIndex));
 }
 
 void Model::uploadGPUResources()

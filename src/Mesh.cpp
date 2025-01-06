@@ -5,6 +5,7 @@
 #include <utility>
 
 #include "meshoptimizer.h"
+#include "GreedyMeshletizer/GreedyMeshletizer.h"
 #include "utils/Utils.h"
 
 Mesh::Mesh(std::vector<Vertex> const& vertices, std::vector<u32> const& indices, std::vector<Texture*> const& textures, std::vector<hlsl::float3> const& positions, std::vector<hlsl::float3> const& normals, std::vector<hlsl::float2> const& UVS, std::vector<u32> const& attributes, MeshletizerType meshletizerType)
@@ -21,8 +22,10 @@ Mesh::Mesh(std::vector<Vertex> const& vertices, std::vector<u32> const& indices,
 
     if(m_type == MESHOPT)
         meshletize_meshoptimizer();
-    else
+    else if (m_type == DXMESH)
         meshletize_dxmesh();
+    else
+        meshletizeGreedy();
 
     generateSubsets();
 
@@ -304,7 +307,14 @@ void Mesh::meshletize_meshoptimizer()
     m_meshletTriangles = final_meshlet_triangles;
     m_indices.clear();
     m_indices = indices_mapping;
+}
 
+void Mesh::meshletizeGreedy()
+{
+    std::vector<uint32_t> uniqueVertexIndices;
+    std::vector<uint32_t> indicesMapping;
+    greedy::meshletize(m_MeshletMaxVerts, m_MeshletMaxPrims, m_indices, m_indices.size(), m_meshlets, uniqueVertexIndices, m_meshletTriangles);
+    m_indices = uniqueVertexIndices;
 }
 
 void Mesh::changeMeshletizerType(MeshletizerType type)
@@ -319,8 +329,10 @@ void Mesh::changeMeshletizerType(MeshletizerType type)
 
     if (type == MESHOPT)
         meshletize_meshoptimizer();
-    else
+    else if (type == DXMESH)
         meshletize_dxmesh();
+    else
+        meshletizeGreedy();
 
     generateSubsets();
 }

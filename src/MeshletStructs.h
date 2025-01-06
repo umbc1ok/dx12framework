@@ -2,5 +2,6 @@
 enum MeshletizerType
 {
     MESHOPT,
-    DXMESH
+    DXMESH,
+    GREEDY
 };
