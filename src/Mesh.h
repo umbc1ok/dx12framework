@@ -55,6 +55,7 @@ public:
 
     void meshletize_dxmesh();
     void meshletize_meshoptimizer();
+    void meshletizeGreedy();
 
     void changeMeshletizerType(MeshletizerType type);
 
