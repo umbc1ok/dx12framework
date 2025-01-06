@@ -56,7 +56,7 @@ Shader::Shader(std::wstring name, ShaderType type)
 //
 //        size_t size = 0;
 //        char const* shader_source = read_hlsl_shader_from_file(m_path, &size);
-//        hr = D3DPreprocess(shader_source, size, olej_utils::wstring_to_string(m_path).c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, &shader_blob,
+//        hr = D3DPreprocess(shader_source, size, olej_utils::wstringToString(m_path).c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, &shader_blob,
 //            &shader_compile_errors_blob);
 //
 //        delete[] shader_source;
@@ -79,10 +79,10 @@ Shader::Shader(std::wstring name, ShaderType type)
 //        }
 //
 //        std::wstring const hash =
-//            std::to_wstring(olej_utils::murmur_hash(static_cast<u8*>(shader_blob->GetBufferPointer()), shader_blob->GetBufferSize(), 0));
+//            std::to_wstring(olej_utils::murmurHash(static_cast<u8*>(shader_blob->GetBufferPointer()), shader_blob->GetBufferSize(), 0));
 //        if (!read_file_to_blob(m_path + hash + m_main_function_name, &shader_blob))
 //        {
-//            hr = D3DCompile(shader_blob->GetBufferPointer(), shader_blob->GetBufferSize(), nullptr, nullptr, nullptr, olej_utils::wstring_to_string(m_main_function_name).c_str(), olej_utils::wstring_to_string(shader_model).c_str(), 0, 0,
+//            hr = D3DCompile(shader_blob->GetBufferPointer(), shader_blob->GetBufferSize(), nullptr, nullptr, nullptr, olej_utils::wstringToString(m_main_function_name).c_str(), olej_utils::wstringToString(shader_model).c_str(), 0, 0,
 //                &shader_blob, &shader_compile_errors_blob);
 //
 //            if (FAILED(hr))
@@ -138,7 +138,7 @@ void Shader::load_shader_dxc()
     std::wstring hash;
     // Hash the preprocessed shader to check if it was already compiled before
     {
-        hash = std::to_wstring(olej_utils::murmur_hash(static_cast<u8*>(preprocessedBlob->GetBufferPointer()), preprocessedBuffer->Size, 0));
+        hash = std::to_wstring(olej_utils::murmurHash(static_cast<u8*>(preprocessedBlob->GetBufferPointer()), preprocessedBuffer->Size, 0));
         size_t size = 0;
         char* data = read_hlsl_shader_from_file(m_compiled_path + m_filename + hash + m_main_function_name, &size);
         
@@ -240,7 +240,7 @@ bool Shader::save_compiled_shader(std::wstring const& path, IDxcBlob* p_blob)
 
     if (!file.is_open())
     {
-        std::cerr << "Failed to open file: " << olej_utils::wstring_to_string(full_path) << std::endl;
+        std::cerr << "Failed to open file: " << olej_utils::wstringToString(full_path) << std::endl;
         return false;
     }
 
@@ -248,7 +248,7 @@ bool Shader::save_compiled_shader(std::wstring const& path, IDxcBlob* p_blob)
 
     if (!file)
     {
-        std::cerr << "Failed to write to file: " << olej_utils::wstring_to_string(full_path) << std::endl;
+        std::cerr << "Failed to write to file: " << olej_utils::wstringToString(full_path) << std::endl;
         return false;
     }
 
@@ -303,7 +303,7 @@ ID3DBlob* Shader::get_blob()
 //
 //    if (!file.read(static_cast<char*>((*pp_blob)->GetBufferPointer()), file_size))
 //    {
-//        std::cerr << "Failed to read file: " << olej_utils::wstring_to_string(full_path) + "\n";
+//        std::cerr << "Failed to read file: " << olej_utils::wstringToString(full_path) + "\n";
 //        (*pp_blob)->Release();
 //        *pp_blob = nullptr;
 //        return false;

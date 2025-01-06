@@ -13,27 +13,27 @@ public:
     Scene() = default;
     virtual void unload();
 
-    void add_child(Entity* const& entity);
-    void remove_child(Entity* const& entity);
+    void addChild(Entity* const& entity);
+    void removeChild(Entity* const& entity);
 
-    void add_component_to_awake(Component* const& component);
-    void remove_component_to_awake(Component* const& component);
+    void addComponentToAwake(Component* const& component);
+    void removeComponentFromAwake(Component* const& component);
 
-    void add_component_to_start(Component* const& component);
-    void remove_component_to_start(Component* const& component);
+    void addComponentToStart(Component* const& component);
+    void removeComponentFromStart(Component* const& component);
 
-    [[nodiscard]] Entity* get_entity_by_guid(std::string const& guid) const;
-    [[nodiscard]] Component* get_component_by_guid(std::string const& guid) const;
+    [[nodiscard]] Entity* getEntityByGUID(std::string const& guid) const;
+    [[nodiscard]] Component* getComponentByGuid(std::string const& guid) const;
 
-    void run_frame();
+    void runFrame();
 
     bool is_running = false;
 
-    std::vector<Entity*> entities = {};
-    std::vector<Component*> tickable_components = {};
+    std::vector<Entity*> m_entities = {};
+    std::vector<Component*> m_tickableComponents = {};
 
 private:
-    std::vector<Component*> components_to_awake = {};
-    std::vector<Component*> components_to_start = {};
+    std::vector<Component*> m_componentsToAwake = {};
+    std::vector<Component*> m_componentsToStart = {};
 };
 

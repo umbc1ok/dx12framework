@@ -32,33 +32,33 @@ Model* Model::create(std::string const& model_path)
     model->m_path = model_path;
     if (!model->deserializeMeshes())
     {
-        model->load_model(model_path);
+        model->loadModel(model_path);
         model->serializeMeshes();
     }
     model->set_can_tick(true);
     model->uploadGPUResources();
-    model->m_pipeline_state = new PipelineState(L"MS_STANDARD.hlsl", L"PS_BASIC.hlsl");
-    model->m_constant_buffer = new ConstantBuffer<SceneConstantBuffer>();
+    model->m_pipelineState = new PipelineState(L"MS_STANDARD.hlsl", L"PS_BASIC.hlsl");
+    model->m_constantBuffer = new ConstantBuffer<SceneConstantBuffer>();
     model->serializeMeshes();
     return model;
 }
 
-void Model::set_constant_buffer()
+void Model::setConstantBuffer()
 {
-    hlsl::float4x4 view = Camera::get_main_camera()->get_view_matrix();
-    hlsl::float4x4 projection = Camera::get_main_camera()->get_projection_matrix();
+    hlsl::float4x4 view = Camera::getMainCamera()->getViewMatrix();
+    hlsl::float4x4 projection = Camera::getMainCamera()->getProjectionMatrix();
     hlsl::float4x4 world = entity->transform->get_model_matrix();
     hlsl::float4x4 mvpMatrix = projection * view;
     mvpMatrix = mvpMatrix * world;
 
-    m_constant_buffer_data.World = hlsl::transpose(world);
-    m_constant_buffer_data.WorldView = hlsl::transpose(world * view);
-    m_constant_buffer_data.WorldViewProj = hlsl::transpose(mvpMatrix);
-    m_constant_buffer_data.DrawFlag = Renderer::get_instance()->get_debug_mode();
+    m_constantBufferData.World = hlsl::transpose(world);
+    m_constantBufferData.WorldView = hlsl::transpose(world * view);
+    m_constantBufferData.WorldViewProj = hlsl::transpose(mvpMatrix);
+    m_constantBufferData.DrawFlag = Renderer::get_instance()->get_debug_mode();
 
-    m_constant_buffer_data.time = ImGui::GetTime();
-    m_constant_buffer->uploadData(m_constant_buffer_data);
-    m_constant_buffer->setConstantBuffer(0);
+    m_constantBufferData.time = ImGui::GetTime();
+    m_constantBuffer->uploadData(m_constantBufferData);
+    m_constantBuffer->setConstantBuffer(0);
 
 }
 
@@ -69,14 +69,14 @@ void Model::draw()
     auto const entry = Renderer::get_instance()->get_profiler()->startEntry(cmd_list, "Model Draw");
     {
         
-        auto kb = Input::get_instance()->m_keyboard->GetState();
+        auto kb = Input::getInstance()->m_keyboard->GetState();
         if (kb.F5)
         {
-            m_pipeline_state = new PipelineState(L"MS_STANDARD.hlsl", L"PS_BASIC.hlsl");
+            m_pipelineState = new PipelineState(L"MS_STANDARD.hlsl", L"PS_BASIC.hlsl");
         }
-        cmd_list->SetGraphicsRootSignature(m_pipeline_state->get_root_signature());
-        cmd_list->SetPipelineState(m_pipeline_state->get_pipeline_state());
-        set_constant_buffer();
+        cmd_list->SetGraphicsRootSignature(m_pipelineState->get_root_signature());
+        cmd_list->SetPipelineState(m_pipelineState->get_pipeline_state());
+        setConstantBuffer();
         for (auto& mesh : m_meshes)
         {
             mesh->dispatch();
@@ -91,12 +91,12 @@ void Model::update()
     draw();
 }
 
-void Model::draw_editor()
+void Model::drawEditor()
 {
-    Component::draw_editor();
-    ImGui::Text("Triangle count: %i", m_triangle_count);
-    ImGui::Text("Vertex count: %i", m_vertex_count);
-    ImGui::Text("Meshlet count: %i", m_meshlets_count);
+    Component::drawEditor();
+    ImGui::Text("Triangle count: %i", m_triangleCount);
+    ImGui::Text("Vertex count: %i", m_vertexCount);
+    ImGui::Text("Meshlet count: %i", m_meshletsCount);
 
     const char* items[] = { "MESHOPTIMIZER", "DXMESH", "GREEDY"};
     {
@@ -109,12 +109,12 @@ void Model::draw_editor()
         {
             MeshletizerType type = static_cast<MeshletizerType>(m_TypeIndex);
             m_meshes.clear();
-            m_vertex_count = 0;
-            m_triangle_count = 0;
-            m_meshlets_count = 0;
+            m_vertexCount = 0;
+            m_triangleCount = 0;
+            m_meshletsCount = 0;
             if (force_reload || !deserializeMeshes())
             {
-                load_model(m_path);
+                loadModel(m_path);
                 serializeMeshes();
             }
             uploadGPUResources();
@@ -126,7 +126,7 @@ void Model::serializeMeshes() const
 {
     int index = 0;
 
-    u32 hash = olej_utils::murmur_hash(reinterpret_cast<u8 const*>(m_path.data()), m_path.size(), 69);
+    u32 hash = olej_utils::murmurHash(reinterpret_cast<u8 const*>(m_path.data()), m_path.size(), 69);
     for (auto& mesh : m_meshes)
     {
         serializers::serializeMesh(
@@ -148,7 +148,7 @@ void Model::serializeMeshes() const
 
 bool Model::deserializeMeshes()
 {
-    u32 hash = olej_utils::murmur_hash(reinterpret_cast<u8 const*>(m_path.data()), m_path.size(), 69);
+    u32 hash = olej_utils::murmurHash(reinterpret_cast<u8 const*>(m_path.data()), m_path.size(), 69);
     int index = 0;
     for(;;)
     {
@@ -191,7 +191,7 @@ bool Model::deserializeMeshes()
     return true;
 }
 
-void Model::load_model(std::string const& path)
+void Model::loadModel(std::string const& path)
 {
     Assimp::Importer importer;
     aiScene const* scene = importer.ReadFile(path, aiProcess_FlipUVs | aiProcess_ForceGenNormals | aiProcess_JoinIdenticalVertices);
@@ -205,25 +205,25 @@ void Model::load_model(std::string const& path)
     std::filesystem::path const filesystem_path = path;
     m_directory = filesystem_path.parent_path().string();
 
-    proccess_node(scene->mRootNode, scene);
+    processNode(scene->mRootNode, scene);
 }
 
-void Model::proccess_node(aiNode const* node, aiScene const* scene)
+void Model::processNode(aiNode const* node, aiScene const* scene)
 {
     for (u32 i = 0; i < node->mNumMeshes; ++i)
     {
         aiMesh const* mesh = scene->mMeshes[node->mMeshes[i]];
-        m_meshes.emplace_back(proccess_mesh(mesh, scene));
-        m_meshlets_count += m_meshes.back()->m_meshlets.size();
+        m_meshes.emplace_back(processMesh(mesh, scene));
+        m_meshletsCount += m_meshes.back()->m_meshlets.size();
     }
 
     for (u32 i = 0; i < node->mNumChildren; ++i)
     {
-        proccess_node(node->mChildren[i], scene);
+        processNode(node->mChildren[i], scene);
     }
 }
 
-Mesh* Model::proccess_mesh(aiMesh const* mesh, aiScene const* scene)
+Mesh* Model::processMesh(aiMesh const* mesh, aiScene const* scene)
 {
     std::vector<Vertex> vertices;
     std::vector<hlsl::float3> positions;
@@ -275,12 +275,12 @@ Mesh* Model::proccess_mesh(aiMesh const* mesh, aiScene const* scene)
     aiMaterial const* assimp_material = scene->mMaterials[mesh->mMaterialIndex];
 
     std::vector<Texture*> diffuse_maps =
-        load_material_textures(assimp_material, aiTextureType_DIFFUSE, TextureType::Diffuse);
+        loadMaterialTextures(assimp_material, aiTextureType_DIFFUSE, TextureType::Diffuse);
     textures.insert(textures.end(), diffuse_maps.begin(), diffuse_maps.end());
 
     // STATS //////////////////////////////
-    m_vertex_count += vertices.size();
-    m_triangle_count += indices.size() / 3;
+    m_vertexCount += vertices.size();
+    m_triangleCount += indices.size() / 3;
     ///////////////////////////////////////
     return new Mesh(vertices, indices, textures, positions, normals, UVs, attributes, static_cast<MeshletizerType>(m_TypeIndex));
 }
@@ -315,7 +315,7 @@ void Model::uploadGPUResources()
     }
 }
 
-std::vector<Texture*> Model::load_material_textures(aiMaterial const* material, aiTextureType const type,
+std::vector<Texture*> Model::loadMaterialTextures(aiMaterial const* material, aiTextureType const type,
     TextureType const type_name)
 {
     std::vector<Texture*> textures;

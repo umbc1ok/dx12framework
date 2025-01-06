@@ -18,7 +18,7 @@ void Input::create()
     m_instance = new Input();
 }
 
-bool Input::get_key_pressed()
+bool Input::getKeyPressed()
 {
     auto kb = m_keyboard->GetState();
     return kb.Escape;
@@ -27,6 +27,6 @@ bool Input::get_key_pressed()
 void Input::update()
 {
     auto mouse_state = m_mouse->GetState();
-    m_mouse_delta = hlsl::float2(mouse_state.x, mouse_state.y) - m_mouse_position;
-    m_mouse_position = hlsl::float2(mouse_state.x, mouse_state.y);
+    m_mouseDelta = hlsl::float2(mouse_state.x, mouse_state.y) - m_mousePosition;
+    m_mousePosition = hlsl::float2(mouse_state.x, mouse_state.y);
 }

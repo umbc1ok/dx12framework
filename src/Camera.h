@@ -12,28 +12,28 @@ public:
 
     void update() override;
 	static void create();
-	static Camera* get_main_camera() { return m_main_camera; };
-	hlsl::float4x4 get_view_matrix() const;
-	hlsl::float4x4 get_projection_matrix();
-	void update_internals();
-	void handle_input();
+	static Camera* getMainCamera() { return m_main_camera; };
+	hlsl::float4x4 getViewMatrix() const;
+	hlsl::float4x4 getProjectionMatrix();
+	void updateInternals();
+	void handleInput();
 
 private:
 	inline static Camera* m_main_camera;
 
-	float m_movement_speed = 0.05f;
+	float m_movementSpeed = 0.05f;
 	hlsl::float4x4 m_projection;
-	float width = 1920.0f;
-	float height = 1080.0f;
+	float m_width = 1920.0f;
+	float m_height = 1080.0f;
 
-	float fov = 90.0f;
+	float m_fov = 90.0f;
 	float m_yaw = 0.0f;
 	float m_pitch = 10.0f;
 
-	float near_plane = 0.1f;
-	float far_plane = 1000.0f;
+	float m_nearPlane = 0.1f;
+	float m_farPlane = 1000.0f;
 
 	bool m_dirty = true;
-    bool m_RMB_pressed = false;
+    bool m_RMBPressed = false;
 };
 

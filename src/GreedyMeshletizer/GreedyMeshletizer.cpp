@@ -105,7 +105,7 @@ namespace greedy
 
         for (int i = 0; i < cache.numPrimitives; i++)
         {
-            packedPrimitiveIndices.push_back(olej_utils::pack_triangle(cache.primitives[i * 3 + 0], cache.primitives[i * 3 + 1], cache.primitives[i * 3 + 2]));
+            packedPrimitiveIndices.push_back(olej_utils::packTriangle(cache.primitives[i * 3 + 0], cache.primitives[i * 3 + 1], cache.primitives[i * 3 + 2]));
         }
     }
 

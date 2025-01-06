@@ -13,15 +13,15 @@ public:
     Input();
     ~Input() = default;
     static void create();
-    static Input* get_instance() { return m_instance; }
-    hlsl::float2 get_mouse_delta() const { return m_mouse_delta; }
-    bool get_key_pressed();
+    static Input* getInstance() { return m_instance; }
+    hlsl::float2 getMouseDelta() const { return m_mouseDelta; }
+    bool getKeyPressed();
     void update();
     DirectX::Keyboard* m_keyboard;
     DirectX::Mouse* m_mouse;
 private:
-    hlsl::float2 m_mouse_position;
-    hlsl::float2 m_mouse_delta;
+    hlsl::float2 m_mousePosition;
+    hlsl::float2 m_mouseDelta;
     static Input* m_instance;
 };
 

@@ -137,44 +137,45 @@ public:
     Editor();
     ~Editor() = default;
     void update();
-    void draw_inspector(EditorWindow* const& window);
-    void draw_content_browser(EditorWindow* const& window);
-    void draw_debug_window(EditorWindow* const& window);
+    void drawInspector(EditorWindow* const& window);
+    void drawContentBrowser(EditorWindow* const& window);
+    void drawDebugWindow(EditorWindow* const& window);
     void cleanup();
-    void remove_window(EditorWindow* const& window);
-    void add_inspector();
-    void add_game();
-    void add_content_browser();
-    void add_scene_hierarchy();
-    void add_debug_window();
-    void add_profiler_window();
-    void set_docking_space();
+    void removeWindow(EditorWindow* const& window);
+    void addInspector();
+    void addGame();
+    void addContentBrowser();
+    void addSceneHierarchy();
+    void addDebugWindow();
+    void addProfilerWindow();
+    void setDockingSpace();
 
 
     i32 m_last_window_id = 0;
 
 private:
-    void draw_scene_hierarchy(EditorWindow* const& window);
-    void draw_entity_recursively(Transform* const& transform);
-    void draw_window_menu_bar(EditorWindow* const& window);
-    void draw_profiler(EditorWindow* const& window);
+    void drawSceneHierarchy(EditorWindow* const& window);
+    void drawEntityRecursively(Transform* const& transform);
+    void drawWindowMenuBar(EditorWindow* const& window);
+    void drawProfiler(EditorWindow* const& window);
 
-    void add_child_entity() const;
-    void copy_selected_entity() const;
-    void delete_selected_entity() const;
-    bool draw_entity_popup(Entity* const& entity);
+    void addChildEntity() const;
+    // todo: implement
+    void copySelectedEntity() const;
+    void deleteSelectedEntity() const;
+    bool drawEntityPopup(Entity* const& entity);
 
     std::vector<Asset> m_assets = {};
-    std::vector<EditorWindow*> m_editor_windows = {};
-    Entity* m_selected_entity = nullptr;
-    bool m_rendering_to_editor = false;
-    bool m_polygon_mode_active = false;
-    int m_frame_count = 0;
-    double m_current_time = 0.0;
-    double m_last_second = 0.0;
-    double m_average_ms_per_frame = 0.0;
+    std::vector<EditorWindow*> m_editorWindows = {};
+    Entity* m_selectedEntity = nullptr;
+    bool m_renderingToEditor = false;
+    bool m_polygonModeActive = false;
+    int m_frameCount = 0;
+    double m_currentTime = 0.0;
+    double m_lastSecond = 0.0;
+    double m_averageMsPerFrame = 0.0;
     static Editor* m_instance;
 
-    int m_current_debug_mode = 1;
-    std::string m_search_filter = {};
+    int m_currentDebugMode = 1;
+    std::string m_searchFilter = {};
 };

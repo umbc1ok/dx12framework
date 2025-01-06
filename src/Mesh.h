@@ -50,11 +50,11 @@ public:
     ~Mesh() = default;
 
     void draw();
-    void bind_textures();
+    void bindTextures();
     void dispatch();
 
-    void meshletize_dxmesh();
-    void meshletize_meshoptimizer();
+    void meshletizeDXMESH();
+    void meshletizeMeshoptimizer();
     void meshletizeGreedy();
 
     void changeMeshletizerType(MeshletizerType type);

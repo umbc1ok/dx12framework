@@ -22,7 +22,7 @@ void Engine::setup()
     create_game();
     Renderer::get_instance()->camera_entity = Entity::create("Camera");
     Camera::create();
-    Renderer::get_instance()->camera_entity->add_component(Camera::get_main_camera());
+    Renderer::get_instance()->camera_entity->add_component(Camera::getMainCamera());
     Game::init();
 }
 
@@ -31,8 +31,8 @@ void Engine::run()
     bool run = true;
     while (run)
     {
-        //MainScene::get_instance()->run_frame();
-        Input::get_instance()->update();
+        //MainScene::getInstance()->runFrame();
+        Input::getInstance()->update();
         Renderer::get_instance()->start_frame();
         Renderer::get_instance()->render();
         Editor::get_instance()->update();

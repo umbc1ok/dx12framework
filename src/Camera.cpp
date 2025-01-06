@@ -12,7 +12,7 @@ class Entity;
 void Camera::update()
 {
     Component::update();
-    handle_input();
+    handleInput();
 }
 
 void Camera::create()
@@ -21,7 +21,7 @@ void Camera::create()
     m_main_camera->set_can_tick(true);
 }
 
-hlsl::float4x4 Camera::get_view_matrix() const
+hlsl::float4x4 Camera::getViewMatrix() const
 {
     hlsl::float3 const position = entity->transform->get_position();
     hlsl::float3 const up = entity->transform->get_up();
@@ -29,69 +29,69 @@ hlsl::float4x4 Camera::get_view_matrix() const
     return hlsl::lookAt(position, position + forward, up);
 }
 
-hlsl::float4x4 Camera::get_projection_matrix()
+hlsl::float4x4 Camera::getProjectionMatrix()
 {
-    update_internals();
+    updateInternals();
 
     return m_projection;
 }
 
-void Camera::update_internals()
+void Camera::updateInternals()
 {
     if (m_dirty)
     {
         // HACK: Farplane and nearplane are switched, otherwise depth test was behaving oppositely
-        m_projection = hlsl::perspective(fov, width / height, far_plane, near_plane);
+        m_projection = hlsl::perspective(m_fov, m_width / m_height, m_farPlane, m_nearPlane);
     }
 }
 
-void Camera::handle_input()
+void Camera::handleInput()
 {
-    auto kb = Input::get_instance()->m_keyboard->GetState();
-    auto mouse = Input::get_instance()->m_mouse;
-    auto mouse_state = Input::get_instance()->m_mouse->GetState();
-    hlsl::float2 mouse_delta = Input::get_instance()->get_mouse_delta();
+    auto kb = Input::getInstance()->m_keyboard->GetState();
+    auto mouse = Input::getInstance()->m_mouse;
+    auto mouse_state = Input::getInstance()->m_mouse->GetState();
+    hlsl::float2 mouse_delta = Input::getInstance()->getMouseDelta();
     auto position = entity->transform->get_position();
-    if(m_RMB_pressed != mouse_state.rightButton)
+    if(m_RMBPressed != mouse_state.rightButton)
     {
-        m_RMB_pressed = mouse_state.rightButton;
+        m_RMBPressed = mouse_state.rightButton;
         Window::get_instance()->change_mouse_mode(!mouse_state.rightButton);
     }
 
-    if(m_RMB_pressed)
+    if(m_RMBPressed)
     {
         if(mouse_state.scrollWheelValue > 0)
-            m_movement_speed += 0.01f;
+            m_movementSpeed += 0.01f;
         else if (mouse_state.scrollWheelValue < 0)
-            m_movement_speed -= 0.01f;
+            m_movementSpeed -= 0.01f;
 
-        if (m_movement_speed < 0.01f)
-            m_movement_speed = 0.01f;
+        if (m_movementSpeed < 0.01f)
+            m_movementSpeed = 0.01f;
         mouse->ResetScrollWheelValue();
 
         if (kb.W)
         {
-            entity->transform->set_local_position(position + entity->transform->get_forward() * m_movement_speed);
+            entity->transform->set_local_position(position + entity->transform->get_forward() * m_movementSpeed);
         }
         if (kb.S)
         {
-            entity->transform->set_local_position(position - entity->transform->get_forward() * m_movement_speed);
+            entity->transform->set_local_position(position - entity->transform->get_forward() * m_movementSpeed);
         }
         if (kb.A)
         {
-            entity->transform->set_local_position(position - entity->transform->get_right() * m_movement_speed);
+            entity->transform->set_local_position(position - entity->transform->get_right() * m_movementSpeed);
         }
         if (kb.D)
         {
-            entity->transform->set_local_position(position + entity->transform->get_right() * m_movement_speed);
+            entity->transform->set_local_position(position + entity->transform->get_right() * m_movementSpeed);
         }
         if (kb.E)
         {
-            entity->transform->set_local_position(position + entity->transform->get_up() * m_movement_speed);
+            entity->transform->set_local_position(position + entity->transform->get_up() * m_movementSpeed);
         }
         if (kb.Q)
         {
-            entity->transform->set_local_position(position - entity->transform->get_up() * m_movement_speed);
+            entity->transform->set_local_position(position - entity->transform->get_up() * m_movementSpeed);
         }
 
         {
@@ -105,7 +105,7 @@ void Camera::handle_input()
             entity->transform->set_local_euler_angles(hlsl::float3(m_pitch, -m_yaw, 0.0f));
 
         }
-        update_internals();
+        updateInternals();
     }
 }
 
