@@ -15,10 +15,10 @@ Editor* Editor::m_instance;
 void Editor::create()
 {
     m_instance = new Editor();
-    m_instance->add_scene_hierarchy();
-    m_instance->add_inspector();
-    m_instance->add_debug_window();
-    m_instance->add_profiler_window();
+    m_instance->addSceneHierarchy();
+    m_instance->addInspector();
+    m_instance->addDebugWindow();
+    m_instance->addProfilerWindow();
 }
 
 Editor::Editor()
@@ -55,46 +55,46 @@ Editor::Editor()
 
 void Editor::update()
 {
-    m_current_time = ImGui::GetTime();
-    m_frame_count += 1;
+    m_currentTime = ImGui::GetTime();
+    m_frameCount += 1;
 
-    if (m_current_time - m_last_second >= 1.0)
+    if (m_currentTime - m_lastSecond >= 1.0)
     {
-        m_average_ms_per_frame = 1000.0 / static_cast<double>(m_frame_count);
-        m_frame_count = 0;
-        m_last_second = ImGui::GetTime();
+        m_averageMsPerFrame = 1000.0 / static_cast<double>(m_frameCount);
+        m_frameCount = 0;
+        m_lastSecond = ImGui::GetTime();
     }
-    Window::get_instance()->update_window_name("DX12Framework by Hubert Olejnik @" + std::to_string(1000.0f / m_average_ms_per_frame) + "fps");
+    Window::get_instance()->update_window_name("DX12Framework by Hubert Olejnik @" + std::to_string(1000.0f / m_averageMsPerFrame) + "fps");
 
     ImGui_ImplDX12_NewFrame();
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
-    set_docking_space();
+    setDockingSpace();
     ImGuiIO& m_io = ImGui::GetIO();
 
-    auto const windows_copy = m_editor_windows;
+    auto const windows_copy = m_editorWindows;
     for (auto& window : windows_copy)
     {
         switch (window->type)
         {
         case EditorWindowType::Debug:
-            draw_debug_window(window);
+            drawDebugWindow(window);
             break;
         case EditorWindowType::Content:
-            draw_content_browser(window);
+            drawContentBrowser(window);
             break;
         case EditorWindowType::Hierarchy:
-            draw_scene_hierarchy(window);
+            drawSceneHierarchy(window);
             break;
         case EditorWindowType::Game:
             // TODO: Rendering to texture currently not supported
             //draw_game(window);
             break;
         case EditorWindowType::Inspector:
-            draw_inspector(window);
+            drawInspector(window);
             break;
         case EditorWindowType::Profiler:
-            draw_profiler(window);
+            drawProfiler(window);
             break;
         case EditorWindowType::Custom:
             printf("Custom Editor windows are currently not supported.\n");
@@ -116,14 +116,14 @@ void Editor::update()
     
 }
 
-void Editor::draw_inspector(EditorWindow* const& window)
+void Editor::drawInspector(EditorWindow* const& window)
 {
     bool is_still_open = true;
     bool const open = ImGui::Begin(window->get_name().c_str(), &is_still_open, window->flags);
 
     if (!is_still_open)
     {
-        remove_window(window);
+        removeWindow(window);
         ImGui::End();
         return;
     }
@@ -134,7 +134,7 @@ void Editor::draw_inspector(EditorWindow* const& window)
         return;
     }
 
-    draw_window_menu_bar(window);
+    drawWindowMenuBar(window);
 
     if (window->is_locked() && window->get_locked_entity() == nullptr)
     {
@@ -145,7 +145,7 @@ void Editor::draw_inspector(EditorWindow* const& window)
 
     if (current_entity == nullptr)
     {
-        current_entity = m_selected_entity;
+        current_entity = m_selectedEntity;
     }
 
     if (current_entity == nullptr)
@@ -290,7 +290,7 @@ void Editor::draw_inspector(EditorWindow* const& window)
             ImGui::Checkbox("Enabled", &enabled);
             component->set_enabled(enabled);
 
-            component->draw_editor();
+            component->drawEditor();
 
             ImGui::Spacing();
             ImGui::Separator();
@@ -308,18 +308,18 @@ void Editor::draw_inspector(EditorWindow* const& window)
         ImGui::SetNextItemWidth(-FLT_MIN);
         ImGui::PushItemWidth(-FLT_MIN);
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(ImGui::GetStyle().FramePadding.x, 5));
-        ImGui::InputText("##filter", m_search_filter.data(), 100);
+        ImGui::InputText("##filter", m_searchFilter.data(), 100);
         ImGui::PopStyleVar();
         ImGui::PopItemWidth();
 
-        std::ranges::transform(m_search_filter, m_search_filter.begin(), [](char const c) { return std::tolower(c); });
+        std::ranges::transform(m_searchFilter, m_searchFilter.begin(), [](char const c) { return std::tolower(c); });
 
 #define CONCAT_CLASS(name) class name
 #define ENUMERATE_COMPONENT(name, ui_name)                                                                        \
     {                                                                                                             \
         std::string ui_name_lower(ui_name);                                                                       \
         std::ranges::transform(ui_name_lower, ui_name_lower.begin(), [](u8 const c) { return std::tolower(c); }); \
-        if (m_search_filter.empty() || ui_name_lower.find(m_search_filter) != std::string::npos)                  \
+        if (m_searchFilter.empty() || ui_name_lower.find(m_searchFilter) != std::string::npos)                  \
         {                                                                                                         \
             if (ImGui::Button(ui_name, ImVec2(-FLT_MIN, 20)))                                                     \
                 entity->add_component<CONCAT_CLASS(name)>(##name::create());                                      \
@@ -334,14 +334,14 @@ void Editor::draw_inspector(EditorWindow* const& window)
     ImGui::End();
 }
 
-void Editor::draw_content_browser(EditorWindow* const& window)
+void Editor::drawContentBrowser(EditorWindow* const& window)
 {
     bool is_still_open = true;
     bool const open = ImGui::Begin(window->get_name().c_str(), &is_still_open, window->flags);
 
     if (!is_still_open)
     {
-        remove_window(window);
+        removeWindow(window);
         ImGui::End();
         return;
     }
@@ -352,7 +352,7 @@ void Editor::draw_content_browser(EditorWindow* const& window)
         return;
     }
 
-    draw_window_menu_bar(window);
+    drawWindowMenuBar(window);
 
     // TODO: Implement scene saving
     //draw_scene_save();
@@ -444,14 +444,14 @@ void Editor::draw_content_browser(EditorWindow* const& window)
     */
     ImGui::End();
 }
-void Editor::draw_debug_window(EditorWindow* const& window)
+void Editor::drawDebugWindow(EditorWindow* const& window)
 {
     bool is_still_open = true;
     bool const open = ImGui::Begin(window->get_name().c_str(), &is_still_open, window->flags);
 
     if (!is_still_open)
     {
-        remove_window(window);
+        removeWindow(window);
         ImGui::End();
         return;
     }
@@ -462,20 +462,20 @@ void Editor::draw_debug_window(EditorWindow* const& window)
         return;
     }
 
-    draw_window_menu_bar(window);
+    drawWindowMenuBar(window);
 
-    ImGui::Text("Application average %.3f ms/frame", m_average_ms_per_frame);
-    if(ImGui::Checkbox("Polygon mode", &m_polygon_mode_active))
+    ImGui::Text("Application average %.3f ms/frame", m_averageMsPerFrame);
+    if(ImGui::Checkbox("Polygon mode", &m_polygonModeActive))
     {
-        Renderer::get_instance()->set_wireframe(m_polygon_mode_active);
+        Renderer::get_instance()->set_wireframe(m_polygonModeActive);
     }
     const char* items[] = { "NONE", "MESHLET VIEW", "TRIANGLE VIEW" };
     {
         ImGui::Text("Wybierz opcje:");
 
-        if (ImGui::Combo("MESHLET DEBUG MODE", &m_current_debug_mode, items, IM_ARRAYSIZE(items)))
+        if (ImGui::Combo("MESHLET DEBUG MODE", &m_currentDebugMode, items, IM_ARRAYSIZE(items)))
         {
-            Renderer::get_instance()->set_debug_mode(m_current_debug_mode);
+            Renderer::get_instance()->set_debug_mode(m_currentDebugMode);
         }
     }
 
@@ -527,7 +527,7 @@ void Editor::draw_debug_window(EditorWindow* const& window)
 
     ImGui::End();
 
-    //Renderer::get_instance()->wireframe_mode_active = m_polygon_mode_active;
+    //Renderer::get_instance()->wireframe_mode_active = m_polygonModeActive;
 }
 
 void Editor::cleanup()
@@ -537,59 +537,59 @@ void Editor::cleanup()
     ImGui::DestroyContext();
 }
 
-void Editor::remove_window(EditorWindow* const& window)
+void Editor::removeWindow(EditorWindow* const& window)
 {
-    auto const it = std::ranges::find(m_editor_windows, window);
+    auto const it = std::ranges::find(m_editorWindows, window);
 
-    if (it != m_editor_windows.end())
+    if (it != m_editorWindows.end())
     {
         delete window;
-        m_editor_windows.erase(it);
+        m_editorWindows.erase(it);
     }
 }
 
-void Editor::add_inspector()
+void Editor::addInspector()
 {
     auto inspector_window = new EditorWindow(m_last_window_id, ImGuiWindowFlags_MenuBar, EditorWindowType::Inspector);
-    m_editor_windows.emplace_back(inspector_window);
+    m_editorWindows.emplace_back(inspector_window);
 }
 
-void Editor::add_game()
+void Editor::addGame()
 {
     auto game_window = new EditorWindow(m_last_window_id, ImGuiWindowFlags_MenuBar, EditorWindowType::Game);
-    m_editor_windows.emplace_back(game_window);
+    m_editorWindows.emplace_back(game_window);
 }
 
-void Editor::add_content_browser()
+void Editor::addContentBrowser()
 {
     auto content_browser_window = new EditorWindow(m_last_window_id, ImGuiWindowFlags_MenuBar, EditorWindowType::Content);
-    m_editor_windows.emplace_back(content_browser_window);
+    m_editorWindows.emplace_back(content_browser_window);
 }
 
-void Editor::add_scene_hierarchy()
+void Editor::addSceneHierarchy()
 {
     auto hierarchy_window = new EditorWindow(m_last_window_id, ImGuiWindowFlags_MenuBar, EditorWindowType::Hierarchy);
-    m_editor_windows.emplace_back(hierarchy_window);
+    m_editorWindows.emplace_back(hierarchy_window);
 }
 
-void Editor::add_debug_window()
+void Editor::addDebugWindow()
 {
     auto debug_window = new EditorWindow(m_last_window_id, ImGuiWindowFlags_MenuBar, EditorWindowType::Debug);
-    m_editor_windows.emplace_back(debug_window);
+    m_editorWindows.emplace_back(debug_window);
 }
 
-void Editor::add_profiler_window()
+void Editor::addProfilerWindow()
 {
     auto profiler_window = new EditorWindow(m_last_window_id, ImGuiWindowFlags_MenuBar, EditorWindowType::Profiler);
-    m_editor_windows.emplace_back(profiler_window);
+    m_editorWindows.emplace_back(profiler_window);
 }
 
-void Editor::set_docking_space()
+void Editor::setDockingSpace()
 {
     ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
 }
 
-void Editor::draw_window_menu_bar(EditorWindow* const& window)
+void Editor::drawWindowMenuBar(EditorWindow* const& window)
 {
     if (ImGui::BeginMenuBar())
     {
@@ -599,27 +599,27 @@ void Editor::draw_window_menu_bar(EditorWindow* const& window)
             {
                 if (ImGui::MenuItem("Inspector"))
                 {
-                    add_inspector();
+                    addInspector();
                 }
                 if (ImGui::MenuItem("Game"))
                 {
-                    add_game();
+                    addGame();
                 }
                 if (ImGui::MenuItem("Content"))
                 {
-                    add_content_browser();
+                    addContentBrowser();
                 }
                 if (ImGui::MenuItem("Hierarchy"))
                 {
-                    add_scene_hierarchy();
+                    addSceneHierarchy();
                 }
                 if (ImGui::MenuItem("Debug"))
                 {
-                    add_debug_window();
+                    addDebugWindow();
                 }
                 if (ImGui::MenuItem("Profiler"))
                 {
-                    add_profiler_window();
+                    addProfilerWindow();
                 }
                 ImGui::EndMenu();
             }
@@ -628,7 +628,7 @@ void Editor::draw_window_menu_bar(EditorWindow* const& window)
             {
                 if (ImGui::Button("Lock"))
                 {
-                    window->set_is_locked(!window->is_locked(), LockData{ m_selected_entity });
+                    window->set_is_locked(!window->is_locked(), LockData{ m_selectedEntity });
                 }
             }
 
@@ -644,7 +644,7 @@ void Editor::draw_window_menu_bar(EditorWindow* const& window)
     }
 }
 
-void Editor::draw_profiler(EditorWindow* const& window)
+void Editor::drawProfiler(EditorWindow* const& window)
 {
     bool is_still_open = true;
     auto profiler = Renderer::get_instance()->get_profiler();
@@ -678,31 +678,31 @@ void Editor::draw_profiler(EditorWindow* const& window)
 }
 
 
-void Editor::add_child_entity() const
+void Editor::addChildEntity() const
 {
-    if (m_selected_entity == nullptr)
+    if (m_selectedEntity == nullptr)
         return;
 
-    auto const entity = m_selected_entity;
+    auto const entity = m_selectedEntity;
     auto const child_entity = Entity::create("Child");
     child_entity->transform->set_parent(entity->transform);
 }
 
-void Editor::delete_selected_entity() const
+void Editor::deleteSelectedEntity() const
 {
-    if (m_selected_entity != nullptr)
+    if (m_selectedEntity != nullptr)
     {
-        m_selected_entity->destroy_immediate();
+        m_selectedEntity->destroy_immediate();
     }
 }
 
-bool Editor::draw_entity_popup(Entity* const& entity)
+bool Editor::drawEntityPopup(Entity* const& entity)
 {
-    if (m_selected_entity != nullptr && ImGui::BeginPopupContextItem(nullptr, ImGuiPopupFlags_MouseButtonRight))
+    if (m_selectedEntity != nullptr && ImGui::BeginPopupContextItem(nullptr, ImGuiPopupFlags_MouseButtonRight))
     {
-        if (m_selected_entity != entity)
+        if (m_selectedEntity != entity)
         {
-            m_selected_entity = entity;
+            m_selectedEntity = entity;
         }
 
         if (ImGui::Button("Rename"))
@@ -722,7 +722,7 @@ bool Editor::draw_entity_popup(Entity* const& entity)
 
         if (ImGui::Button("Delete"))
         {
-            delete_selected_entity();
+            deleteSelectedEntity();
             ImGui::CloseCurrentPopup();
             ImGui::EndPopup();
             return false;
@@ -757,7 +757,7 @@ bool Editor::draw_entity_popup(Entity* const& entity)
         */
         if (ImGui::Button("Add child"))
         {
-            add_child_entity();
+            addChildEntity();
             ImGui::CloseCurrentPopup();
             ImGui::EndPopup();
             return true;
@@ -770,14 +770,14 @@ bool Editor::draw_entity_popup(Entity* const& entity)
     return true;
 }
 
-void Editor::draw_scene_hierarchy(EditorWindow* const& window)
+void Editor::drawSceneHierarchy(EditorWindow* const& window)
 {
     bool is_still_open = true;
     bool const open = ImGui::Begin(window->get_name().c_str(), &is_still_open, window->flags);
 
     if (!is_still_open)
     {
-        remove_window(window);
+        removeWindow(window);
         ImGui::End();
         return;
     }
@@ -788,7 +788,7 @@ void Editor::draw_scene_hierarchy(EditorWindow* const& window)
         return;
     }
 
-    draw_window_menu_bar(window);
+    drawWindowMenuBar(window);
 
     if (ImGui::BeginMenuBar())
     {
@@ -801,26 +801,26 @@ void Editor::draw_scene_hierarchy(EditorWindow* const& window)
     }
 
     // Draw every entity without a parent, and draw its children recursively
-    auto const entities_copy = MainScene::get_instance()->entities;
+    auto const entities_copy = MainScene::get_instance()->m_entities;
     for (auto const& entity : entities_copy)
     {
         if (entity->transform->parent != nullptr)
             continue;
 
-        draw_entity_recursively(entity->transform);
+        drawEntityRecursively(entity->transform);
     }
 
     ImGui::End();
 }
 
-void Editor::draw_entity_recursively(Transform* const& transform)
+void Editor::drawEntityRecursively(Transform* const& transform)
 {
     if (transform == nullptr || transform->entity == nullptr)
         return;
 
     auto const entity = transform->entity;
     ImGuiTreeNodeFlags const node_flags =
-        (m_selected_entity != nullptr && m_selected_entity->hashed_guid == entity->hashed_guid ? ImGuiTreeNodeFlags_Selected : 0)
+        (m_selectedEntity != nullptr && m_selectedEntity->hashed_guid == entity->hashed_guid ? ImGuiTreeNodeFlags_Selected : 0)
         | (transform->children.empty() ? ImGuiTreeNodeFlags_Leaf : 0) | ImGuiTreeNodeFlags_OpenOnDoubleClick
         | ImGuiTreeNodeFlags_OpenOnArrow;
 
@@ -829,10 +829,10 @@ void Editor::draw_entity_recursively(Transform* const& transform)
     {
         if (ImGui::IsItemClicked() || ImGui::IsItemClicked(ImGuiMouseButton_Right))
         {
-            m_selected_entity = entity;
+            m_selectedEntity = entity;
         }
 
-        if (!draw_entity_popup(entity))
+        if (!drawEntityPopup(entity))
         {
             return;
         }
@@ -843,10 +843,10 @@ void Editor::draw_entity_recursively(Transform* const& transform)
 
     if (ImGui::IsItemClicked() || ImGui::IsItemClicked(ImGuiMouseButton_Right))
     {
-        m_selected_entity = entity;
+        m_selectedEntity = entity;
     }
 
-    if (!draw_entity_popup(entity))
+    if (!drawEntityPopup(entity))
     {
         ImGui::TreePop();
         return;
@@ -854,7 +854,7 @@ void Editor::draw_entity_recursively(Transform* const& transform)
 
     for (auto const& child : transform->children)
     {
-        draw_entity_recursively(child);
+        drawEntityRecursively(child);
     }
 
     ImGui::TreePop();

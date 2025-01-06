@@ -25,9 +25,9 @@ void Grass::start()
 
 }
 
-void Grass::draw_editor()
+void Grass::drawEditor()
 {
-    Component::draw_editor();
+    Component::drawEditor();
     ImGui::SliderFloat2("Wind Direction", &wind->direction.x, -1, 1);
     wind->direction = hlsl::normalize(wind->direction);
     ImGui::SliderFloat("Wind Strength", &m_base_force,0,500);
@@ -91,7 +91,7 @@ void Grass::update()
         
     }
 
-    auto kb = Input::get_instance()->m_keyboard->GetState();
+    auto kb = Input::getInstance()->m_keyboard->GetState();
     if (kb.F5)
     {
         m_pipeline_state = new PipelineState(L"MS_GRASS.hlsl", L"PS_GRASS.hlsl");
@@ -138,8 +138,8 @@ void Grass::generate_blades()
 
 void Grass::set_constant_buffer()
 {
-    hlsl::float4x4 view = Camera::get_main_camera()->get_view_matrix();
-    hlsl::float4x4 projection = Camera::get_main_camera()->get_projection_matrix();
+    hlsl::float4x4 view = Camera::getMainCamera()->getViewMatrix();
+    hlsl::float4x4 projection = Camera::getMainCamera()->getProjectionMatrix();
     hlsl::float4x4 world = entity->transform->get_model_matrix();
     hlsl::float4x4 mvpMatrix = projection * view;
     mvpMatrix = mvpMatrix * world;

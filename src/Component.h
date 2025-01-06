@@ -22,7 +22,7 @@ public:
 
     void destroy_immediate();
 
-    virtual void draw_editor();
+    virtual void drawEditor();
 
     Entity* entity;
 

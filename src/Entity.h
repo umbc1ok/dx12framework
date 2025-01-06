@@ -27,7 +27,7 @@ public:
         components.emplace_back(component);
         component->entity = this;
 
-        MainScene::get_instance()->add_component_to_start(component);
+        MainScene::get_instance()->addComponentToStart(component);
 
         // Initialization for internal components
         component->initialize();
@@ -55,7 +55,7 @@ public:
         }
         else
         {
-            MainScene::get_instance()->add_component_to_awake(component);
+            MainScene::get_instance()->addComponentToAwake(component);
         }
 
 
@@ -68,7 +68,7 @@ public:
         components.emplace_back(component);
         component->entity = this;
 
-        MainScene::get_instance()->add_component_to_start(component);
+        MainScene::get_instance()->addComponentToStart(component);
 
         // Initialization for internal components
         component->initialize();
@@ -95,7 +95,7 @@ public:
         }
         else
         {
-            MainScene::get_instance()->add_component_to_awake(component);
+            MainScene::get_instance()->addComponentToAwake(component);
         }
 
         return component;
@@ -108,7 +108,7 @@ public:
         components.emplace_back(component);
         component->entity = this;
 
-        MainScene::get_instance()->add_component_to_start(component);
+        MainScene::get_instance()->addComponentToStart(component);
 
         // Initialization for internal components
         component->initialize();
@@ -135,7 +135,7 @@ public:
         }
         else
         {
-            MainScene::get_instance()->add_component_to_awake(component);
+            MainScene::get_instance()->addComponentToAwake(component);
         }
 
 

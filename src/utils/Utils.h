@@ -13,7 +13,7 @@ namespace olej_utils
     };
 
     template<typename T>
-    void swap_and_erase(std::vector<T>& vector, T element)
+    void swapAndErase(std::vector<T>& vector, T element)
     {
         if (auto const it = std::ranges::find(vector, element); it != vector.end())
         {
@@ -23,7 +23,7 @@ namespace olej_utils
         }
     }
 
-    inline unsigned char random_char()
+    inline unsigned char randomChar()
     {
         std::random_device rd;
         std::mt19937 gen(rd());
@@ -31,12 +31,12 @@ namespace olej_utils
         return static_cast<unsigned char>(dis(gen));
     }
 
-    inline std::string generate_hex(unsigned int const length)
+    inline std::string generateHEX(unsigned int const length)
     {
         std::stringstream ss;
         for (unsigned int i = 0; i < length; ++i)
         {
-            auto const random_character = random_char();
+            auto const random_character = randomChar();
             std::stringstream hexstream;
             hexstream << std::hex << static_cast<int>(random_character);
             auto hex = hexstream.str();
@@ -45,7 +45,7 @@ namespace olej_utils
         return ss.str();
     }
 
-    inline std::string generate_guid()
+    inline std::string generateGUID()
     {
         std::string result;
 
@@ -53,13 +53,13 @@ namespace olej_utils
 
         for (unsigned int i = 0; i < 5; ++i)
         {
-            result += generate_hex(guid_lengths[i]);
+            result += generateHEX(guid_lengths[i]);
         }
 
         return result;
     }
 
-    inline u32 murmur_hash(u8 const* key, size_t const len, u32 const seed)
+    inline u32 murmurHash(u8 const* key, size_t const len, u32 const seed)
     {
         u32 h = seed;
         if (len > 3)
@@ -102,20 +102,21 @@ namespace olej_utils
         return h;
     }
 
-    inline LPCWSTR const string_to_LPCWSTR(std::string const& s)
+    inline LPCWSTR const stringToLPCWSTR(std::string const& s)
     {
         std::wstring wsTmp(s.begin(), s.end());
         LPCWSTR result = wsTmp.c_str();
         return result;
     }
 
-    inline std::string const wstring_to_string(std::wstring const& s)
+    // probably this can be replaced with some std function
+    inline std::string const wstringToString(std::wstring const& s)
     {
         std::string wsTmp(s.begin(), s.end());
         return wsTmp;
     }
 
-    inline uint32_t pack_triangle(uint8_t x, uint8_t y, uint8_t z)
+    inline uint32_t packTriangle(uint8_t x, uint8_t y, uint8_t z)
     {
         uint32_t packed_triangle =
             (static_cast<uint32_t>(x) << 0)

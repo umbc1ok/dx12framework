@@ -9,7 +9,7 @@
 
 Component::Component()
 {
-    guid = olej_utils::generate_guid();
+    guid = olej_utils::generateGUID();
 }
 
 void Component::initialize()
@@ -54,23 +54,23 @@ void Component::destroy_immediate()
 
     if (!has_been_awaken)
     {
-        MainScene::get_instance()->remove_component_to_awake(this);
+        MainScene::get_instance()->removeComponentFromAwake(this);
     }
 
     if (!has_been_started)
     {
-        MainScene::get_instance()->remove_component_to_start(this);
+        MainScene::get_instance()->removeComponentFromStart(this);
     }
 
     set_can_tick(false);
     set_enabled(false);
     uninitialize();
 
-    olej_utils::swap_and_erase(entity->components, this);
+    olej_utils::swapAndErase(entity->components, this);
     entity = nullptr;
 }
 
-void Component::draw_editor()
+void Component::drawEditor()
 {
     if (ImGui::Button("Remove component", ImVec2(-FLT_MIN, 20.0f)))
     {
@@ -84,9 +84,9 @@ void Component::set_can_tick(bool const value)
     {
 
         if (value)
-            MainScene::get_instance()->tickable_components.emplace_back(this);
+            MainScene::get_instance()->m_tickableComponents.emplace_back(this);
         else
-            olej_utils::swap_and_erase(MainScene::get_instance()->tickable_components, this);
+            olej_utils::swapAndErase(MainScene::get_instance()->m_tickableComponents, this);
 
     }
 

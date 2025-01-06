@@ -70,7 +70,7 @@ void Renderer::render()
         } m_profiler->endEntry(cmd_list, profilerEntrySettingFrameSettings);
         ProfilerEntry* const profilerEntryDrawAll = m_profiler->startEntry(cmd_list, "Draw all objects");
         {
-            MainScene::get_instance()->run_frame();
+            MainScene::get_instance()->runFrame();
         } m_profiler->endEntry(cmd_list, profilerEntryDrawAll);
 
     } m_profiler->endEntry(cmd_list, profilerEntry);

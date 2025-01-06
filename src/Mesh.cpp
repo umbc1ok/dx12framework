@@ -21,9 +21,9 @@ Mesh::Mesh(std::vector<Vertex> const& vertices, std::vector<u32> const& indices,
     m_type = meshletizerType;
 
     if(m_type == MESHOPT)
-        meshletize_meshoptimizer();
+        meshletizeMeshoptimizer();
     else if (m_type == DXMESH)
-        meshletize_dxmesh();
+        meshletizeDXMESH();
     else
         meshletizeGreedy();
 
@@ -55,7 +55,7 @@ void Mesh::draw()
     dispatch();
 }
 
-void Mesh::bind_textures()
+void Mesh::bindTextures()
 {
     std::vector<ID3D12DescriptorHeap*> heaps = std::vector<ID3D12DescriptorHeap*>(m_textures.size());
     for (int i = 0; i < m_textures.size(); i++)
@@ -77,10 +77,10 @@ void Mesh::bind_textures()
 void Mesh::dispatch()
 {
     auto cmd_list = Renderer::get_instance()->g_pd3dCommandList;
-    cmd_list->SetGraphicsRootShaderResourceView(2, VertexResource->GetGPUVirtualAddress());
-    cmd_list->SetGraphicsRootShaderResourceView(3, MeshletResource->GetGPUVirtualAddress());
-    cmd_list->SetGraphicsRootShaderResourceView(4, IndexResource->GetGPUVirtualAddress());
-    cmd_list->SetGraphicsRootShaderResourceView(5, MeshletTriangleIndicesResource->GetGPUVirtualAddress());
+    cmd_list->SetGraphicsRootShaderResourceView(2, VertexResource->getGPUVirtualAddress());
+    cmd_list->SetGraphicsRootShaderResourceView(3, MeshletResource->getGPUVirtualAddress());
+    cmd_list->SetGraphicsRootShaderResourceView(4, IndexResource->getGPUVirtualAddress());
+    cmd_list->SetGraphicsRootShaderResourceView(5, MeshletTriangleIndicesResource->getGPUVirtualAddress());
 
 
     // TODO: Add subsets
@@ -94,7 +94,7 @@ void Mesh::dispatch()
     
 }
 
-void Mesh::meshletize_dxmesh()
+void Mesh::meshletizeDXMESH()
 {
     const uint32_t vertexCount = static_cast<uint32_t>(m_vertices.size());
     const uint32_t triCount = m_indices.size() / 3;
@@ -213,7 +213,7 @@ void Mesh::meshletize_dxmesh()
 
     for (int i = 0; i < primitive_indices.size(); i++)
     {
-        m_meshletTriangles[i] = olej_utils::pack_triangle(static_cast<uint8_t>(primitive_indices[i].indices.i0), static_cast<uint8_t>(primitive_indices[i].indices.i1), static_cast<uint8_t>(primitive_indices[i].indices.i2));
+        m_meshletTriangles[i] = olej_utils::packTriangle(static_cast<uint8_t>(primitive_indices[i].indices.i0), static_cast<uint8_t>(primitive_indices[i].indices.i1), static_cast<uint8_t>(primitive_indices[i].indices.i2));
     }
 
     for(int i = 0; i < unique_vertex_indices.size(); i += 4)
@@ -242,7 +242,7 @@ void Mesh::meshletize_dxmesh()
 
 }
 
-void Mesh::meshletize_meshoptimizer()
+void Mesh::meshletizeMeshoptimizer()
 {
     const float cone_weight = 0.0f;
 
@@ -301,7 +301,7 @@ void Mesh::meshletize_meshoptimizer()
     size_t triangle_count = meshlet_triangles.size() / 3;
     for (size_t i = 0; i < triangle_count; ++i)
     {
-        final_meshlet_triangles[i] = olej_utils::pack_triangle(meshlet_triangles[i * 3 + 0], meshlet_triangles[i * 3 + 1], meshlet_triangles[i * 3 + 2]);
+        final_meshlet_triangles[i] = olej_utils::packTriangle(meshlet_triangles[i * 3 + 0], meshlet_triangles[i * 3 + 1], meshlet_triangles[i * 3 + 2]);
     }
 
     m_meshletTriangles = final_meshlet_triangles;
@@ -328,9 +328,9 @@ void Mesh::changeMeshletizerType(MeshletizerType type)
     m_meshlets.clear();
 
     if (type == MESHOPT)
-        meshletize_meshoptimizer();
+        meshletizeMeshoptimizer();
     else if (type == DXMESH)
-        meshletize_dxmesh();
+        meshletizeDXMESH();
     else
         meshletizeGreedy();
 

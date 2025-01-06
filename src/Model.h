@@ -7,7 +7,6 @@
 #include "utils/maths.h"
 #include "../res/shaders/shared/shared_cb.h"
 #include "DX12Wrappers/ConstantBuffer.h"
-#include "MeshletStructs.h"
 
 class Mesh;
 
@@ -18,38 +17,38 @@ public:
     static Model* create(std::string const& model_path);
     ~Model() = default;
 
-    void set_constant_buffer();
+    void setConstantBuffer();
     void draw();
     void update() override;
-    void draw_editor() override;
+    void drawEditor() override;
     void serializeMeshes() const;
     bool deserializeMeshes();
 
     std::vector<Texture*> m_loaded_textures;
 private:
-    void load_model(std::string const& model_path);
-    void proccess_node(aiNode const* node, aiScene const* scene);
-    Mesh* proccess_mesh(aiMesh const* mesh, aiScene const* scene);
+    void loadModel(std::string const& model_path);
+    void processNode(aiNode const* node, aiScene const* scene);
+    Mesh* processMesh(aiMesh const* mesh, aiScene const* scene);
 
     void uploadGPUResources();
-    std::vector<Texture*> load_material_textures(aiMaterial const* material, aiTextureType type, TextureType type_name);
+    std::vector<Texture*> loadMaterialTextures(aiMaterial const* material, aiTextureType type, TextureType type_name);
 
     std::vector<Mesh*> m_meshes;
     std::string m_directory;
 
 
-    ConstantBuffer<SceneConstantBuffer>* m_constant_buffer;
-    SceneConstantBuffer m_constant_buffer_data;
+    ConstantBuffer<SceneConstantBuffer>* m_constantBuffer;
+    SceneConstantBuffer m_constantBufferData;
 
     // STATS FOR EDITOR
-    int m_vertex_count = 0;
-    int m_triangle_count = 0;
-    int m_meshlets_count = 0;
+    int m_vertexCount = 0;
+    int m_triangleCount = 0;
+    int m_meshletsCount = 0;
 
     int m_TypeIndex = 2;
 
     std::string m_path;
 
-    PipelineState* m_pipeline_state;
+    PipelineState* m_pipelineState;
 };
 

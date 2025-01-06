@@ -19,7 +19,7 @@ public:
     ~Grass() = default;
     void update() override;
     void start() override;
-    void draw_editor() override;
+    void drawEditor() override;
     void generate_blades();
     //void create_CBV();
     void upload_GPU_resources();
