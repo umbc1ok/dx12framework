@@ -16,7 +16,6 @@ Mesh::Mesh(std::vector<Vertex> const& vertices, std::vector<u32> const& indices,
     m_UVs = UVS;
     m_positions = positions;
     m_normals = normals;
-    m_UVs = UVS;
     m_attributes = attributes;
     m_type = meshletizerType;
 
@@ -42,7 +41,6 @@ Mesh::Mesh(std::vector<Vertex> const& vertices, std::vector<u32> const& indices,
     m_UVs = UVS;
     m_positions = positions;
     m_normals = normals;
-    m_UVs = UVS;
     m_attributes = attributes;
     m_meshlets = meshlets;
     m_type = meshletizerType;
@@ -311,9 +309,12 @@ void Mesh::meshletizeMeshoptimizer()
 
 void Mesh::meshletizeGreedy()
 {
+    std::vector<uint32_t> newIndices(m_indices.size());
+    meshopt_optimizeVertexCache(newIndices.data(), m_indices.data(), m_indices.size(), m_vertices.size());
+    m_indices = newIndices;
     std::vector<uint32_t> uniqueVertexIndices;
     std::vector<uint32_t> indicesMapping;
-    greedy::meshletize(m_MeshletMaxVerts, m_MeshletMaxPrims, m_indices, m_indices.size(), m_meshlets, uniqueVertexIndices, m_meshletTriangles);
+    greedy::meshletize(m_MeshletMaxVerts, m_MeshletMaxPrims, m_indices, m_vertices, m_meshlets, uniqueVertexIndices, m_meshletTriangles);
     m_indices = uniqueVertexIndices;
 }
 

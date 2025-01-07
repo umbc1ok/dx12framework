@@ -1,7 +1,10 @@
 #include "GreedyMeshletizer.h"
 
+#include <iostream>
+#include <queue>
 #include <unordered_set>
 
+#include "Mesh.h"
 #include "utils/Utils.h"
 
 namespace greedy
@@ -22,6 +25,7 @@ namespace greedy
             numVertices = 0;
             // reset
             memset(vertices, 0xFFFFFFFF, sizeof(vertices));
+            memset(primitives, 0xFFFFFFFF, sizeof(primitives));
         }
 
         bool cannotInsert(const uint32_t* indices, uint32_t maxVertexSize, uint32_t maxPrimitiveSize) const
@@ -86,7 +90,8 @@ namespace greedy
         }
     };
 
-    void addMeshlet(std::vector<Meshlet>& meshlets,
+    void addMeshlet(
+        std::vector<Meshlet>& meshlets,
         std::vector<uint32_t>& uniqueVertexIndices,
         std::vector<uint32_t>& packedPrimitiveIndices,
         const PrimitiveCache& cache)
@@ -109,101 +114,17 @@ namespace greedy
         }
     }
 
-
-    void meshletize(
-        uint32_t maxVerts, uint32_t maxPrims,
-        const std::vector<uint32_t>& indices, uint32_t indexCount,
-        std::vector<Meshlet>& meshlets,
-        std::vector<uint32_t>& uniqueVertexIndices,
-        std::vector<uint32_t>& packedPrimitiveIndices)
-    {
-        PrimitiveCache cache;
-        cache.reset();
-
-        std::unordered_map<uint32_t, Vertex*> indexVertexMap;
-        std::vector<Triangle*> triangles;
-
-        generateMeshGraph(&indexVertexMap, &triangles, indices.size(), indices);
-
-        std::vector<bool> used(triangles.size(), false);
-
-        std::unordered_set<uint32_t> currentVerts;
-
-        uint32_t score;
-        uint32_t maxScore;
-
-
-        for(uint32_t usedCount = 0 ; usedCount < triangles.size(); usedCount++)
-        {
-            if (used[usedCount]) continue;
-
-            std::vector<Triangle*> frontier = { triangles[usedCount] };
-            currentVerts.clear();
-
-            while(frontier.size() > 0)
-            {
-                maxScore = 0;
-
-                Triangle* candidate;
-                uint32_t candidateIndex;
-                uint32_t candidateIndices[3];
-
-                for (uint32_t i = 0; i < frontier.size(); i++)
-                {
-                    Triangle* current = frontier[i];
-                    score = 0;
-                    for (Vertex* v : current->vertices)
-                        score += currentVerts.count(v->index);
-
-                    if (score >= maxScore)
-                    {
-                        maxScore = score;
-                        candidate = current;
-                        candidateIndex = i;
-                    }
-                }
-                for (uint32_t i = 0; i < 3; ++i)
-                    candidateIndices[i] = candidate->vertices[i]->index;
-
-                // check if we've filled the meshlet already
-                if (cache.cannotInsert(candidateIndices, maxVerts, maxPrims))
-                {
-                    addMeshlet(meshlets, uniqueVertexIndices, packedPrimitiveIndices, cache);
-                    cache.reset();
-                    break;
-                }
-
-                cache.insert(candidateIndices);
-                std::swap(frontier[candidateIndex], frontier[frontier.size() - 1]);
-                frontier.pop_back();
-
-                for (Vertex* v : candidate->vertices) 
-                    currentVerts.insert(v->index);
-                for (Triangle* t : candidate->neighbours)
-                {
-                    if (!used[t->id]) frontier.push_back(t);
-                }
-                used[candidate->id] = true;
-            }
-            if (!cache.empty())
-            {
-                addMeshlet(meshlets, uniqueVertexIndices, packedPrimitiveIndices, cache);
-            }
-        }
-
-    }
-
     void generateMeshGraph(
-        std::unordered_map<uint32_t, Vertex*>* indexVertexMap,
+        std::unordered_map<uint32_t, MeshletizerVertex*>* indexVertexMap,
         std::vector<Triangle*>* triangles,
-        const uint32_t numIndices,
-        const std::vector<uint32_t>& indices)
+        const std::vector<uint32_t>& indices,
+        const std::vector<Vertex>& vertices)
     {
         int unique = 0;
         int reused = 0;
 
-        triangles->resize(numIndices / 3);
-        for(int i = 0; i < numIndices / 3 ; i++)
+        triangles->resize(indices.size() / 3);
+        for (int i = 0; i < indices.size() / 3; i++)
         {
             Triangle* t = new Triangle();
             t->id = i;
@@ -220,10 +141,11 @@ namespace greedy
                 }
                 else
                 {
-                    Vertex* v = new Vertex();
+                    MeshletizerVertex* v = new MeshletizerVertex();
                     v->index = indices[i * 3 + j];
                     v->degree = 1;
                     v->neighbours.push_back(t);
+                    v->position = vertices[v->index].position;
                     (*indexVertexMap)[v->index] = v;
                     t->vertices.push_back(v);
                     unique++;
@@ -235,9 +157,9 @@ namespace greedy
         uint32_t found;
         Triangle* currentTriangle;
         Triangle* candidateNeighborTriangle;
-        Vertex* currentVertex;
+        MeshletizerVertex* currentVertex;
         // possibly rename to something more descriptive
-        Vertex* connectedVertex;
+        MeshletizerVertex* connectedVertex;
 
         // Find adjacent triangles
         for (uint32_t i = 0; i < triangles->size(); ++i)
@@ -249,7 +171,7 @@ namespace greedy
                 currentVertex = currentTriangle->vertices[j];
                 // For each triangle containing each vertex of each triangle
                 for (uint32_t k = 0; k < currentVertex->neighbours.size(); ++k)
-                { 
+                {
                     candidateNeighborTriangle = currentVertex->neighbours[k];
                     if (candidateNeighborTriangle->id == currentTriangle->id) continue; // You are yourself a neighbour of your neighbours
                     // For each vertex of each triangle containing ...
@@ -269,6 +191,178 @@ namespace greedy
     }
 
 
+    void sortVertices(
+        const std::vector<Vertex>& vertices,
+        std::unordered_map<uint32_t, MeshletizerVertex*>& indexVertexMap,
+        std::vector<Triangle*>& triangles,
+        std::vector<MeshletizerVertex*>& reorganizedVertices)
+    {
+        hlsl::float3 min{ FLT_MAX, FLT_MAX, FLT_MAX };
+        hlsl::float3 max{ FLT_MIN, FLT_MIN, FLT_MIN };
+
+        for(Triangle* tri : triangles)
+        {
+            min = hlsl::min(min, indexVertexMap[tri->vertices[0]->index]->position);
+            min = hlsl::min(min, indexVertexMap[tri->vertices[1]->index]->position);
+            min = hlsl::min(min, indexVertexMap[tri->vertices[2]->index]->position);
+
+            max = hlsl::max(max, indexVertexMap[tri->vertices[0]->index]->position);
+            max = hlsl::max(max, indexVertexMap[tri->vertices[1]->index]->position);
+            max = hlsl::max(max, indexVertexMap[tri->vertices[2]->index]->position);
+        }
+
+        hlsl::float3 axis = hlsl::abs(max - min);
+
+        reorganizedVertices.reserve(indexVertexMap.size());
+        for (int i = 0; i < indexVertexMap.size(); i++)
+        {
+            reorganizedVertices.push_back(indexVertexMap[i]);
+        }
+
+        // Sort by X axis
+        if (axis.x > axis.y && axis.x > axis.z)
+        {
+            std::sort(reorganizedVertices.begin(), reorganizedVertices.end(),
+                [&](const MeshletizerVertex* a, const MeshletizerVertex* b)
+                {
+                    return vertices[a->index].position[0] > vertices[b->index].position[0];
+                });
+
+            std::cout << "Sorted by X axis" << std::endl;
+        }
+        // Sort by Y axis
+        else if (axis.y > axis.z && axis.y > axis.x) 
+        {
+            std::sort(reorganizedVertices.begin(), reorganizedVertices.end(),
+                [&](const MeshletizerVertex* a, const MeshletizerVertex* b)
+                {
+                    return vertices[a->index].position[1] > vertices[b->index].position[1];
+                });
+
+            std::cout << "Sorted by Y axis" << std::endl;
+        }
+        // Sort by Z axis
+        else
+        {
+            std::sort(reorganizedVertices.begin(), reorganizedVertices.end(),
+                [&](const MeshletizerVertex* a, const MeshletizerVertex* b)
+                {
+                    return vertices[a->index].position[2] > vertices[b->index].position[2];
+                });
+
+            std::cout << "Sorted by Z axis" << std::endl;
+        }
+    }
+
+    void generateMeshlets(
+        const std::vector<MeshletizerVertex*>& vertsVector,
+        std::vector<Meshlet>& meshlets,
+        uint32_t maxVerts, uint32_t maxPrims,
+        std::vector<uint32_t>& uniqueVertexIndices,
+        std::vector<uint32_t>& packedPrimitiveIndices,
+        std::unordered_map<uint32_t,
+        MeshletizerVertex*>& indexVertexMap)
+    {
+        std::queue<MeshletizerVertex*> priorityQueue;
+        std::unordered_map<unsigned int, unsigned char> used;
+        PrimitiveCache cache;
+        cache.reset();
+
+        for (int i = 0; i < vertsVector.size(); ++i)
+        {
+            MeshletizerVertex* vert = vertsVector[i];
+            if (used.contains(vert->index))
+                continue;
+
+            priorityQueue.push(vert);
+
+
+            while (!priorityQueue.empty())
+            {
+                MeshletizerVertex* newVertex = priorityQueue.front();
+                priorityQueue.pop();
+
+                for (Triangle* tri : newVertex->neighbours)
+                {
+                    if (tri->flag == 1)
+                        continue;
+
+                    uint32_t candidateIndices[3] = {};
+                    for (uint32_t j = 0; j < 3; ++j)
+                    {
+                        uint32_t idx = tri->vertices[j]->index;
+                        candidateIndices[j] = idx;
+                        if (!used.contains(idx))
+                            priorityQueue.push(tri->vertices[j]);
+                    }
+
+                    if (cache.cannotInsert(candidateIndices, maxVerts, maxPrims))
+                    {
+                        for (int v = 0; v < cache.numVertices; ++v)
+                        {
+                            for (Triangle* newTri : indexVertexMap[cache.vertices[v]]->neighbours)
+                            {
+                                if (newTri->flag == 1)
+                                    continue;
+
+                                for (uint32_t j = 0; j < 3; ++j)
+                                {
+                                    uint32_t idx = newTri->vertices[j]->index;
+                                    candidateIndices[j] = idx;
+                                    if (!used.contains(idx))
+                                        priorityQueue.push(newTri->vertices[j]);
+                                }
+
+                                if (!cache.cannotInsert(candidateIndices, maxVerts, maxPrims))
+                                {
+                                    cache.insert(candidateIndices);
+                                    newTri->flag = 1;
+                                }
+                            }
+                        }
+                        addMeshlet(meshlets, uniqueVertexIndices, packedPrimitiveIndices, cache);
+
+                        //reset cache and empty priorityQueue
+                        priorityQueue = {};
+                        priorityQueue.push(vert);
+                        cache.reset();
+                        continue;
+                    }
+                    cache.insert(candidateIndices);
+
+                    tri->flag = 1;
+                }
+
+                // TODO: CHeck why I had to comment it out
+                //priorityQueue.pop();
+                used[vert->index] = 1;
+            }
+        }
+        if (!cache.empty())
+        {
+            addMeshlet(meshlets, uniqueVertexIndices, packedPrimitiveIndices, cache);
+            cache.reset();
+        }
+
+    }
+
+    void meshletize(
+        uint32_t maxVerts, uint32_t maxPrims,
+        std::vector<uint32_t>& indices,
+        std::vector<Vertex>& vertices,
+        std::vector<Meshlet>& meshlets,
+        std::vector<uint32_t>& uniqueVertexIndices,
+        std::vector<uint32_t>& packedPrimitiveIndices)
+    {
+        std::unordered_map<uint32_t, MeshletizerVertex*> indexVertexMap;
+        std::vector<Triangle*> triangles;
+        std::vector<MeshletizerVertex*> vertexVector;
+
+        generateMeshGraph(&indexVertexMap, &triangles, indices, vertices);
+        sortVertices(vertices, indexVertexMap, triangles, vertexVector);
+
+        generateMeshlets(vertexVector, meshlets, maxVerts, maxPrims, uniqueVertexIndices, packedPrimitiveIndices, indexVertexMap);
+    }
 
 
 }
