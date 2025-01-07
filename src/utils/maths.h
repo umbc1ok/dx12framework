@@ -544,4 +544,21 @@ namespace hlsl
             return value / len;
         return float2(0.0f, 0.0f);
     }
+
+    inline float3 min(const float3& left, const float3& right)
+    {
+        return float3(std::min(left.x, right.x), std::min(left.y, right.y), std::min(left.z, right.z));
+    }
+
+    inline float3 max(const float3& left, const float3& right)
+    {
+        return float3(std::max(left.x, right.x), std::max(left.y, right.y), std::max(left.z, right.z));
+    }
+
+    inline float3 abs(const float3& value)
+    {
+        return float3(fabs(value.x), fabs(value.y), fabs(value.z));
+    }
+
+
 } // namespace hlsl
