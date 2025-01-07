@@ -102,8 +102,16 @@ void Model::drawEditor()
     {
         ImGui::Separator();
         ImGui::Text("Meshletizer settings:");
-        static bool force_reload = false;
-        ImGui::Checkbox("FORCE RELOAD", &force_reload);
+        if(ImGui::Button("FORCE RELOAD"))
+        {
+            m_meshes.clear();
+            m_vertexCount = 0;
+            m_triangleCount = 0;
+            m_meshletsCount = 0;
+            loadModel(m_path);
+            serializeMeshes();
+            uploadGPUResources();
+        }
 
         if (ImGui::Combo("MESHLET DEBUG MODE", &m_TypeIndex, items, IM_ARRAYSIZE(items)))
         {
@@ -112,7 +120,7 @@ void Model::drawEditor()
             m_vertexCount = 0;
             m_triangleCount = 0;
             m_meshletsCount = 0;
-            if (force_reload || !deserializeMeshes())
+            if (!deserializeMeshes())
             {
                 loadModel(m_path);
                 serializeMeshes();
