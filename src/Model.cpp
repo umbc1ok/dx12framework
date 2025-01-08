@@ -35,14 +35,13 @@ Model* Model::create(std::string const& model_path)
     if (!model->deserializeMeshes())
     {
         model->loadModel(model_path);
-        //model->serializeMeshes();
+        model->serializeMeshes();
     }
     model->set_can_tick(true);
     model->uploadGPUResources();
     model->m_pipelineState = new PipelineState(L"AS_STANDARD.hlsl", L"MS_STANDARD.hlsl", L"PS_BASIC.hlsl");
     model->m_sceneConstantBuffer = new ConstantBuffer<SceneConstantBuffer>();
     model->m_cameraConstantBuffer = new ConstantBuffer<CameraConstants>();
-    //model->serializeMeshes();
     return model;
 }
 
@@ -165,6 +164,7 @@ void Model::serializeMeshes() const
             mesh->m_positions,
             mesh->m_normals,
             mesh->m_UVs,
+            mesh->m_cullData,
             mesh->m_MeshletMaxVerts,
             mesh->m_MeshletMaxPrims,
             mesh->m_type,
@@ -192,6 +192,7 @@ bool Model::deserializeMeshes()
         std::vector<hlsl::float3> positions;
         std::vector<hlsl::float3> normals;
         std::vector<hlsl::float2> UVs;
+        std::vector<CullData> cullData;
         int32_t MeshletMaxVerts = 1;
         int32_t MeshletMaxPrims = 1;
         MeshletizerType type;
@@ -204,12 +205,13 @@ bool Model::deserializeMeshes()
             positions,
             normals,
             UVs,
+            cullData,
             MeshletMaxVerts,
             MeshletMaxPrims,
             type,
             path);
 
-        m_meshes.push_back(new Mesh(vertices, indices, {}, positions, normals, UVs, attributes, type, meshlets, meshletTriangles));
+        m_meshes.push_back(new Mesh(vertices, indices, {}, positions, normals, UVs, attributes, type, meshlets, meshletTriangles, cullData));
         index++;
     }
 

@@ -39,7 +39,7 @@ Mesh::Mesh(std::vector<Vertex> const& vertices, std::vector<uint32_t> const& ind
 Mesh::Mesh(std::vector<Vertex> const& vertices, std::vector<uint32_t> const& indices, std::vector<Texture*> const& textures,
     std::vector<hlsl::float3> const& positions, std::vector<hlsl::float3> const& normals,
     std::vector<hlsl::float2> const& UVS, std::vector<uint32_t> const& attributes, MeshletizerType meshletizerType,
-    std::vector<Meshlet> const& meshlets, std::vector<uint32_t> meshletTriangles)
+    std::vector<Meshlet> const& meshlets, std::vector<uint32_t> const& meshletTriangles, std::vector<CullData> const& cullData)
 {
     m_vertices = vertices;
     m_indices = indices;
@@ -51,8 +51,10 @@ Mesh::Mesh(std::vector<Vertex> const& vertices, std::vector<uint32_t> const& ind
     m_meshlets = meshlets;
     m_type = meshletizerType;
     m_meshletTriangles = meshletTriangles;
-    generateSubsets();
+    m_cullData = cullData;
     m_meshInfoBuffer = new ConstantBuffer<MeshInfo>();
+
+    generateSubsets();
 
 }
 
