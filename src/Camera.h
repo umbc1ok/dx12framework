@@ -4,6 +4,20 @@
 
 #include "Entity.h"
 
+struct Frustum
+{
+	hlsl::float4 top_plane;
+	hlsl::float4 bottom_plane;
+
+	hlsl::float4 right_plane;
+	hlsl::float4 left_plane;
+
+	hlsl::float4 far_plane;
+	hlsl::float4 near_plane;
+};
+
+
+
 class Camera final : public Component
 {
 public:
@@ -17,8 +31,11 @@ public:
 	hlsl::float4x4 getProjectionMatrix();
 	void updateInternals();
 	void handleInput();
-
+    const Frustum& getFrustum() const { return m_frustum; }
 private:
+	void updateFrustum();
+
+
 	inline static Camera* m_main_camera;
 
 	float m_movementSpeed = 0.05f;
@@ -35,5 +52,7 @@ private:
 
 	bool m_dirty = true;
     bool m_RMBPressed = false;
+
+	Frustum m_frustum;
 };
 
