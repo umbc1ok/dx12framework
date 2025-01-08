@@ -98,8 +98,8 @@ void Grass::update()
     }
 
     auto cmd_list = Renderer::get_instance()->g_pd3dCommandList;
-    cmd_list->SetGraphicsRootSignature(m_pipeline_state->get_root_signature());
-    cmd_list->SetPipelineState(m_pipeline_state->get_pipeline_state());
+    cmd_list->SetGraphicsRootSignature(m_pipeline_state->dx12RootSignature());
+    cmd_list->SetPipelineState(m_pipeline_state->PSO());
     dispatch();
 }
 
