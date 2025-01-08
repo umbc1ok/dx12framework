@@ -19,6 +19,7 @@ namespace serializers
         const std::vector<hlsl::float3>& positions,
         const std::vector<hlsl::float3>& normals,
         const std::vector<hlsl::float2>& UVs,
+        const std::vector<CullData>& cullData,
         int32_t MeshletMaxVerts,
         int32_t MeshletMaxPrims,
         MeshletizerType type,
@@ -33,9 +34,10 @@ namespace serializers
          std::vector<hlsl::float3>& positions,
          std::vector<hlsl::float3>& normals,
          std::vector<hlsl::float2>& UVs,
-        int32_t MeshletMaxVerts,
-        int32_t MeshletMaxPrims,
-        MeshletizerType& type,
-        const std::string& fileName);
+         std::vector<CullData>& cullData,
+         int32_t MeshletMaxVerts,
+         int32_t MeshletMaxPrims,
+         MeshletizerType& type,
+         const std::string& fileName);
 
 }

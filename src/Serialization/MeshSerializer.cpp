@@ -9,6 +9,7 @@ bool serializers::serializeMesh(
     const std::vector<hlsl::float3>& positions,
     const std::vector<hlsl::float3>& normals,
     const std::vector<hlsl::float2>& UVs,
+    const std::vector<CullData>& cullData,
     int32_t MeshletMaxVerts,
     int32_t MeshletMaxPrims,
     MeshletizerType type,
@@ -28,6 +29,7 @@ bool serializers::serializeMesh(
     serializeVector(out, positions);
     serializeVector(out, normals);
     serializeVector(out, UVs);
+    serializeVector(out, cullData);
 
     serializeObject(out, MeshletMaxVerts);
     serializeObject(out, MeshletMaxPrims);
@@ -45,6 +47,7 @@ void serializers::deserializeMesh(
     std::vector<hlsl::float3>& positions,
     std::vector<hlsl::float3>& normals,
     std::vector<hlsl::float2>& UVs,
+    std::vector<CullData>& cullData,
     int32_t MeshletMaxVerts,
     int32_t MeshletMaxPrims,
     MeshletizerType& type,
@@ -64,6 +67,7 @@ void serializers::deserializeMesh(
     deserializeVector(in, positions);
     deserializeVector(in, normals);
     deserializeVector(in, UVs);
+    deserializeVector(in, cullData);
 
     deserializeObject(in, MeshletMaxVerts);
     deserializeObject(in, MeshletMaxPrims);
