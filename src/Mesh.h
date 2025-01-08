@@ -3,12 +3,12 @@
 
 
 #include "DX12Wrappers/Vertex.h"
-#include "DX12Wrappers/VertexBuffer.h"
 #include "Texture.h"
 
 #include "MeshletStructs.h"
 #include "DX12Wrappers/Resource.h"
-#include "DXMeshletGenerator/D3D12MeshletGenerator.h"
+#include "../res/shaders/shared/shared_cb.h"
+
 
 struct Attribute
 {
@@ -25,14 +25,6 @@ struct Attribute
     EType    Type;
     uint32_t Offset;
 };
-struct MeshInfo
-{
-    uint32_t IndexSize;
-    uint32_t MeshletCount;
-
-    uint32_t LastMeshletVertCount;
-    uint32_t LastMeshletPrimCount;
-};
 
 struct MeshSubset
 {
@@ -40,29 +32,36 @@ struct MeshSubset
     uint32_t size;
 };
 
+template <typename T>
+class ConstantBuffer;
 
 
 class Mesh
 {
 public:
-    Mesh(std::vector<Vertex> const& vertices, std::vector<u32> const&  indices, std::vector<Texture*> const& textures, std::vector<hlsl::float3> const& positions, std::vector<hlsl::float3> const& normals, std::vector<hlsl::float2> const& UVS, std::vector<u32> const& attributes, MeshletizerType meshletizerType);
-    Mesh(std::vector<Vertex> const& vertices, std::vector<u32> const&  indices, std::vector<Texture*> const& textures, std::vector<hlsl::float3> const& positions, std::vector<hlsl::float3> const& normals, std::vector<hlsl::float2> const& UVS, std::vector<u32> const& attributes, MeshletizerType meshletizerType, std::vector<Meshlet> const& meshlets, std::vector<u32> meshletTriangles);
+    Mesh(std::vector<Vertex> const& vertices, std::vector<uint32_t> const&  indices, std::vector<Texture*> const& textures, std::vector<hlsl::float3> const& positions, std::vector<hlsl::float3> const& normals, std::vector<hlsl::float2> const& UVS, std::vector<uint32_t> const& attributes, MeshletizerType meshletizerType);
+    Mesh(std::vector<Vertex> const& vertices, std::vector<uint32_t> const&  indices, std::vector<Texture*> const& textures, std::vector<hlsl::float3> const& positions, std::vector<hlsl::float3> const& normals, std::vector<hlsl::float2> const& UVS, std::vector<uint32_t> const& attributes, MeshletizerType meshletizerType, std::vector<Meshlet> const& meshlets, std::vector<uint32_t> meshletTriangles);
     ~Mesh() = default;
 
     void draw();
     void bindTextures();
+    void bindMeshInfo(uint32_t meshletCount, uint32_t meshletOffset);
+
     void dispatch();
 
     void meshletizeDXMESH();
     void meshletizeMeshoptimizer();
     void meshletizeGreedy();
 
+    void generateCullingData();
+
+
     void changeMeshletizerType(MeshletizerType type);
 
 
     std::vector<Vertex> m_vertices;
-    std::vector<u32> m_indices;
-
+    std::vector<uint32_t> m_indices;
+    std::vector<CullData> m_cullData;
 
     std::vector<Meshlet> m_meshlets;
     std::vector<uint32_t> m_meshletTriangles;
@@ -80,7 +79,9 @@ public:
     Resource*              IndexResource;
     Resource*              MeshletResource;
     Resource*              MeshletTriangleIndicesResource;
+    Resource*              CullDataResource;
 
+    ConstantBuffer<MeshInfo>* m_meshInfoBuffer;
 
     int32_t m_MeshletMaxVerts = 64;
     int32_t m_MeshletMaxPrims = 124;

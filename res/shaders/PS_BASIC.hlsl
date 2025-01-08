@@ -26,7 +26,7 @@ struct VertexOut
     uint   TriangleIndex : COLOR1;
 };
 
-ConstantBuffer<SceneConstantBuffer> Globals : register(b0);
+ConstantBuffer<SceneConstantBuffer> InstanceData : register(b0);
 
 float4 ps_main(VertexOut input) : SV_TARGET
 {
@@ -36,7 +36,7 @@ float4 ps_main(VertexOut input) : SV_TARGET
 
     float3 diffuseColor;
     float shininess;
-    if (Globals.DrawFlag == DRAW_MESHLETS)
+    if (InstanceData.DrawFlag == DRAW_MESHLETS)
     {
         uint index = input.MeshletIndex;
         diffuseColor = float3(
@@ -45,7 +45,7 @@ float4 ps_main(VertexOut input) : SV_TARGET
             float(index & 7) / 8);
         shininess = 16.0;
     }
-    else if(Globals.DrawFlag == DRAW_TRIANGLES)
+    else if(InstanceData.DrawFlag == DRAW_TRIANGLES)
     {
         uint index = input.TriangleIndex;
         diffuseColor = float3(
@@ -60,7 +60,7 @@ float4 ps_main(VertexOut input) : SV_TARGET
         shininess = 64.0;
     }
     float3 finalColor;
-    if(Globals.DrawFlag == DRAW_NORMAL)
+    if(InstanceData.DrawFlag == DRAW_NORMAL)
     {
         float3 normal = normalize(input.Normal);
 

@@ -7,8 +7,11 @@
 #include "meshoptimizer.h"
 #include "GreedyMeshletizer/GreedyMeshletizer.h"
 #include "utils/Utils.h"
+#include "DXMeshletGenerator/D3D12MeshletGenerator.h"
+#include "DX12Wrappers/ConstantBuffer.h"
 
-Mesh::Mesh(std::vector<Vertex> const& vertices, std::vector<u32> const& indices, std::vector<Texture*> const& textures, std::vector<hlsl::float3> const& positions, std::vector<hlsl::float3> const& normals, std::vector<hlsl::float2> const& UVS, std::vector<u32> const& attributes, MeshletizerType meshletizerType)
+
+Mesh::Mesh(std::vector<Vertex> const& vertices, std::vector<uint32_t> const& indices, std::vector<Texture*> const& textures, std::vector<hlsl::float3> const& positions, std::vector<hlsl::float3> const& normals, std::vector<hlsl::float2> const& UVS, std::vector<uint32_t> const& attributes, MeshletizerType meshletizerType)
 {
     m_vertices = vertices;
     m_indices = indices;
@@ -28,12 +31,15 @@ Mesh::Mesh(std::vector<Vertex> const& vertices, std::vector<u32> const& indices,
 
     generateSubsets();
 
+    m_meshInfoBuffer = new ConstantBuffer<MeshInfo>();
+
+
 }
 
-Mesh::Mesh(std::vector<Vertex> const& vertices, std::vector<u32> const& indices, std::vector<Texture*> const& textures,
+Mesh::Mesh(std::vector<Vertex> const& vertices, std::vector<uint32_t> const& indices, std::vector<Texture*> const& textures,
     std::vector<hlsl::float3> const& positions, std::vector<hlsl::float3> const& normals,
-    std::vector<hlsl::float2> const& UVS, std::vector<u32> const& attributes, MeshletizerType meshletizerType,
-    std::vector<Meshlet> const& meshlets, std::vector<u32> meshletTriangles)
+    std::vector<hlsl::float2> const& UVS, std::vector<uint32_t> const& attributes, MeshletizerType meshletizerType,
+    std::vector<Meshlet> const& meshlets, std::vector<uint32_t> meshletTriangles)
 {
     m_vertices = vertices;
     m_indices = indices;
@@ -46,6 +52,8 @@ Mesh::Mesh(std::vector<Vertex> const& vertices, std::vector<u32> const& indices,
     m_type = meshletizerType;
     m_meshletTriangles = meshletTriangles;
     generateSubsets();
+    m_meshInfoBuffer = new ConstantBuffer<MeshInfo>();
+
 }
 
 void Mesh::draw()
@@ -72,21 +80,29 @@ void Mesh::bindTextures()
     }
 }
 
+void Mesh::bindMeshInfo(uint32_t meshletCount, uint32_t meshletOffset)
+{
+    MeshInfo info;
+    info.IndexBytes = sizeof(uint32_t);
+    info.MeshletCount = meshletCount;
+    info.MeshletOffset = meshletOffset;
+    m_meshInfoBuffer->uploadData(info);
+    m_meshInfoBuffer->setConstantBuffer(1);
+}
+
 void Mesh::dispatch()
 {
     auto cmd_list = Renderer::get_instance()->g_pd3dCommandList;
-    cmd_list->SetGraphicsRootShaderResourceView(2, VertexResource->getGPUVirtualAddress());
-    cmd_list->SetGraphicsRootShaderResourceView(3, MeshletResource->getGPUVirtualAddress());
-    cmd_list->SetGraphicsRootShaderResourceView(4, IndexResource->getGPUVirtualAddress());
-    cmd_list->SetGraphicsRootShaderResourceView(5, MeshletTriangleIndicesResource->getGPUVirtualAddress());
+    cmd_list->SetGraphicsRootShaderResourceView(3, VertexResource->getGPUVirtualAddress());
+    cmd_list->SetGraphicsRootShaderResourceView(4, MeshletResource->getGPUVirtualAddress());
+    cmd_list->SetGraphicsRootShaderResourceView(5, IndexResource->getGPUVirtualAddress());
+    cmd_list->SetGraphicsRootShaderResourceView(6, MeshletTriangleIndicesResource->getGPUVirtualAddress());
+    // TODO: Bind Cull Data below
+    cmd_list->SetGraphicsRootShaderResourceView(7, CullDataResource->getGPUVirtualAddress());
 
-
-    // TODO: Add subsets
-    int subsetsNumber = (m_meshlets.size() / 65535) + 1;
-    
     for (auto& subset : m_subsets)
     {
-        cmd_list->SetGraphicsRoot32BitConstant(1, subset.offset, 1);
+        bindMeshInfo(subset.size, subset.offset);
         cmd_list->DispatchMesh(subset.size, 1, 1);
     }
     
@@ -108,7 +124,7 @@ void Mesh::meshletizeDXMESH()
     std::vector<Subset> meshlet_subsets;
     std::vector<uint8_t> unique_vertex_indices;
     std::vector<PackedTriangle> primitive_indices;
-    std::vector<u32> indices_mapping;
+    std::vector<uint32_t> indices_mapping;
 
 
     std::vector<hlsl::float3> tangents;
@@ -206,6 +222,17 @@ void Mesh::meshletizeDXMESH()
         unique_vertex_indices,
         primitive_indices
     ));
+    m_cullData.resize(m_meshlets.size());
+    AssertFailed(ComputeCullData(
+        reinterpret_cast<const DirectX::XMFLOAT3*>(m_positions.data()),
+        m_positions.size(),
+        m_meshlets.data(),
+        m_meshlets.size(),
+        reinterpret_cast<uint32_t*>(unique_vertex_indices.data()),
+        primitive_indices.data(),
+        DirectX::CNORM_DEFAULT,
+        m_cullData.data()
+    ));
 
     m_meshletTriangles.resize(primitive_indices.size());
 
@@ -227,16 +254,6 @@ void Mesh::meshletizeDXMESH()
     m_indices = indices_mapping;
     //m_cullData.resize(m_meshlets.size());
 
-    //AssertFailed(ComputeCullData(
-    //    reinterpret_cast<const DirectX::XMFLOAT3*>(m_positions.data()),
-    //    m_positions.size(),
-    //    m_meshlets.data(),
-    //    m_meshlets.size(),
-    //    reinterpret_cast<uint16_t*>(m_uniqueVertexIndices.data()),
-    //    m_primitiveIndices.data(),
-    //    DirectX::CNORM_DEFAULT,
-    //    m_cullData.data()
-    //));
 
 }
 
@@ -246,7 +263,7 @@ void Mesh::meshletizeMeshoptimizer()
 
     size_t max_meshlets = meshopt_buildMeshletsBound(m_indices.size(), m_MeshletMaxVerts, m_MeshletMaxPrims);
     std::vector<meshopt_Meshlet> meshlets(max_meshlets);
-    std::vector<u32> indices_mapping;
+    std::vector<uint32_t> indices_mapping;
     // vertex index data, so every entry in that vector is a global index of a vertex
 
     indices_mapping.resize(max_meshlets * m_MeshletMaxVerts);
@@ -297,6 +314,30 @@ void Mesh::meshletizeMeshoptimizer()
 
 
     size_t triangle_count = meshlet_triangles.size() / 3;
+    //std::vector<MeshletCullData> bounds;
+    //for (auto meshlet : m_meshlets)
+    //{
+    //    auto bound = meshopt_computeMeshletBounds(indices_mapping.data() + meshlet.VertOffset, meshlet_triangles.data() + meshlet.PrimOffset, meshlet.PrimCount, &m_positions[0].x, m_positions.size(), sizeof(hlsl::float3));
+    //    MeshletCullData data;
+    //    data.BoundingSphere = hlsl::float4(bound.center[0], bound.center[1], bound.center[2], bound.radius);
+    //    float angle = acos(bound.cone_cutoff);
+    //    hlsl::float4 coneToPack = hlsl::float4(bound.cone_axis[0], bound.cone_axis[1], bound.cone_axis[2], -cos(angle + hlsl::PI / 2));
+
+    //    coneToPack.xyz = (coneToPack.xyz + 1.0f) * 0.5f;
+    //    coneToPack.w = coneToPack.w * 225.0f;
+    //    uint packed = 0;
+    //    packed |= (uint32_t(coneToPack.x) & 0xFF) << 0;
+    //    packed |= (uint32_t(coneToPack.y) & 0xFF) << 8;
+    //    packed |= (uint32_t(coneToPack.z) & 0xFF) << 16;
+    //    packed |= (uint32_t(coneToPack.w) & 0xFF) << 24;
+    //    data.NormalCone = packed;
+    //    data.ApexOffset = 0.0f;
+    //    bounds.push_back(data);
+    //}
+
+
+
+
     for (size_t i = 0; i < triangle_count; ++i)
     {
         final_meshlet_triangles[i] = olej_utils::packTriangle(meshlet_triangles[i * 3 + 0], meshlet_triangles[i * 3 + 1], meshlet_triangles[i * 3 + 2]);
@@ -316,6 +357,14 @@ void Mesh::meshletizeGreedy()
     std::vector<uint32_t> indicesMapping;
     greedy::meshletize(m_MeshletMaxVerts, m_MeshletMaxPrims, m_indices, m_vertices, m_meshlets, uniqueVertexIndices, m_meshletTriangles);
     m_indices = uniqueVertexIndices;
+}
+
+void Mesh::generateCullingData()
+{
+    for (auto meshlet : m_meshlets)
+    {
+        //
+    }
 }
 
 void Mesh::changeMeshletizerType(MeshletizerType type)

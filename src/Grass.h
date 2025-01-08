@@ -8,8 +8,9 @@
 #include <d3d12.h>
 
 #include "PipelineState.h"
-#include "DX12Wrappers/ConstantBuffer.h"
 
+template <typename T>
+class ConstantBuffer;
 
 class Grass :
     public Component
