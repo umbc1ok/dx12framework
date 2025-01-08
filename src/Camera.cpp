@@ -13,6 +13,7 @@ void Camera::update()
 {
     Component::update();
     handleInput();
+    updateFrustum();
 }
 
 void Camera::create()
@@ -107,5 +108,58 @@ void Camera::handleInput()
         }
         updateInternals();
     }
+}
+
+void Camera::updateFrustum()
+{
+    hlsl::float4x4 world = entity->transform->get_model_matrix();
+    hlsl::float4x4 comboMatrix = m_projection * getViewMatrix() * world;
+
+    m_frustum.right_plane = hlsl::float4(
+        comboMatrix[3][0] - comboMatrix[0][0],
+        comboMatrix[3][1] - comboMatrix[0][1],
+        comboMatrix[3][2] - comboMatrix[0][2],
+        comboMatrix[3][3] - comboMatrix[0][3]
+    );
+
+    // Left clipping plane
+    m_frustum.left_plane = hlsl::float4(
+        comboMatrix[3][0] + comboMatrix[0][0],
+        comboMatrix[3][1] + comboMatrix[0][1],
+        comboMatrix[3][2] + comboMatrix[0][2],
+        comboMatrix[3][3] + comboMatrix[0][3]
+    );
+
+    // Top clipping plane
+    m_frustum.top_plane = hlsl::float4(
+        comboMatrix[3][0] - comboMatrix[1][0],
+        comboMatrix[3][1] - comboMatrix[1][1],
+        comboMatrix[3][2] - comboMatrix[1][2],
+        comboMatrix[3][3] - comboMatrix[1][3]
+    );
+
+    // Bottom clipping plane
+    m_frustum.bottom_plane = hlsl::float4(
+        comboMatrix[3][0] + comboMatrix[1][0],
+        comboMatrix[3][1] + comboMatrix[1][1],
+        comboMatrix[3][2] + comboMatrix[1][2],
+        comboMatrix[3][3] + comboMatrix[1][3]
+    );
+
+    // Near clipping plane
+    m_frustum.near_plane = hlsl::float4(
+        comboMatrix[2][0],
+        comboMatrix[2][1],
+        comboMatrix[2][2],
+        comboMatrix[2][3]
+    );
+
+    // Far clipping plane
+    m_frustum.far_plane = hlsl::float4(
+        comboMatrix[3][0] - comboMatrix[2][0],
+        comboMatrix[3][1] - comboMatrix[2][1],
+        comboMatrix[3][2] - comboMatrix[2][2],
+        comboMatrix[3][3] - comboMatrix[2][3]
+    );
 }
 
