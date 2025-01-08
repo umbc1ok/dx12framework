@@ -23,6 +23,7 @@ struct PipelineStateStreamMesh
     CD3DX12_PIPELINE_STATE_STREAM_ROOT_SIGNATURE pRootSignature;
     CD3DX12_PIPELINE_STATE_STREAM_INPUT_LAYOUT InputLayout;
     CD3DX12_PIPELINE_STATE_STREAM_PRIMITIVE_TOPOLOGY PrimitiveTopologyType;
+    CD3DX12_PIPELINE_STATE_STREAM_AS AS;
     CD3DX12_PIPELINE_STATE_STREAM_MS MS;
     CD3DX12_PIPELINE_STATE_STREAM_PS PS;
     CD3DX12_PIPELINE_STATE_STREAM_DEPTH_STENCIL_FORMAT DSVFormat;
@@ -36,6 +37,7 @@ class PipelineState
 {
 public:
     PipelineState(std::wstring vs_name, std::wstring ps_name);
+    PipelineState(std::wstring as_name, std::wstring vs_name, std::wstring ps_name);
     ~PipelineState() = default;
 
     void compilePSO();

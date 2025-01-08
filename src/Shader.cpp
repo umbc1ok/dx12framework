@@ -23,10 +23,6 @@ Shader::Shader(std::wstring name, ShaderType type)
     m_filename = name;
     switch (m_type)
     {
-    case ShaderType::VERTEX:
-        m_mainFunctionName = L"vs_main";
-        m_shaderModel = L"vs_6_5";
-        break;
     case ShaderType::PIXEL:
         m_mainFunctionName = L"ps_main";
         m_shaderModel = L"ps_6_5";
@@ -34,6 +30,10 @@ Shader::Shader(std::wstring name, ShaderType type)
     case ShaderType::MESH:
         m_mainFunctionName = L"ms_main";
         m_shaderModel = L"ms_6_5";
+        break;
+    case ShaderType::AMPLIFICATION:
+        m_mainFunctionName = L"as_main";
+        m_shaderModel = L"as_6_5";
         break;
     }
 
@@ -50,8 +50,6 @@ Shader::Shader(std::wstring name, ShaderType type)
 
 void Shader::loadShader()
 {
-    // TODO: Add shader reloading
-
     uint32_t codePage = DXC_CP_ACP;
     IDxcBlobEncoding* sourceBlob;
     HRESULT hr;

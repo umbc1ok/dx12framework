@@ -10,7 +10,15 @@
 PipelineState::PipelineState(std::wstring vs_name, std::wstring ps_name)
 {
     m_msName = vs_name;
-    m_asName = L"";
+    m_psName = ps_name;
+    compilePSO();
+    Renderer::get_instance()->register_pipeline_state(this);
+}
+
+PipelineState::PipelineState(std::wstring as_name, std::wstring vs_name, std::wstring ps_name)
+{
+    m_asName = as_name;
+    m_msName = vs_name;
     m_psName = ps_name;
     compilePSO();
     Renderer::get_instance()->register_pipeline_state(this);
@@ -20,8 +28,11 @@ void PipelineState::compilePSO()
 {
     auto device = Renderer::get_instance()->get_device();
 
-    mesh_shader = new Shader(m_msName, ShaderType::MESH);
-    pixel_shader = new Shader(m_psName, ShaderType::PIXEL);
+    if(!m_asName.empty())
+        m_amplificationShader = new Shader(m_asName, ShaderType::AMPLIFICATION);
+
+    m_meshShader = new Shader(m_msName, ShaderType::MESH);
+    m_pixelShader = new Shader(m_psName, ShaderType::PIXEL);
 
     const D3D12_INPUT_ELEMENT_DESC input_layout[3] =
     {
@@ -70,14 +81,20 @@ void PipelineState::compilePSO()
 
     D3D12_DEPTH_STENCIL_DESC depth_stencil_desc = CD3DX12_DEPTH_STENCIL_DESC(CD3DX12_DEFAULT());
 
-    D3D12_SHADER_BYTECODE* ms = new D3D12_SHADER_BYTECODE(mesh_shader->getBlob()->GetBufferPointer(), mesh_shader->getBlob()->GetBufferSize());
-    D3D12_SHADER_BYTECODE* ps = new D3D12_SHADER_BYTECODE(pixel_shader->getBlob()->GetBufferPointer(), pixel_shader->getBlob()->GetBufferSize());
+    D3D12_SHADER_BYTECODE* as = nullptr;
+    if (!m_asName.empty())
+        as = new D3D12_SHADER_BYTECODE(m_amplificationShader->getBlob()->GetBufferPointer(), m_amplificationShader->getBlob()->GetBufferSize());
+
+    D3D12_SHADER_BYTECODE* ms = new D3D12_SHADER_BYTECODE(m_meshShader->getBlob()->GetBufferPointer(), m_meshShader->getBlob()->GetBufferSize());
+    D3D12_SHADER_BYTECODE* ps = new D3D12_SHADER_BYTECODE(m_pixelShader->getBlob()->GetBufferPointer(), m_pixelShader->getBlob()->GetBufferSize());
 
     createRootSignature();
     D3DX12_MESH_SHADER_PIPELINE_STATE_DESC psoDesc = {};
     psoDesc.pRootSignature = m_rootSignature;
     psoDesc.MS = *ms;
     psoDesc.PS = *ps;
+    if(as)
+        psoDesc.AS = *as;
     psoDesc.NumRenderTargets = 1;
     psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
     psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
