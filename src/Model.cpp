@@ -84,12 +84,6 @@ void Model::draw()
     auto cmd_list = Renderer::get_instance()->g_pd3dCommandList;
     auto const entry = Renderer::get_instance()->get_profiler()->startEntry(cmd_list, "Model Draw");
     {
-        
-        auto kb = Input::getInstance()->m_keyboard->GetState();
-        if (kb.F5)
-        {
-            m_pipelineState = new PipelineState(L"AS_STANDARD.hlsl", L"MS_STANDARD.hlsl", L"PS_BASIC.hlsl");
-        }
         cmd_list->SetGraphicsRootSignature(m_pipelineState->dx12RootSignature());
         cmd_list->SetPipelineState(m_pipelineState->PSO());
         setConstantBuffer();

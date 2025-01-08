@@ -39,6 +39,16 @@ void Renderer::create()
 
 void Renderer::start_frame()
 {
+    auto kb = Input::getInstance()->m_keyboard->GetState();
+    if (kb.F5)
+    {
+        for(auto& pipelineState: mRegisteredPipelineStates)
+        {
+            pipelineState->reload();
+        }
+    }
+
+
     auto index = g_pSwapChain->GetCurrentBackBufferIndex();
     frame_index = index;
     auto cmdqueue = get_cmd_queue(D3D12_COMMAND_LIST_TYPE_DIRECT);

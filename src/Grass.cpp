@@ -94,10 +94,10 @@ void Grass::update()
     }
 
     auto kb = Input::getInstance()->m_keyboard->GetState();
-    if (kb.F5)
-    {
-        m_pipeline_state = new PipelineState(L"MS_GRASS.hlsl", L"PS_GRASS.hlsl");
-    }
+    //if (kb.F5)
+    //{
+    //    m_pipeline_state = new PipelineState(L"MS_GRASS.hlsl", L"PS_GRASS.hlsl");
+    //}
 
     auto cmd_list = Renderer::get_instance()->g_pd3dCommandList;
     cmd_list->SetGraphicsRootSignature(m_pipeline_state->dx12RootSignature());
