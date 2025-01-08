@@ -112,54 +112,23 @@ void Camera::handleInput()
 
 void Camera::updateFrustum()
 {
-    hlsl::float4x4 world = entity->transform->get_model_matrix();
-    hlsl::float4x4 comboMatrix = m_projection * getViewMatrix() * world;
-
-    m_frustum.right_plane = hlsl::float4(
-        comboMatrix[3][0] - comboMatrix[0][0],
-        comboMatrix[3][1] - comboMatrix[0][1],
-        comboMatrix[3][2] - comboMatrix[0][2],
-        comboMatrix[3][3] - comboMatrix[0][3]
-    );
+    hlsl::float4x4 comboMatrix = m_projection * getViewMatrix();
+    //comboMatrix = hlsl::transpose(comboMatrix);
 
     // Left clipping plane
-    m_frustum.left_plane = hlsl::float4(
-        comboMatrix[3][0] + comboMatrix[0][0],
-        comboMatrix[3][1] + comboMatrix[0][1],
-        comboMatrix[3][2] + comboMatrix[0][2],
-        comboMatrix[3][3] + comboMatrix[0][3]
-    );
-
-    // Top clipping plane
-    m_frustum.top_plane = hlsl::float4(
-        comboMatrix[3][0] - comboMatrix[1][0],
-        comboMatrix[3][1] - comboMatrix[1][1],
-        comboMatrix[3][2] - comboMatrix[1][2],
-        comboMatrix[3][3] - comboMatrix[1][3]
-    );
-
+    m_frustum.left_plane = comboMatrix.row(3) + comboMatrix.row(0);
+    // Right clipping plane
+    m_frustum.right_plane = comboMatrix.row(3) - comboMatrix.row(0);
     // Bottom clipping plane
-    m_frustum.bottom_plane = hlsl::float4(
-        comboMatrix[3][0] + comboMatrix[1][0],
-        comboMatrix[3][1] + comboMatrix[1][1],
-        comboMatrix[3][2] + comboMatrix[1][2],
-        comboMatrix[3][3] + comboMatrix[1][3]
-    );
-
+    m_frustum.bottom_plane = comboMatrix.row(3) + comboMatrix.row(1);
+    // Top clipping plane
+    m_frustum.top_plane = comboMatrix.row(3) - comboMatrix.row(1);
     // Near clipping plane
-    m_frustum.near_plane = hlsl::float4(
-        comboMatrix[2][0],
-        comboMatrix[2][1],
-        comboMatrix[2][2],
-        comboMatrix[2][3]
-    );
-
+    m_frustum.near_plane = comboMatrix.row(2);
     // Far clipping plane
-    m_frustum.far_plane = hlsl::float4(
-        comboMatrix[3][0] - comboMatrix[2][0],
-        comboMatrix[3][1] - comboMatrix[2][1],
-        comboMatrix[3][2] - comboMatrix[2][2],
-        comboMatrix[3][3] - comboMatrix[2][3]
-    );
+    m_frustum.far_plane = comboMatrix.row(3) - comboMatrix.row(2);
+
+
+
 }
 
