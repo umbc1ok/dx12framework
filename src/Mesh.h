@@ -53,7 +53,6 @@ public:
     void meshletizeMeshoptimizer();
     void meshletizeGreedy();
 
-    void generateCullingData();
 
 
     void changeMeshletizerType(MeshletizerType type);

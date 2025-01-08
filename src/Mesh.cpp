@@ -314,26 +314,29 @@ void Mesh::meshletizeMeshoptimizer()
 
 
     size_t triangle_count = meshlet_triangles.size() / 3;
-    //std::vector<MeshletCullData> bounds;
-    //for (auto meshlet : m_meshlets)
-    //{
-    //    auto bound = meshopt_computeMeshletBounds(indices_mapping.data() + meshlet.VertOffset, meshlet_triangles.data() + meshlet.PrimOffset, meshlet.PrimCount, &m_positions[0].x, m_positions.size(), sizeof(hlsl::float3));
-    //    MeshletCullData data;
-    //    data.BoundingSphere = hlsl::float4(bound.center[0], bound.center[1], bound.center[2], bound.radius);
-    //    float angle = acos(bound.cone_cutoff);
-    //    hlsl::float4 coneToPack = hlsl::float4(bound.cone_axis[0], bound.cone_axis[1], bound.cone_axis[2], -cos(angle + hlsl::PI / 2));
 
-    //    coneToPack.xyz = (coneToPack.xyz + 1.0f) * 0.5f;
-    //    coneToPack.w = coneToPack.w * 225.0f;
-    //    uint packed = 0;
-    //    packed |= (uint32_t(coneToPack.x) & 0xFF) << 0;
-    //    packed |= (uint32_t(coneToPack.y) & 0xFF) << 8;
-    //    packed |= (uint32_t(coneToPack.z) & 0xFF) << 16;
-    //    packed |= (uint32_t(coneToPack.w) & 0xFF) << 24;
-    //    data.NormalCone = packed;
-    //    data.ApexOffset = 0.0f;
-    //    bounds.push_back(data);
-    //}
+
+
+    // convert data so it can be fed into ComputeCullData()
+    std::vector<PackedTriangle> triangles(triangle_count);
+    for(int i = 0; i < triangle_count; i++)
+    {
+        triangles[i].indices.i0 = meshlet_triangles[i * 3];
+        triangles[i].indices.i1 = meshlet_triangles[i * 3 + 1];
+        triangles[i].indices.i2 = meshlet_triangles[i * 3 + 2];
+    }
+
+    m_cullData.resize(m_meshlets.size());
+    AssertFailed(ComputeCullData(
+        reinterpret_cast<const DirectX::XMFLOAT3*>(m_positions.data()),
+        m_positions.size(),
+        m_meshlets.data(),
+        m_meshlets.size(),
+        indices_mapping.data(),
+        triangles.data(),
+        DirectX::CNORM_DEFAULT,
+        m_cullData.data()
+    ));
 
 
 
@@ -357,15 +360,33 @@ void Mesh::meshletizeGreedy()
     std::vector<uint32_t> indicesMapping;
     greedy::meshletize(m_MeshletMaxVerts, m_MeshletMaxPrims, m_indices, m_vertices, m_meshlets, uniqueVertexIndices, m_meshletTriangles);
     m_indices = uniqueVertexIndices;
+
+
+    // convert data so it can be fed into ComputeCullData()
+    std::vector<PackedTriangle> triangles(m_meshletTriangles.size());
+    for (int i = 0; i < triangles.size(); i++)
+    {
+        auto packed = m_meshletTriangles[i];
+        triangles[i].indices.i0 = static_cast<uint8_t>(packed);
+        triangles[i].indices.i1 = static_cast<uint8_t>(packed >> 8);
+        triangles[i].indices.i2 = static_cast<uint8_t>(packed >> 16);
+    }
+
+
+    m_cullData.resize(m_meshlets.size());
+
+    AssertFailed(ComputeCullData(
+        reinterpret_cast<const DirectX::XMFLOAT3*>(m_positions.data()),
+        m_positions.size(),
+        m_meshlets.data(),
+        m_meshlets.size(),
+        m_indices.data(),
+        triangles.data(),
+        DirectX::CNORM_DEFAULT,
+        m_cullData.data()
+    ));
 }
 
-void Mesh::generateCullingData()
-{
-    for (auto meshlet : m_meshlets)
-    {
-        //
-    }
-}
 
 void Mesh::changeMeshletizerType(MeshletizerType type)
 {
