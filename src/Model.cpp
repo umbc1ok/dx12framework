@@ -89,7 +89,7 @@ void Model::draw()
         auto kb = Input::getInstance()->m_keyboard->GetState();
         if (kb.F5)
         {
-            m_pipelineState = new PipelineState(L"MS_STANDARD.hlsl", L"PS_BASIC.hlsl");
+            m_pipelineState = new PipelineState(L"AS_STANDARD.hlsl", L"MS_STANDARD.hlsl", L"PS_BASIC.hlsl");
         }
         cmd_list->SetGraphicsRootSignature(m_pipelineState->dx12RootSignature());
         cmd_list->SetPipelineState(m_pipelineState->PSO());
