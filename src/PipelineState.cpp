@@ -69,8 +69,8 @@ void PipelineState::compilePSO()
 
     D3D12_DEPTH_STENCIL_DESC depth_stencil_desc = CD3DX12_DEPTH_STENCIL_DESC(CD3DX12_DEFAULT());
 
-    D3D12_SHADER_BYTECODE* ms = new D3D12_SHADER_BYTECODE(mesh_shader->dxc_blob->GetBufferPointer(), mesh_shader->dxc_blob->GetBufferSize());
-    D3D12_SHADER_BYTECODE* ps = new D3D12_SHADER_BYTECODE(pixel_shader->dxc_blob->GetBufferPointer(), pixel_shader->dxc_blob->GetBufferSize());
+    D3D12_SHADER_BYTECODE* ms = new D3D12_SHADER_BYTECODE(mesh_shader->getBlob()->GetBufferPointer(), mesh_shader->getBlob()->GetBufferSize());
+    D3D12_SHADER_BYTECODE* ps = new D3D12_SHADER_BYTECODE(pixel_shader->getBlob()->GetBufferPointer(), pixel_shader->getBlob()->GetBufferSize());
 
     create_root_signature();
     D3DX12_MESH_SHADER_PIPELINE_STATE_DESC psoDesc = {};

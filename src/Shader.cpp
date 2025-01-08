@@ -24,86 +24,38 @@ Shader::Shader(std::wstring name, ShaderType type)
     switch (m_type)
     {
     case ShaderType::VERTEX:
-        m_main_function_name = L"vs_main";
-        shader_model = L"vs_6_5";
+        m_mainFunctionName = L"vs_main";
+        m_shaderModel = L"vs_6_5";
         break;
     case ShaderType::PIXEL:
-        m_main_function_name = L"ps_main";
-        shader_model = L"ps_6_5";
+        m_mainFunctionName = L"ps_main";
+        m_shaderModel = L"ps_6_5";
         break;
     case ShaderType::MESH:
-        m_main_function_name = L"ms_main";
-        shader_model = L"ms_6_5";
+        m_mainFunctionName = L"ms_main";
+        m_shaderModel = L"ms_6_5";
         break;
     }
 
-    HRESULT hr = DxcCreateInstance(CLSID_DxcLibrary, IID_PPV_ARGS(&library));
+    HRESULT hr = DxcCreateInstance(CLSID_DxcLibrary, IID_PPV_ARGS(&m_library));
     AssertFailed(hr);
-    hr = DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&compiler));
+    hr = DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&m_compiler));
     AssertFailed(hr);
-    DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&utils));
-    hr = utils->CreateDefaultIncludeHandler(&include_handler);
+    DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&m_utils));
+    hr = m_utils->CreateDefaultIncludeHandler(&m_includeHandler);
     AssertFailed(hr);
 
-    load_shader_dxc();
+    loadShader();
 }
 
-//void Shader::load_shader()
-//{
-//    HRESULT hr;
-//    {
-//        ID3DBlob* shader_compile_errors_blob;
-//
-//        size_t size = 0;
-//        char const* shader_source = read_hlsl_shader_from_file(m_path, &size);
-//        hr = D3DPreprocess(shader_source, size, olej_utils::wstringToString(m_path).c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, &shader_blob,
-//            &shader_compile_errors_blob);
-//
-//        delete[] shader_source;
-//
-//        if (FAILED(hr))
-//        {
-//            char const* error_string = nullptr;
-//            if (hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND))
-//            {
-//                error_string = "Error. Vertex shader file not found.";
-//            }
-//            else if (shader_compile_errors_blob)
-//            {
-//                error_string = static_cast<char const*>(shader_compile_errors_blob->GetBufferPointer());
-//                shader_compile_errors_blob->Release();
-//            }
-//
-//            std::cout << error_string << "\n";
-//            return;
-//        }
-//
-//        std::wstring const hash =
-//            std::to_wstring(olej_utils::murmurHash(static_cast<u8*>(shader_blob->GetBufferPointer()), shader_blob->GetBufferSize(), 0));
-//        if (!read_file_to_blob(m_path + hash + m_main_function_name, &shader_blob))
-//        {
-//            hr = D3DCompile(shader_blob->GetBufferPointer(), shader_blob->GetBufferSize(), nullptr, nullptr, nullptr, olej_utils::wstringToString(m_main_function_name).c_str(), olej_utils::wstringToString(shader_model).c_str(), 0, 0,
-//                &shader_blob, &shader_compile_errors_blob);
-//
-//            if (FAILED(hr))
-//            {
-//                auto const error_string = static_cast<char const*>(shader_compile_errors_blob->GetBufferPointer());
-//                std::cout << error_string << "\n";
-//                return;
-//            }
-//            save_compiled_shader(m_path + hash + m_main_function_name, shader_blob);
-//        }
-//    }
-//}
-
-void Shader::load_shader_dxc()
+void Shader::loadShader()
 {
     // TODO: Add shader reloading
 
     uint32_t codePage = DXC_CP_ACP;
     IDxcBlobEncoding* sourceBlob;
     HRESULT hr;
-    hr = library->CreateBlobFromFile(m_path.c_str(), &codePage, &sourceBlob);
+    hr = m_library->CreateBlobFromFile(m_path.c_str(), &codePage, &sourceBlob);
     AssertFailed(hr);
 
     DxcBuffer sourceBuffer;
@@ -121,13 +73,13 @@ void Shader::load_shader_dxc()
     {
         IDxcCompilerArgs* preprocessArgs;
         LPCWSTR arguments = L"-P";
-        utils->BuildArguments(m_path.c_str(), m_main_function_name.c_str(), shader_model.c_str(), &arguments, 1, nullptr, 0, &preprocessArgs);
+        m_utils->BuildArguments(m_path.c_str(), m_mainFunctionName.c_str(), m_shaderModel.c_str(), &arguments, 1, nullptr, 0, &preprocessArgs);
 
         IDxcResult* preprocessResult;
-        AssertFailed(compiler->Compile(
+        AssertFailed(m_compiler->Compile(
             &sourceBuffer,
             preprocessArgs->GetArguments(), preprocessArgs->GetCount(),
-            include_handler.Get(),
+            m_includeHandler.Get(),
             IID_PPV_ARGS(&preprocessResult)));
         preprocessResult->GetResult(&preprocessedBlob);
         preprocessedBuffer = new DxcBuffer();
@@ -140,11 +92,11 @@ void Shader::load_shader_dxc()
     {
         hash = std::to_wstring(olej_utils::murmurHash(static_cast<u8*>(preprocessedBlob->GetBufferPointer()), preprocessedBuffer->Size, 0));
         size_t size = 0;
-        char* data = read_hlsl_shader_from_file(m_compiled_path + m_filename + hash + m_main_function_name, &size);
+        char* data = readShaderBlobFromFile(m_compiledPath + m_filename + hash + m_mainFunctionName, &size);
         
         IDxcBlobEncoding* encoded_blob;
-        utils->CreateBlob(data, size, CP_UTF8, &encoded_blob);
-        hr = encoded_blob->QueryInterface(IID_PPV_ARGS(&dxc_blob));
+        m_utils->CreateBlob(data, size, CP_UTF8, &encoded_blob);
+        hr = encoded_blob->QueryInterface(IID_PPV_ARGS(&m_dxcBlob));
         if (data && SUCCEEDED(hr))
         {
             std::cout << "Shader succesfully reloaded" << std::endl;
@@ -156,15 +108,15 @@ void Shader::load_shader_dxc()
     // Compile from preprocessed file
     {
         IDxcCompilerArgs* compileArguments;
-        utils->BuildArguments(m_path.c_str(), m_main_function_name.c_str(), shader_model.c_str(), nullptr, 0, nullptr, 0, &compileArguments);
+        m_utils->BuildArguments(m_path.c_str(), m_mainFunctionName.c_str(), m_shaderModel.c_str(), nullptr, 0, nullptr, 0, &compileArguments);
 
         IDxcResult* compileResult;
-        hr = compiler->Compile(
+        hr = m_compiler->Compile(
             preprocessedBuffer,
             compileArguments->GetArguments(), compileArguments->GetCount(),
-            include_handler.Get(),
+            m_includeHandler.Get(),
             IID_PPV_ARGS(&compileResult));
-        compileResult->GetResult(&dxc_blob);
+        compileResult->GetResult(&m_dxcBlob);
         if (SUCCEEDED(hr))
         {
             compileResult->GetStatus(&hr);
@@ -185,10 +137,10 @@ void Shader::load_shader_dxc()
 
 
     // Save the compiled shader to file
-    save_compiled_shader(m_compiled_path + m_filename + hash + m_main_function_name, dxc_blob);
+    saveCompiledShaderBlob(m_compiledPath + m_filename + hash + m_mainFunctionName, m_dxcBlob);
 }
 
-char* Shader::read_hlsl_shader_from_file(std::wstring const& path, size_t* p_size)
+char* Shader::readShaderBlobFromFile(std::wstring const& path, size_t* p_size)
 {
     std::ifstream file(path, std::ios::binary | std::ios::ate);
 
@@ -217,13 +169,13 @@ char* Shader::read_hlsl_shader_from_file(std::wstring const& path, size_t* p_siz
 
 
 
-bool Shader::save_compiled_shader(std::wstring const& path, IDxcBlob* p_blob)
+bool Shader::saveCompiledShaderBlob(std::wstring const& path, IDxcBlob* p_blob)
 {
     size_t const last_slash_pos = path.find_last_of('/');
     std::wstring const filename = path.substr(last_slash_pos + 1);
-    std::wstring const full_path = m_compiled_path + filename;
+    std::wstring const full_path = m_compiledPath + filename;
 
-    std::filesystem::path const directory = m_compiled_path;
+    std::filesystem::path const directory = m_compiledPath;
 
     if (!std::filesystem::exists(directory))
     {
@@ -257,57 +209,8 @@ bool Shader::save_compiled_shader(std::wstring const& path, IDxcBlob* p_blob)
     return true;
 }
 
-
-
-
-ID3DBlob* Shader::get_blob()
+IDxcBlob* Shader::getBlob() const
 {
-    return shader_blob;
+    return m_dxcBlob;
 }
 
-//bool Shader::read_file_to_blob(std::wstring const& path, IDxcBlob** pp_blob)
-//{
-//    size_t const last_slash_pos = path.find_last_of('/');
-//    std::wstring const filename = path.substr(last_slash_pos + 1);
-//    std::wstring const full_path = m_compiled_path + filename;
-//
-//    std::filesystem::path const directory = m_compiled_path;
-//
-//    if (!std::filesystem::exists(directory))
-//    {
-//        std::filesystem::create_directories(directory);
-//    }
-//
-//    if (!pp_blob)
-//    {
-//        return false;
-//    }
-//
-//    std::ifstream file(full_path, std::ios::binary | std::ios::ate);
-//
-//    if (!file.is_open())
-//    {
-//        return false;
-//    }
-//
-//    std::streamsize const file_size = file.tellg();
-//    file.seekg(0, std::ios::beg);
-//    uint32_t codePage = CP_UTF8;
-//    HRESULT const hr = library->CreateBlobFromFile(m_path.c_str(), &codePage, &sourceBlob);
-//
-//    if (FAILED(hr))
-//    {
-//        std::cerr << "Failed to create blob." << std::endl;
-//        return false;
-//    }
-//
-//    if (!file.read(static_cast<char*>((*pp_blob)->GetBufferPointer()), file_size))
-//    {
-//        std::cerr << "Failed to read file: " << olej_utils::wstringToString(full_path) + "\n";
-//        (*pp_blob)->Release();
-//        *pp_blob = nullptr;
-//        return false;
-//    }
-//
-//    return true;
-//}
