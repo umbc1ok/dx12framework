@@ -74,8 +74,8 @@ void Model::draw()
         {
             m_pipelineState = new PipelineState(L"MS_STANDARD.hlsl", L"PS_BASIC.hlsl");
         }
-        cmd_list->SetGraphicsRootSignature(m_pipelineState->get_root_signature());
-        cmd_list->SetPipelineState(m_pipelineState->get_pipeline_state());
+        cmd_list->SetGraphicsRootSignature(m_pipelineState->dx12RootSignature());
+        cmd_list->SetPipelineState(m_pipelineState->PSO());
         setConstantBuffer();
         for (auto& mesh : m_meshes)
         {

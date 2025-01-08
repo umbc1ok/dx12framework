@@ -9,8 +9,9 @@
 
 PipelineState::PipelineState(std::wstring vs_name, std::wstring ps_name)
 {
-    m_vs_name = vs_name;
-    m_ps_name = ps_name;
+    m_msName = vs_name;
+    m_asName = L"";
+    m_psName = ps_name;
     compilePSO();
     Renderer::get_instance()->register_pipeline_state(this);
 }
@@ -19,8 +20,8 @@ void PipelineState::compilePSO()
 {
     auto device = Renderer::get_instance()->get_device();
 
-    mesh_shader = new Shader(m_vs_name, ShaderType::MESH);
-    pixel_shader = new Shader(m_ps_name, ShaderType::PIXEL);
+    mesh_shader = new Shader(m_msName, ShaderType::MESH);
+    pixel_shader = new Shader(m_psName, ShaderType::PIXEL);
 
     const D3D12_INPUT_ELEMENT_DESC input_layout[3] =
     {
@@ -36,7 +37,7 @@ void PipelineState::compilePSO()
 
     CD3DX12_RASTERIZER_DESC rasterizer_desc = {};
 
-    if (m_wireframe_active)
+    if (m_wireframeActive)
         rasterizer_desc.FillMode = D3D12_FILL_MODE_WIREFRAME;
     else
         rasterizer_desc.FillMode = D3D12_FILL_MODE_SOLID; // Use D3D12_FILL_MODE_WIREFRAME for wireframe mode
@@ -51,7 +52,7 @@ void PipelineState::compilePSO()
     rasterizer_desc.AntialiasedLineEnable = TRUE;
 
     //rasterizer_desc.ForcedSampleCount = 0;
-    if (m_wireframe_active)
+    if (m_wireframeActive)
         rasterizer_desc.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
     else
         rasterizer_desc.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
@@ -72,9 +73,9 @@ void PipelineState::compilePSO()
     D3D12_SHADER_BYTECODE* ms = new D3D12_SHADER_BYTECODE(mesh_shader->getBlob()->GetBufferPointer(), mesh_shader->getBlob()->GetBufferSize());
     D3D12_SHADER_BYTECODE* ps = new D3D12_SHADER_BYTECODE(pixel_shader->getBlob()->GetBufferPointer(), pixel_shader->getBlob()->GetBufferSize());
 
-    create_root_signature();
+    createRootSignature();
     D3DX12_MESH_SHADER_PIPELINE_STATE_DESC psoDesc = {};
-    psoDesc.pRootSignature = m_root_signature;
+    psoDesc.pRootSignature = m_rootSignature;
     psoDesc.MS = *ms;
     psoDesc.PS = *ps;
     psoDesc.NumRenderTargets = 1;
@@ -94,139 +95,92 @@ void PipelineState::compilePSO()
     streamDesc.pPipelineStateSubobjectStream = &psoStream;
     streamDesc.SizeInBytes = sizeof(psoStream);
 
-    AssertFailed(device->CreatePipelineState(&streamDesc, IID_PPV_ARGS(&m_pipeline_state)));
+    AssertFailed(device->CreatePipelineState(&streamDesc, IID_PPV_ARGS(&m_pipelineState)));
 
 }
 
-ID3D12RootSignature* PipelineState::get_root_signature() const
+ID3D12RootSignature* PipelineState::dx12RootSignature() const
 {
-    return m_root_signature;
+    return m_rootSignature;
 }
 
-ID3D12PipelineState* PipelineState::get_pipeline_state() const
+ID3D12PipelineState* PipelineState::PSO() const
 {
-    return m_pipeline_state;
+    return m_pipelineState;
 }
 
-void PipelineState::set_wireframe(const bool& wireframe)
+void PipelineState::setWireframe(const bool& wireframe)
 {
-    if(wireframe != m_wireframe_active)
+    if(wireframe != m_wireframeActive)
     {
-        m_wireframe_active = wireframe;
+        m_wireframeActive = wireframe;
         compilePSO();
     }
 }
 
 // This is very basic, using it only to render a cube for now
-void PipelineState::create_root_signature()
+void PipelineState::createRootSignature()
 {
-    if(is_mesh_shader)
+    auto device = Renderer::get_instance()->get_device();
+    // Create a root signature.
+    D3D12_FEATURE_DATA_ROOT_SIGNATURE feature_data = {};
+    feature_data.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
+
+    if (FAILED(device->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &feature_data, sizeof(feature_data))))
     {
-        auto device = Renderer::get_instance()->get_device();
-        // Create a root signature.
-        D3D12_FEATURE_DATA_ROOT_SIGNATURE feature_data = {};
-        feature_data.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
-
-        if (FAILED(device->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &feature_data, sizeof(feature_data))))
-        {
-            feature_data.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
-        }
-
-        // Allow input layout and deny unnecessary access to certain pipeline stages.
-        D3D12_ROOT_SIGNATURE_FLAGS root_signature_flags =
-            D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
-            D3D12_ROOT_SIGNATURE_FLAG_DENY_AMPLIFICATION_SHADER_ROOT_ACCESS;
-
-
-        CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC root_signature_description;
-
-        if (m_vs_name == L"MS_GRASS.hlsl")
-        {
-            CD3DX12_ROOT_PARAMETER1 root_parameters[3];
-            root_parameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_ALL);
-            root_parameters[1].InitAsConstantBufferView(1, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_ALL);
-            root_parameters[2].InitAsUnorderedAccessView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_ALL);
-
-
-            CD3DX12_STATIC_SAMPLER_DESC static_samplers[1];
-            static_samplers[0].Init(0, D3D12_FILTER_ANISOTROPIC); // s3
-
-            root_signature_description.Init_1_1(_countof(root_parameters), root_parameters, 1, static_samplers, root_signature_flags);
-        }
-        else
-        {
-            
-            CD3DX12_ROOT_PARAMETER1 root_parameters[6];
-            //
-            root_parameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_ALL);
-            root_parameters[1].InitAsConstants(2, 1, 0, D3D12_SHADER_VISIBILITY_ALL);
-            root_parameters[2].InitAsShaderResourceView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_ALL);
-            root_parameters[3].InitAsShaderResourceView(1, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_ALL);
-            root_parameters[4].InitAsShaderResourceView(2, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_ALL);
-            root_parameters[5].InitAsShaderResourceView(3, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_ALL);
-
-            CD3DX12_STATIC_SAMPLER_DESC static_samplers[1];
-            static_samplers[0].Init(0, D3D12_FILTER_ANISOTROPIC); // s3
-
-            root_signature_description.Init_1_1(_countof(root_parameters), root_parameters, 1, static_samplers, root_signature_flags);
-        }
-
-
-
-        // Serialize the root signature.
-        ID3DBlob* root_signature_blob;
-        ID3DBlob* error_blob;
-        AssertFailed(D3DX12SerializeVersionedRootSignature(&root_signature_description,
-            feature_data.HighestVersion, &root_signature_blob, &error_blob));
-
-        // Create the root signature.
-        AssertFailed(device->CreateRootSignature(0, root_signature_blob->GetBufferPointer(),
-            root_signature_blob->GetBufferSize(), IID_PPV_ARGS(&m_root_signature)));
-
-        root_signature_blob->Release();
+        feature_data.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
     }
-    else
+
+    // Allow input layout and deny unnecessary access to certain pipeline stages.
+    D3D12_ROOT_SIGNATURE_FLAGS root_signature_flags =
+        D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
+        D3D12_ROOT_SIGNATURE_FLAG_DENY_AMPLIFICATION_SHADER_ROOT_ACCESS;
+
+
+    CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC root_signature_description;
+
+    if (m_msName == L"MS_GRASS.hlsl")
     {
-        auto device = Renderer::get_instance()->get_device();
-        // Create a root signature.
-        D3D12_FEATURE_DATA_ROOT_SIGNATURE feature_data = {};
-        feature_data.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
+        CD3DX12_ROOT_PARAMETER1 root_parameters[3];
+        root_parameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_ALL);
+        root_parameters[1].InitAsConstantBufferView(1, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_ALL);
+        root_parameters[2].InitAsUnorderedAccessView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_ALL);
 
-        if (FAILED(device->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &feature_data, sizeof(feature_data))))
-        {
-            feature_data.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
-        }
-
-        // Allow input layout and deny unnecessary access to certain pipeline stages.
-        D3D12_ROOT_SIGNATURE_FLAGS root_signature_flags =
-            D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
-            D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
-            D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
-            D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
-
-        // A single 32-bit constant root parameter that is used by the vertex shader.
-        CD3DX12_ROOT_PARAMETER1 root_parameters[2];
-        root_parameters[0].InitAsConstants(sizeof(hlsl::float4x4) / 4, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
-
-        CD3DX12_DESCRIPTOR_RANGE1 myTextureDescriptorRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE);
-        root_parameters[1].InitAsDescriptorTable(1, &myTextureDescriptorRange);
-        CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC root_signature_description;
 
         CD3DX12_STATIC_SAMPLER_DESC static_samplers[1];
         static_samplers[0].Init(0, D3D12_FILTER_ANISOTROPIC); // s3
 
         root_signature_description.Init_1_1(_countof(root_parameters), root_parameters, 1, static_samplers, root_signature_flags);
-
-        // Serialize the root signature.
-        ID3DBlob* root_signature_blob;
-        ID3DBlob* error_blob;
-        AssertFailed(D3DX12SerializeVersionedRootSignature(&root_signature_description,
-            feature_data.HighestVersion, &root_signature_blob, &error_blob));
-
-        // Create the root signature.
-        AssertFailed(device->CreateRootSignature(0, root_signature_blob->GetBufferPointer(),
-            root_signature_blob->GetBufferSize(), IID_PPV_ARGS(&m_root_signature)));
-
-        root_signature_blob->Release();
     }
+    else
+    {
+        
+        CD3DX12_ROOT_PARAMETER1 root_parameters[6];
+        //
+        root_parameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_ALL);
+        root_parameters[1].InitAsConstants(2, 1, 0, D3D12_SHADER_VISIBILITY_ALL);
+        root_parameters[2].InitAsShaderResourceView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_ALL);
+        root_parameters[3].InitAsShaderResourceView(1, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_ALL);
+        root_parameters[4].InitAsShaderResourceView(2, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_ALL);
+        root_parameters[5].InitAsShaderResourceView(3, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_ALL);
+
+        CD3DX12_STATIC_SAMPLER_DESC static_samplers[1];
+        static_samplers[0].Init(0, D3D12_FILTER_ANISOTROPIC); // s3
+
+        root_signature_description.Init_1_1(_countof(root_parameters), root_parameters, 1, static_samplers, root_signature_flags);
+    }
+
+
+
+    // Serialize the root signature.
+    ID3DBlob* root_signature_blob;
+    ID3DBlob* error_blob;
+    AssertFailed(D3DX12SerializeVersionedRootSignature(&root_signature_description,
+        feature_data.HighestVersion, &root_signature_blob, &error_blob));
+
+    // Create the root signature.
+    AssertFailed(device->CreateRootSignature(0, root_signature_blob->GetBufferPointer(),
+        root_signature_blob->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)));
+
+    root_signature_blob->Release();
 }

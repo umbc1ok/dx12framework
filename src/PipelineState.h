@@ -36,24 +36,28 @@ class PipelineState
 {
 public:
     PipelineState(std::wstring vs_name, std::wstring ps_name);
-    ~PipelineState();
+    ~PipelineState() = default;
 
     void compilePSO();
-    ID3D12RootSignature* get_root_signature() const;
-    ID3D12PipelineState* get_pipeline_state() const;
-    void set_wireframe(const bool& wireframe);
+    void setWireframe(const bool& wireframe);
+
+    ID3D12RootSignature* dx12RootSignature() const;
+    ID3D12PipelineState* PSO() const;
+
 private:
-    ID3D12RootSignature* m_root_signature;
-    ID3D12PipelineState* m_pipeline_state;
-    void create_root_signature();
+    void createRootSignature();
 
-    std::wstring m_vs_name;
-    std::wstring m_ps_name;
+    ID3D12RootSignature* m_rootSignature;
+    ID3D12PipelineState* m_pipelineState;
 
-    bool m_wireframe_active = false;
-    bool is_mesh_shader = true;
-    Shader* vertex_shader;
-    Shader* mesh_shader;
-    Shader* pixel_shader;
+    std::wstring m_msName = L"";
+    std::wstring m_asName = L"";
+    std::wstring m_psName = L"";
+
+    bool m_wireframeActive = false;
+
+    Shader* m_amplificationShader;
+    Shader* m_meshShader;
+    Shader* m_pixelShader;
 };
 

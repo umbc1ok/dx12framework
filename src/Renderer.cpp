@@ -177,7 +177,7 @@ void Renderer::set_wireframe(const bool& wireframe)
 {
     for (auto pipeline_state : mRegisteredPipelineStates)
     {
-        pipeline_state->set_wireframe(wireframe);
+        pipeline_state->setWireframe(wireframe);
     }
 }
 
