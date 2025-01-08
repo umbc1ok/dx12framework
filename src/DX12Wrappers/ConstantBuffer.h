@@ -3,6 +3,9 @@
 #include <d3d12.h>
 #include "Renderer.h"
 #include "utils/ErrorHandler.h"
+#include <d3dx12.h>
+
+
 
 template <typename T>
 class ConstantBuffer

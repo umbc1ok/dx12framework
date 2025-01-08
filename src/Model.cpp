@@ -20,9 +20,11 @@
 #include "Input.h"
 #include "Serialization/MeshSerializer.h"
 #include "utils/Utils.h"
+
+#include "DX12Wrappers/ConstantBuffer.h"
+
 using namespace Microsoft::WRL;
 
-using namespace DirectX;
 
 
 Model* Model::create(std::string const& model_path)
@@ -33,13 +35,14 @@ Model* Model::create(std::string const& model_path)
     if (!model->deserializeMeshes())
     {
         model->loadModel(model_path);
-        model->serializeMeshes();
+        //model->serializeMeshes();
     }
     model->set_can_tick(true);
     model->uploadGPUResources();
-    model->m_pipelineState = new PipelineState(L"MS_STANDARD.hlsl", L"PS_BASIC.hlsl");
-    model->m_constantBuffer = new ConstantBuffer<SceneConstantBuffer>();
-    model->serializeMeshes();
+    model->m_pipelineState = new PipelineState(L"AS_STANDARD.hlsl", L"MS_STANDARD.hlsl", L"PS_BASIC.hlsl");
+    model->m_sceneConstantBuffer = new ConstantBuffer<SceneConstantBuffer>();
+    model->m_cameraConstantBuffer = new ConstantBuffer<CameraConstants>();
+    //model->serializeMeshes();
     return model;
 }
 
@@ -51,14 +54,28 @@ void Model::setConstantBuffer()
     hlsl::float4x4 mvpMatrix = projection * view;
     mvpMatrix = mvpMatrix * world;
 
-    m_constantBufferData.World = hlsl::transpose(world);
-    m_constantBufferData.WorldView = hlsl::transpose(world * view);
-    m_constantBufferData.WorldViewProj = hlsl::transpose(mvpMatrix);
-    m_constantBufferData.DrawFlag = Renderer::get_instance()->get_debug_mode();
+    m_sceneConstantBufferData.World = hlsl::transpose(world);
+    m_sceneConstantBufferData.WorldView = hlsl::transpose(world * view);
+    m_sceneConstantBufferData.WorldViewProj = hlsl::transpose(mvpMatrix);
+    m_sceneConstantBufferData.DrawFlag = Renderer::get_instance()->get_debug_mode();
 
-    m_constantBufferData.time = ImGui::GetTime();
-    m_constantBuffer->uploadData(m_constantBufferData);
-    m_constantBuffer->setConstantBuffer(0);
+    m_sceneConstantBufferData.time = ImGui::GetTime();
+    m_sceneConstantBuffer->uploadData(m_sceneConstantBufferData);
+    m_sceneConstantBuffer->setConstantBuffer(0);
+
+    if (!freezeCamera)
+    {
+        m_cameraConstants.CullViewPosition = Camera::getMainCamera()->entity->transform->get_position();
+        auto const frustum = Camera::getMainCamera()->getFrustum();
+        m_cameraConstants.Planes[0] = frustum.top_plane;
+        m_cameraConstants.Planes[1] = frustum.bottom_plane;
+        m_cameraConstants.Planes[2] = frustum.right_plane;
+        m_cameraConstants.Planes[3] = frustum.left_plane;
+        m_cameraConstants.Planes[4] = frustum.far_plane;
+        m_cameraConstants.Planes[5] = frustum.near_plane;
+    }
+    m_cameraConstantBuffer->uploadData(m_cameraConstants);
+    m_cameraConstantBuffer->setConstantBuffer(2);
 
 }
 
@@ -97,6 +114,8 @@ void Model::drawEditor()
     ImGui::Text("Triangle count: %i", m_triangleCount);
     ImGui::Text("Vertex count: %i", m_vertexCount);
     ImGui::Text("Meshlet count: %i", m_meshletsCount);
+
+    ImGui::Checkbox("Freeze Camera", &freezeCamera);
 
     const char* items[] = { "MESHOPTIMIZER", "DXMESH", "GREEDY"};
     {
@@ -319,6 +338,12 @@ void Model::uploadGPUResources()
         {
             m->VertexResource = new Resource();
             m->VertexResource->create(m->m_vertices.size() * sizeof(Vertex), m->m_vertices.data());
+        }
+
+        if (m->m_cullData.size() != 0)
+        {
+            m->CullDataResource = new Resource();
+            m->CullDataResource->create(m->m_cullData.size() * sizeof(CullData), m->m_cullData.data());
         }
     }
 }

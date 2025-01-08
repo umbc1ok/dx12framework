@@ -6,9 +6,11 @@
 #include "PipelineState.h"
 #include "utils/maths.h"
 #include "../res/shaders/shared/shared_cb.h"
-#include "DX12Wrappers/ConstantBuffer.h"
 
 class Mesh;
+
+template <typename T>
+class ConstantBuffer;
 
 class Model : public Component
 {
@@ -37,17 +39,24 @@ private:
     std::string m_directory;
 
 
-    ConstantBuffer<SceneConstantBuffer>* m_constantBuffer;
-    SceneConstantBuffer m_constantBufferData;
+    ConstantBuffer<SceneConstantBuffer>* m_sceneConstantBuffer;
+    SceneConstantBuffer m_sceneConstantBufferData;
+
+    ConstantBuffer<CameraConstants>* m_cameraConstantBuffer;
+    CameraConstants m_cameraConstants;
+
 
     // STATS FOR EDITOR
     int m_vertexCount = 0;
     int m_triangleCount = 0;
     int m_meshletsCount = 0;
 
-    int m_TypeIndex = 2;
+    int m_TypeIndex = 1;
 
     std::string m_path;
+
+    bool freezeCamera = false;
+
 
     PipelineState* m_pipelineState;
 };
