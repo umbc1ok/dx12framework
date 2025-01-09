@@ -34,6 +34,7 @@ void Renderer::create()
     m_instance->m_ScissorRect = CD3DX12_RECT(0, 0, LONG_MAX, LONG_MAX);
     m_instance->m_profiler = new GPUProfiler();
     m_instance->m_profiler->startRecording();
+    m_instance->m_debugDrawer = new DebugDrawer();
     //
 }
 
@@ -78,13 +79,24 @@ void Renderer::render()
 
             cmd_list->OMSetRenderTargets(1, &rtv, FALSE, &dsv);
         } m_profiler->endEntry(cmd_list, profilerEntrySettingFrameSettings);
+
         ProfilerEntry* const profilerEntryDrawAll = m_profiler->startEntry(cmd_list, "Draw all objects");
         {
             MainScene::get_instance()->runFrame();
         } m_profiler->endEntry(cmd_list, profilerEntryDrawAll);
 
+        ProfilerEntry* const profilerEntryDrawDebug = m_profiler->startEntry(cmd_list, "Draw debug geometry");
+        {
+            m_debugDrawer->draw();
+        } m_profiler->endEntry(cmd_list, profilerEntryDrawDebug);
+
     } m_profiler->endEntry(cmd_list, profilerEntry);
 
+}
+
+void Renderer::initDebugDrawings()
+{
+    m_debugDrawer->createCamera();
 }
 
 void Renderer::end_frame()

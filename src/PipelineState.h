@@ -33,10 +33,19 @@ struct PipelineStateStreamMesh
     CD3DX12_PIPELINE_STATE_STREAM_DEPTH_STENCIL depthStencildesc;
 };
 
+
+enum PipelineType
+{
+    TRADITIONAL,
+    MESH,
+    COMPUTE
+};
+
+
 class PipelineState
 {
 public:
-    PipelineState(std::wstring vs_name, std::wstring ps_name);
+    PipelineState(std::wstring ms_name, std::wstring ps_name, PipelineType type);
     PipelineState(std::wstring as_name, std::wstring vs_name, std::wstring ps_name);
     ~PipelineState() = default;
 
@@ -46,14 +55,18 @@ public:
     ID3D12RootSignature* dx12RootSignature() const;
     ID3D12PipelineState* PSO() const;
 
+    void reload() { compilePSO(); }
+
 private:
     void createRootSignature();
 
     ID3D12RootSignature* m_rootSignature;
     ID3D12PipelineState* m_pipelineState;
 
-    std::wstring m_msName = L"";
     std::wstring m_asName = L"";
+
+    std::wstring m_vsName = L"";
+    std::wstring m_msName = L"";
     std::wstring m_psName = L"";
 
     bool m_wireframeActive = false;
@@ -61,5 +74,8 @@ private:
     Shader* m_amplificationShader;
     Shader* m_meshShader;
     Shader* m_pixelShader;
+    Shader* m_vertexShader;
+
+    PipelineType m_type;
 };
 

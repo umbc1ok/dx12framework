@@ -62,17 +62,14 @@ void Model::setConstantBuffer()
     m_sceneConstantBuffer->uploadData(m_sceneConstantBufferData);
     m_sceneConstantBuffer->setConstantBuffer(0);
 
-    if (!freezeCamera)
-    {
-        m_cameraConstants.CullViewPosition = Camera::getMainCamera()->entity->transform->get_position();
-        auto const frustum = Camera::getMainCamera()->getFrustum();
-        m_cameraConstants.Planes[0] = frustum.top_plane;
-        m_cameraConstants.Planes[1] = frustum.bottom_plane;
-        m_cameraConstants.Planes[2] = frustum.right_plane;
-        m_cameraConstants.Planes[3] = frustum.left_plane;
-        m_cameraConstants.Planes[4] = frustum.far_plane;
-        m_cameraConstants.Planes[5] = frustum.near_plane;
-    }
+    m_cameraConstants.CullViewPosition = Camera::getMainCamera()->getCullingPosition();
+    auto const frustum = Camera::getMainCamera()->getFrustum();
+    m_cameraConstants.Planes[0] = frustum.top_plane;
+    m_cameraConstants.Planes[1] = frustum.bottom_plane;
+    m_cameraConstants.Planes[2] = frustum.right_plane;
+    m_cameraConstants.Planes[3] = frustum.left_plane;
+    m_cameraConstants.Planes[4] = frustum.far_plane;
+    m_cameraConstants.Planes[5] = frustum.near_plane;
     m_cameraConstantBuffer->uploadData(m_cameraConstants);
     m_cameraConstantBuffer->setConstantBuffer(2);
 

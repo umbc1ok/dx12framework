@@ -29,9 +29,19 @@ public:
 	static Camera* getMainCamera() { return m_main_camera; };
 	hlsl::float4x4 getViewMatrix() const;
 	hlsl::float4x4 getProjectionMatrix();
+	hlsl::float3 getCullingPosition();
 	void updateInternals();
 	void handleInput();
     const Frustum& getFrustum() const { return m_frustum; }
+
+    const float getAspectRatio() const { return m_width / m_height; }
+    const float getFov() const { return m_fov; }
+    const float getNearPlane() const { return m_nearPlane; }
+    const float getFarPlane() const { return m_farPlane; }
+
+    void freeze(bool freeze) { m_frozen = freeze; }
+
+
 private:
 	void updateFrustum();
 
@@ -54,5 +64,9 @@ private:
     bool m_RMBPressed = false;
 
 	Frustum m_frustum;
+
+    hlsl::float3 m_cachedPosition = hlsl::float3(0.0f, 0.0f, 0.0f);
+
+	bool m_frozen = false;
 };
 

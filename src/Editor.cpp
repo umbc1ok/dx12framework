@@ -478,7 +478,7 @@ void Editor::drawDebugWindow(EditorWindow* const& window)
             Renderer::get_instance()->set_debug_mode(m_currentDebugMode);
         }
     }
-
+    Renderer::get_instance()->getDebugDrawer()->drawEditor();
     // TODO: Implement scene saving
     //draw_scene_save();
 

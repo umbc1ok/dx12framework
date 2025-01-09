@@ -35,6 +35,10 @@ Shader::Shader(std::wstring name, ShaderType type)
         m_mainFunctionName = L"as_main";
         m_shaderModel = L"as_6_5";
         break;
+    case ShaderType::VERTEX:
+        m_mainFunctionName = L"vs_main";
+        m_shaderModel = L"vs_6_5";
+        break;
     }
 
     HRESULT hr = DxcCreateInstance(CLSID_DxcLibrary, IID_PPV_ARGS(&m_library));

@@ -2,6 +2,7 @@
 #include <dxgi1_4.h>
 #include <dxgidebug.h>
 
+#include "debugGeometry/DebugDrawer.h"
 #include "DX12Wrappers/CommandQueue.h"
 #include "Tools/GPUProfiler.h"
 #include "utils/Types.h"
@@ -23,6 +24,8 @@ public:
     void end_frame();
     void cleanup();
     void render();
+    void initDebugDrawings();
+
 
     GPUProfiler* get_profiler() { return m_profiler; }
     ID3D12Device2* get_device() const;
@@ -56,7 +59,7 @@ public:
 
     void set_debug_mode(const u32& mode) { m_debug_mode = mode; }
     u32 get_debug_mode() const { return m_debug_mode; }
-
+    DebugDrawer* getDebugDrawer() { return m_debugDrawer; }
     void register_pipeline_state(PipelineState* pipeline_state);
 private:
 
@@ -109,6 +112,7 @@ private:
 
     GPUProfiler* m_profiler;
 
+    DebugDrawer* m_debugDrawer;
 
     u32 m_debug_mode = 1;
     static Renderer* m_instance;

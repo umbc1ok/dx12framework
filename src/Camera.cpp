@@ -37,6 +37,14 @@ hlsl::float4x4 Camera::getProjectionMatrix()
     return m_projection;
 }
 
+hlsl::float3 Camera::getCullingPosition()
+{
+    if (!m_frozen)
+        m_cachedPosition = entity->transform->get_position();
+
+    return m_cachedPosition;
+}
+
 void Camera::updateInternals()
 {
     if (m_dirty)
@@ -112,23 +120,24 @@ void Camera::handleInput()
 
 void Camera::updateFrustum()
 {
-    hlsl::float4x4 comboMatrix = m_projection * getViewMatrix();
-    //comboMatrix = hlsl::transpose(comboMatrix);
 
-    // Left clipping plane
-    m_frustum.left_plane = comboMatrix.row(3) + comboMatrix.row(0);
-    // Right clipping plane
-    m_frustum.right_plane = comboMatrix.row(3) - comboMatrix.row(0);
-    // Bottom clipping plane
-    m_frustum.bottom_plane = comboMatrix.row(3) + comboMatrix.row(1);
-    // Top clipping plane
-    m_frustum.top_plane = comboMatrix.row(3) - comboMatrix.row(1);
-    // Near clipping plane
-    m_frustum.near_plane = comboMatrix.row(2);
-    // Far clipping plane
-    m_frustum.far_plane = comboMatrix.row(3) - comboMatrix.row(2);
+    if(!m_frozen)
+    {
+        hlsl::float4x4 comboMatrix = m_projection * getViewMatrix();
+        //comboMatrix = hlsl::transpose(comboMatrix);
 
-
-
+        // Left clipping plane
+        m_frustum.left_plane = comboMatrix.row(3) + comboMatrix.row(0);
+        // Right clipping plane
+        m_frustum.right_plane = comboMatrix.row(3) - comboMatrix.row(0);
+        // Bottom clipping plane
+        m_frustum.bottom_plane = comboMatrix.row(3) + comboMatrix.row(1);
+        // Top clipping plane
+        m_frustum.top_plane = comboMatrix.row(3) - comboMatrix.row(1);
+        // Near clipping plane
+        m_frustum.near_plane = comboMatrix.row(2);
+        // Far clipping plane
+        m_frustum.far_plane = comboMatrix.row(3) - comboMatrix.row(2);
+    }
 }
 

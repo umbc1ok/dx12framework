@@ -7,17 +7,19 @@ class IndexBuffer
 {
 public:
 
-    IndexBuffer(u16 const* data, u16 const no_of_indicies);
+    IndexBuffer(uint32_t const* data, uint32_t const no_of_indicies);
     ~IndexBuffer();
 
     ID3D12Resource* get() const;
     void update();
     D3D12_INDEX_BUFFER_VIEW* get_view() { return &m_IndexBufferView; }
+    uint32_t size() const { return m_no_of_indicies; }
+
 private:
     ID3D12Resource* m_IndexBuffer;
     D3D12_INDEX_BUFFER_VIEW m_IndexBufferView = {};
 
-    u16 const* m_data;
-    u16 m_no_of_indicies;
+    uint32_t const* m_data;
+    uint32_t m_no_of_indicies;
 };
 
