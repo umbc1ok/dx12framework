@@ -7,10 +7,19 @@
 #include "utils/ErrorHandler.h"
 #include "utils/maths.h"
 
-PipelineState::PipelineState(std::wstring vs_name, std::wstring ps_name)
+PipelineState::PipelineState(std::wstring ms_or_vs_name, std::wstring ps_name, PipelineType type)
 {
-    m_msName = vs_name;
-    m_psName = ps_name;
+    if (type == TRADITIONAL)
+    {
+        m_vsName = ms_or_vs_name;
+        m_psName = ps_name;
+    }
+    else if (type == MESH)
+    {
+        m_msName = ms_or_vs_name;
+        m_psName = ps_name;
+    }
+    m_type = type;
     compilePSO();
     Renderer::get_instance()->register_pipeline_state(this);
 }
@@ -20,6 +29,7 @@ PipelineState::PipelineState(std::wstring as_name, std::wstring vs_name, std::ws
     m_asName = as_name;
     m_msName = vs_name;
     m_psName = ps_name;
+    m_type = MESH;
     compilePSO();
     Renderer::get_instance()->register_pipeline_state(this);
 }
@@ -31,14 +41,17 @@ void PipelineState::compilePSO()
     if(!m_asName.empty())
         m_amplificationShader = new Shader(m_asName, ShaderType::AMPLIFICATION);
 
-    m_meshShader = new Shader(m_msName, ShaderType::MESH);
+    if (m_type == MESH)
+        m_meshShader = new Shader(m_msName, ShaderType::MESH);
+    else
+        m_vertexShader = new Shader(m_vsName, ShaderType::VERTEX);
     m_pixelShader = new Shader(m_psName, ShaderType::PIXEL);
 
     const D3D12_INPUT_ELEMENT_DESC input_layout[3] =
     {
-        { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 1 },
-        { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 1 },
-        { "UV", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 1 }
+        { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 1, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 2, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
     };
 
 
@@ -81,38 +94,67 @@ void PipelineState::compilePSO()
 
     D3D12_DEPTH_STENCIL_DESC depth_stencil_desc = CD3DX12_DEPTH_STENCIL_DESC(CD3DX12_DEFAULT());
 
-    D3D12_SHADER_BYTECODE* as = nullptr;
-    if (!m_asName.empty())
-        as = new D3D12_SHADER_BYTECODE(m_amplificationShader->getBlob()->GetBufferPointer(), m_amplificationShader->getBlob()->GetBufferSize());
-
-    D3D12_SHADER_BYTECODE* ms = new D3D12_SHADER_BYTECODE(m_meshShader->getBlob()->GetBufferPointer(), m_meshShader->getBlob()->GetBufferSize());
-    D3D12_SHADER_BYTECODE* ps = new D3D12_SHADER_BYTECODE(m_pixelShader->getBlob()->GetBufferPointer(), m_pixelShader->getBlob()->GetBufferSize());
-
     createRootSignature();
-    D3DX12_MESH_SHADER_PIPELINE_STATE_DESC psoDesc = {};
-    psoDesc.pRootSignature = m_rootSignature;
-    psoDesc.MS = *ms;
-    psoDesc.PS = *ps;
-    if(as)
-        psoDesc.AS = *as;
-    psoDesc.NumRenderTargets = 1;
-    psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
-    psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
-    psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(rasterizer_desc);
-    psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-    psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
-    psoDesc.SampleMask = UINT_MAX;
-    psoDesc.SampleDesc = DefaultSampleDesc();
-    psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+
+    if(m_type == MESH)
+    {
+        D3D12_SHADER_BYTECODE* as = nullptr;
+        if (!m_asName.empty())
+            as = new D3D12_SHADER_BYTECODE(m_amplificationShader->getBlob()->GetBufferPointer(), m_amplificationShader->getBlob()->GetBufferSize());
+
+        D3D12_SHADER_BYTECODE* ms = new D3D12_SHADER_BYTECODE(m_meshShader->getBlob()->GetBufferPointer(), m_meshShader->getBlob()->GetBufferSize());
+        D3D12_SHADER_BYTECODE* ps = new D3D12_SHADER_BYTECODE(m_pixelShader->getBlob()->GetBufferPointer(), m_pixelShader->getBlob()->GetBufferSize());
+
+        D3DX12_MESH_SHADER_PIPELINE_STATE_DESC psoDesc = {};
+        psoDesc.pRootSignature = m_rootSignature;
+        psoDesc.MS = *ms;
+        psoDesc.PS = *ps;
+        if (as)
+            psoDesc.AS = *as;
+        psoDesc.NumRenderTargets = 1;
+        psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+        psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
+        psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(rasterizer_desc);
+        psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+        psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+        psoDesc.SampleMask = UINT_MAX;
+        psoDesc.SampleDesc = DefaultSampleDesc();
+        psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 
 
-    auto psoStream = CD3DX12_PIPELINE_MESH_STATE_STREAM(psoDesc);
+        auto psoStream = CD3DX12_PIPELINE_MESH_STATE_STREAM(psoDesc);
 
-    D3D12_PIPELINE_STATE_STREAM_DESC streamDesc;
-    streamDesc.pPipelineStateSubobjectStream = &psoStream;
-    streamDesc.SizeInBytes = sizeof(psoStream);
+        D3D12_PIPELINE_STATE_STREAM_DESC streamDesc;
+        streamDesc.pPipelineStateSubobjectStream = &psoStream;
+        streamDesc.SizeInBytes = sizeof(psoStream);
 
-    AssertFailed(device->CreatePipelineState(&streamDesc, IID_PPV_ARGS(&m_pipelineState)));
+        AssertFailed(device->CreatePipelineState(&streamDesc, IID_PPV_ARGS(&m_pipelineState)));
+    }
+    else if(m_type == TRADITIONAL)
+    {
+        D3D12_SHADER_BYTECODE* vs = new D3D12_SHADER_BYTECODE(m_vertexShader->getBlob()->GetBufferPointer(), m_vertexShader->getBlob()->GetBufferSize());
+        D3D12_SHADER_BYTECODE* ps = new D3D12_SHADER_BYTECODE(m_pixelShader->getBlob()->GetBufferPointer(), m_pixelShader->getBlob()->GetBufferSize());
+
+        PipelineStateStream pipeline_state_stream = {};
+
+        pipeline_state_stream.pRootSignature = m_rootSignature;
+        pipeline_state_stream.InputLayout = { input_layout, _countof(input_layout) };
+        pipeline_state_stream.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+        pipeline_state_stream.VS = *vs;
+        pipeline_state_stream.PS = *ps;
+        pipeline_state_stream.DSVFormat = DXGI_FORMAT_D32_FLOAT;
+        pipeline_state_stream.RTVFormats = rtv_formats;
+        pipeline_state_stream.RasterizerState = rasterizer_desc;
+        pipeline_state_stream.blendDesc = blend_desc;
+
+
+        D3D12_PIPELINE_STATE_STREAM_DESC pipeline_state_stream_desc = {
+        sizeof(PipelineStateStream), &pipeline_state_stream
+        };
+
+
+        AssertFailed(Renderer::get_instance()->get_device()->CreatePipelineState(&pipeline_state_stream_desc, IID_PPV_ARGS(&m_pipelineState)));
+    }
 
 }
 
@@ -155,6 +197,7 @@ void PipelineState::createRootSignature()
 
     CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC root_signature_description;
 
+    // TODO: This isn't very beatiful, needs to be refactored later
     if (m_msName == L"MS_GRASS.hlsl")
     {
         CD3DX12_ROOT_PARAMETER1 root_parameters[3];
@@ -163,6 +206,15 @@ void PipelineState::createRootSignature()
         root_parameters[2].InitAsUnorderedAccessView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_ALL);
 
 
+        CD3DX12_STATIC_SAMPLER_DESC static_samplers[1];
+        static_samplers[0].Init(0, D3D12_FILTER_ANISOTROPIC); // s3
+
+        root_signature_description.Init_1_1(_countof(root_parameters), root_parameters, 1, static_samplers, root_signature_flags);
+    }
+    else if(!m_vsName.empty())
+    {
+        CD3DX12_ROOT_PARAMETER1 root_parameters[1];
+        root_parameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_ALL);
         CD3DX12_STATIC_SAMPLER_DESC static_samplers[1];
         static_samplers[0].Init(0, D3D12_FILTER_ANISOTROPIC); // s3
 

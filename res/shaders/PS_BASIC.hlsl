@@ -9,13 +9,6 @@
 //
 //*********************************************************
 #include "shared/shared_cb.h"
-// struct Constants
-// {
-//     float4x4 World;
-//     float4x4 WorldView;
-//     float4x4 WorldViewProj;
-//     uint     DrawMeshlets;
-// };
 
 struct VertexOut
 {

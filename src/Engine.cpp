@@ -24,6 +24,7 @@ void Engine::setup()
     Camera::create();
     Renderer::get_instance()->camera_entity->add_component(Camera::getMainCamera());
     Game::init();
+    Renderer::get_instance()->initDebugDrawings();
 }
 
 void Engine::run()
