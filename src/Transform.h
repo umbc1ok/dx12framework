@@ -46,7 +46,7 @@ public:
     hlsl::float3 get_right();
     hlsl::float3 get_up();
 
-    hlsl::float4x4 const& get_model_matrix();
+    hlsl::float4x4 get_model_matrix();
 
     hlsl::float4x4 get_local_model_matrix();
     void compute_local_model_matrix();

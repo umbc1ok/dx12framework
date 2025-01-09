@@ -236,7 +236,7 @@ hlsl::float3 Transform::get_up()
     return m_up;
 }
 
-hlsl::float4x4 const& Transform::get_model_matrix()
+hlsl::float4x4 Transform::get_model_matrix()
 {
     recompute_model_matrix_if_needed();
 
