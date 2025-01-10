@@ -9,6 +9,7 @@
 #include "Entity.h"
 #include "Renderer.h"
 #include "Window.h"
+#include "Tools/GPUProfiler.h"
 
 Editor* Editor::m_instance;
 
@@ -644,10 +645,11 @@ void Editor::drawWindowMenuBar(EditorWindow* const& window)
     }
 }
 
-void Editor::drawProfiler(EditorWindow* const& window)
+// This should be implemented inside the profiler, and this function should just call the profiler's function
+void Editor::drawProfiler(EditorWindow* const& window)  
 {
     bool is_still_open = true;
-    auto profiler = Renderer::get_instance()->get_profiler();
+    auto profiler = GPUProfiler::getInstance();
     ImGui::Begin(window->get_name().c_str(), &is_still_open, window->flags);
     profiler->collectData();
     bool useMicroSeconds = profiler->useMicroSeconds();
@@ -673,7 +675,7 @@ void Editor::drawProfiler(EditorWindow* const& window)
             ImGui::Unindent();
         }
     }
-    Renderer::get_instance()->get_profiler()->unmap();
+    profiler->unmap();
     ImGui::End();
 }
 

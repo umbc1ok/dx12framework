@@ -28,6 +28,9 @@ public:
 	GPUProfiler() = default;
 	~GPUProfiler() = default;
 
+	static void create();
+	static GPUProfiler* getInstance();
+
     ProfilerEntry* startEntry(ID3D12GraphicsCommandList6* cmdList, const std::string name);
     void endEntry(ID3D12GraphicsCommandList6* cmdList, ProfilerEntry* entry);
 
@@ -44,6 +47,9 @@ public:
 	bool useMicroSeconds() { return m_useMicroSeconds; }
 
 private:
+    static GPUProfiler* m_instance;
+
+
 	uint32_t m_currentNesting = 0;
 	uint64_t currentStampIndex = 0;
 	float lastFrameTime = 0.0f;
