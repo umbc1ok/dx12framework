@@ -11,11 +11,13 @@
 
 #include "Game.h"
 #include "Input.h"
+#include "Tools/GPUProfiler.h"
 
 
 void Engine::setup()
 {
     Window::create();
+    GPUProfiler::create();
     Renderer::create();
     Editor::create();
     Input::create();

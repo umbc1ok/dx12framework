@@ -22,6 +22,7 @@
 #include "utils/Utils.h"
 
 #include "DX12Wrappers/ConstantBuffer.h"
+#include "Tools/GPUProfiler.h"
 
 using namespace Microsoft::WRL;
 
@@ -79,7 +80,9 @@ void Model::setConstantBuffer()
 void Model::draw()
 {
     auto cmd_list = Renderer::get_instance()->g_pd3dCommandList;
-    auto const entry = Renderer::get_instance()->get_profiler()->startEntry(cmd_list, "Model Draw");
+    auto profiler = GPUProfiler::getInstance();
+
+    auto const entry = profiler->startEntry(cmd_list, "Model Draw");
     {
         cmd_list->SetGraphicsRootSignature(m_pipelineState->dx12RootSignature());
         cmd_list->SetPipelineState(m_pipelineState->PSO());
@@ -88,7 +91,7 @@ void Model::draw()
         {
             mesh->dispatch();
         }
-    } Renderer::get_instance()->get_profiler()->endEntry(cmd_list, entry);
+    } profiler->endEntry(cmd_list, entry);
 }
 
 void Model::update()

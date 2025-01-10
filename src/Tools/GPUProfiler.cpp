@@ -3,6 +3,18 @@
 #include <iostream>
 #include <utils/ErrorHandler.h>
 
+GPUProfiler* GPUProfiler::m_instance;
+
+void GPUProfiler::create()
+{
+    m_instance = new GPUProfiler();
+}
+
+GPUProfiler* GPUProfiler::getInstance()
+{
+    return m_instance;
+}
+
 ProfilerEntry* GPUProfiler::startEntry(ID3D12GraphicsCommandList6* cmdList, const std::string name)
 {
     cmdList->EndQuery(queryHeap, D3D12_QUERY_TYPE_TIMESTAMP, currentStampIndex);

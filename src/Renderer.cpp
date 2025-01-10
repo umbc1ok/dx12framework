@@ -10,6 +10,8 @@
 
 #include "Input.h"
 #include "Keyboard.h"
+#include "Tools/GPUProfiler.h"
+
 
 Renderer* Renderer::m_instance;
 
@@ -32,9 +34,8 @@ void Renderer::create()
     m_instance->m_Viewport = CD3DX12_VIEWPORT(0.0f, 0.0f,
         static_cast<float>(width), static_cast<float>(height));
     m_instance->m_ScissorRect = CD3DX12_RECT(0, 0, LONG_MAX, LONG_MAX);
-    m_instance->m_profiler = new GPUProfiler();
-    m_instance->m_profiler->startRecording();
     m_instance->m_debugDrawer = new DebugDrawer();
+    GPUProfiler::getInstance()->startRecording();
     //
 }
 
@@ -63,11 +64,12 @@ void Renderer::start_frame()
 void Renderer::render()
 {
     auto cmd_list = g_pd3dCommandList;
-    m_profiler->startFrame();
+    auto profiler = GPUProfiler::getInstance();
+    profiler->startFrame();
     auto rtv = get_current_rtv();
-    ProfilerEntry* const profilerEntry = m_profiler->startEntry(cmd_list, "Frame");
+    ProfilerEntry* const profilerEntry = profiler->startEntry(cmd_list, "Frame");
     {
-        ProfilerEntry* const profilerEntrySettingFrameSettings = m_profiler->startEntry(cmd_list, "Setup frame");
+        ProfilerEntry* const profilerEntrySettingFrameSettings = profiler->startEntry(cmd_list, "Setup frame");
         {
             auto dsv = get_dsv_heap()->GetCPUDescriptorHandleForHeapStart();
             FLOAT clearColor[] = { 0.4f, 0.6f, 0.9f, 1.0f };
@@ -78,19 +80,19 @@ void Renderer::render()
             cmd_list->RSSetScissorRects(1, &m_ScissorRect);
 
             cmd_list->OMSetRenderTargets(1, &rtv, FALSE, &dsv);
-        } m_profiler->endEntry(cmd_list, profilerEntrySettingFrameSettings);
+        } profiler->endEntry(cmd_list, profilerEntrySettingFrameSettings);
 
-        ProfilerEntry* const profilerEntryDrawAll = m_profiler->startEntry(cmd_list, "Draw all objects");
+        ProfilerEntry* const profilerEntryDrawAll = profiler->startEntry(cmd_list, "Draw all objects");
         {
             MainScene::get_instance()->runFrame();
-        } m_profiler->endEntry(cmd_list, profilerEntryDrawAll);
+        } profiler->endEntry(cmd_list, profilerEntryDrawAll);
 
-        ProfilerEntry* const profilerEntryDrawDebug = m_profiler->startEntry(cmd_list, "Draw debug geometry");
+        ProfilerEntry* const profilerEntryDrawDebug = profiler->startEntry(cmd_list, "Draw debug geometry");
         {
             m_debugDrawer->draw();
-        } m_profiler->endEntry(cmd_list, profilerEntryDrawDebug);
+        } profiler->endEntry(cmd_list, profilerEntryDrawDebug);
 
-    } m_profiler->endEntry(cmd_list, profilerEntry);
+    } profiler->endEntry(cmd_list, profilerEntry);
 
 }
 
@@ -102,11 +104,11 @@ void Renderer::initDebugDrawings()
 void Renderer::end_frame()
 {
     auto command_list = g_pd3dCommandList;
-
+    auto profiler = GPUProfiler::getInstance();
     transition_resource(command_list, get_current_back_buffer(),
         D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 
-    m_profiler->endRecording(command_list);
+    profiler->endRecording(command_list);
     auto index = g_pSwapChain->GetCurrentBackBufferIndex();
     g_fencevalues[g_pSwapChain->GetCurrentBackBufferIndex()] = m_DirectCommandQueue->execute_command_list(command_list);
     m_DirectCommandQueue->wait_for_fence_value(g_fencevalues[index]);

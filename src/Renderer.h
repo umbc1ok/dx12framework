@@ -4,7 +4,6 @@
 
 #include "debugGeometry/DebugDrawer.h"
 #include "DX12Wrappers/CommandQueue.h"
-#include "Tools/GPUProfiler.h"
 #include "utils/Types.h"
 #define DX12_ENABLE_DEBUG_LAYER 
 
@@ -27,7 +26,6 @@ public:
     void initDebugDrawings();
 
 
-    GPUProfiler* get_profiler() { return m_profiler; }
     ID3D12Device2* get_device() const;
 
     void update_buffer_resource(ID3D12GraphicsCommandList2* commandList,
@@ -109,8 +107,6 @@ private:
     ID3D12InfoQueue* pInfoQueue = nullptr;
 
     std::vector<PipelineState*> mRegisteredPipelineStates;
-
-    GPUProfiler* m_profiler;
 
     DebugDrawer* m_debugDrawer;
 
