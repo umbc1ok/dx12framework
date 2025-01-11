@@ -8,13 +8,18 @@
 #include "DX12Wrappers/ConstantBuffer.h"
 #include "Transform.h"
 
+DebugDrawing::DebugDrawing()
+{
+    m_transformationMatrices = new ConstantBuffer<TransformationMatrices>();
+    matrices = new TransformationMatrices();
+}
+
 DebugDrawer::DebugDrawer()
 {
     m_pipelineState = new PipelineState(L"debug/VS_DEBUG.hlsl", L"debug/PS_DEBUG.hlsl", TRADITIONAL);
     m_pipelineState->setWireframe(true);
 
-    m_transformationMatrices = new ConstantBuffer<TransformationMatrices>();
-    matrices = new TransformationMatrices();
+
 }
     
 DebugDrawer::~DebugDrawer()
@@ -80,7 +85,6 @@ void DebugDrawer::draw()
 
     for (uint32_t i = 0; i < m_debugDrawings.size(); i++)
     {
-
         if (m_debugDrawings[i]->type == DebugDrawingType::CAMERA_FRUSTUM)
         {
             if (!pauseCamera)
@@ -88,9 +92,9 @@ void DebugDrawer::draw()
                 m_cachedCameraWorld = Camera::getMainCamera()->entity->transform->get_model_matrix();
                 continue;
             }
-            matrices->World = m_cachedCameraWorld;
-            matrices->WorldView = hlsl::transpose(Camera::getMainCamera()->getViewMatrix());
-            matrices->WorldViewProj = hlsl::transpose(Camera::getMainCamera()->getProjectionMatrix() * (pauseCamera ? Camera::getMainCamera()->getViewMatrix() * matrices->World : hlsl::float4x4()));
+            m_debugDrawings[i]->matrices->World = m_cachedCameraWorld;
+            m_debugDrawings[i]->matrices->WorldView = hlsl::transpose(Camera::getMainCamera()->getViewMatrix());
+            m_debugDrawings[i]->matrices->WorldViewProj = hlsl::transpose(Camera::getMainCamera()->getProjectionMatrix() * (pauseCamera ? Camera::getMainCamera()->getViewMatrix() * m_debugDrawings[i]->matrices->World : hlsl::float4x4()));
         }
         else
         {
@@ -98,15 +102,16 @@ void DebugDrawer::draw()
             {
                 continue;
             }
-            matrices->World = m_debugDrawings[i]->transform->get_model_matrix();
-            matrices->WorldView = hlsl::transpose(Camera::getMainCamera()->getViewMatrix());
-            matrices->WorldViewProj = hlsl::transpose(Camera::getMainCamera()->getProjectionMatrix() * Camera::getMainCamera()->getViewMatrix() * matrices->World);
+            m_debugDrawings[i]->matrices->World = m_debugDrawings[i]->transform->get_model_matrix();
+            m_debugDrawings[i]->matrices->WorldView = hlsl::transpose(Camera::getMainCamera()->getViewMatrix());
+            m_debugDrawings[i]->matrices->WorldViewProj = hlsl::transpose(Camera::getMainCamera()->getProjectionMatrix() * Camera::getMainCamera()->getViewMatrix() * m_debugDrawings[i]->matrices->World);
         }
 
+        if (!pauseCamera && m_debugDrawings[i]->type == DebugDrawingType::CAMERA_FRUSTUM)
+            continue;
 
-
-        m_transformationMatrices->uploadData(*matrices);
-        m_transformationMatrices->setConstantBuffer(0);
+        m_debugDrawings[i]->m_transformationMatrices->uploadData(*m_debugDrawings[i]->matrices);
+        m_debugDrawings[i]->m_transformationMatrices->setConstantBuffer(0);
 
         cmd_list->IASetVertexBuffers(0, 1, m_debugDrawings[i]->vb->get_view());
         cmd_list->IASetIndexBuffer(m_debugDrawings[i]->ib->get_view());

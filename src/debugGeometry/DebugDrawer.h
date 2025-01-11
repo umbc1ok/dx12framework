@@ -26,7 +26,13 @@ struct DebugDrawing
 
     DebugDrawingType type;
     bool active = false;
-    DebugDrawing() {}
+
+    ConstantBuffer<TransformationMatrices>* m_transformationMatrices;
+
+    TransformationMatrices* matrices;
+
+    DebugDrawing();
+
 };
 
 
@@ -53,9 +59,7 @@ private:
 
     PipelineState* m_pipelineState;
 
-    ConstantBuffer<TransformationMatrices>* m_transformationMatrices;
 
-    TransformationMatrices* matrices;
 
     hlsl::float4x4 m_cachedCameraWorld;
 
