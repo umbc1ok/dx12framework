@@ -94,8 +94,8 @@ void ms_main(
     uint gtid : SV_GroupThreadID,
     uint gid : SV_GroupID,
     in payload Payload payload,
-    out indices uint3 tris[124],
-    out vertices VertexOut verts[64]
+    out indices uint3 tris[256],
+    out vertices VertexOut verts[128]
 )
 {
     uint meshletIndex = payload.MeshletIndices[gid];
@@ -103,14 +103,19 @@ void ms_main(
     if (MeshInfo.MeshletOffset + meshletIndex >= MeshInfo.MeshletCount)
         return;
 
-
     Meshlet m = Meshlets[MeshInfo.MeshletOffset + meshletIndex];
-    
+
+    // Call SetMeshOutputCounts early on in the mesh shader.
+    // This call will reserve output memory for storing vertex and primitive attributes (other than the vertex position). 
+    // Requesting memory early helps hiding the latency required for memory allocation in the geometry engine.
+    // via: https://gpuopen.com/learn/mesh_shaders/mesh_shaders-optimization_and_best_practices/
     SetMeshOutputCounts(m.VertCount, m.PrimCount);
+
 
     if(gtid < m.PrimCount)
     {
-        tris[gtid] = GetPrimitive(m, gtid);
+        tris[gtid * 2] = GetPrimitive(m, gtid * 2);
+        tris[gtid * 2 + 1] = GetPrimitive(m, gtid * 2 + 1);
     }
 
     if (gtid < m.VertCount)

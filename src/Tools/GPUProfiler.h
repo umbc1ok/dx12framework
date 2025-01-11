@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+#include "Editor.h"
+
 
 struct ProfilerEntry
 {
@@ -45,6 +47,8 @@ public:
 
     void setDisplayMode(bool useMicroSeconds) { m_useMicroSeconds = useMicroSeconds; }
 	bool useMicroSeconds() { return m_useMicroSeconds; }
+
+    void drawEditor(EditorWindow* const& window);
 
 private:
     static GPUProfiler* m_instance;

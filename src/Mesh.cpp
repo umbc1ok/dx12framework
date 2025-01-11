@@ -9,9 +9,10 @@
 #include "utils/Utils.h"
 #include "DXMeshletGenerator/D3D12MeshletGenerator.h"
 #include "DX12Wrappers/ConstantBuffer.h"
+#include "Tools/MeshletBenchmark.h"
 
 
-Mesh::Mesh(std::vector<Vertex> const& vertices, std::vector<uint32_t> const& indices, std::vector<Texture*> const& textures, std::vector<hlsl::float3> const& positions, std::vector<hlsl::float3> const& normals, std::vector<hlsl::float2> const& UVS, std::vector<uint32_t> const& attributes, MeshletizerType meshletizerType)
+Mesh::Mesh(std::vector<Vertex> const& vertices, std::vector<uint32_t> const& indices, std::vector<Texture*> const& textures, std::vector<hlsl::float3> const& positions, std::vector<hlsl::float3> const& normals, std::vector<hlsl::float2> const& UVS, std::vector<uint32_t> const& attributes, MeshletizerType meshletizerType, int32_t maxVerts, int32_t maxPrims)
 {
     m_vertices = vertices;
     m_indices = indices;
@@ -21,6 +22,8 @@ Mesh::Mesh(std::vector<Vertex> const& vertices, std::vector<uint32_t> const& ind
     m_normals = normals;
     m_attributes = attributes;
     m_type = meshletizerType;
+    m_MeshletMaxPrims = maxPrims;
+    m_MeshletMaxVerts = maxVerts;
 
     if(m_type == MESHOPT)
         meshletizeMeshoptimizer();
@@ -39,6 +42,7 @@ Mesh::Mesh(std::vector<Vertex> const& vertices, std::vector<uint32_t> const& ind
 Mesh::Mesh(std::vector<Vertex> const& vertices, std::vector<uint32_t> const& indices, std::vector<Texture*> const& textures,
     std::vector<hlsl::float3> const& positions, std::vector<hlsl::float3> const& normals,
     std::vector<hlsl::float2> const& UVS, std::vector<uint32_t> const& attributes, MeshletizerType meshletizerType,
+    int32_t maxVerts, int32_t maxPrims,
     std::vector<Meshlet> const& meshlets, std::vector<uint32_t> const& meshletTriangles, std::vector<CullData> const& cullData)
 {
     m_vertices = vertices;
@@ -53,6 +57,8 @@ Mesh::Mesh(std::vector<Vertex> const& vertices, std::vector<uint32_t> const& ind
     m_meshletTriangles = meshletTriangles;
     m_cullData = cullData;
     m_meshInfoBuffer = new ConstantBuffer<MeshInfo>();
+    m_MeshletMaxPrims = maxPrims;
+    m_MeshletMaxVerts = maxVerts;
 
     generateSubsets();
 
@@ -210,6 +216,11 @@ void Mesh::meshletizeDXMESH()
     }
 
     // Meshletize our mesh and generate per-meshlet culling data
+
+    auto benchmark = MeshletBenchmark::getInstance();
+    benchmark->startMeshletizing();
+
+
     AssertFailed(ComputeMeshlets(
         m_MeshletMaxVerts,
         m_MeshletMaxPrims,
@@ -224,6 +235,10 @@ void Mesh::meshletizeDXMESH()
         unique_vertex_indices,
         primitive_indices
     ));
+    benchmark->endMeshletizing();
+
+
+
     m_cullData.resize(m_meshlets.size());
     AssertFailed(ComputeCullData(
         reinterpret_cast<const DirectX::XMFLOAT3*>(m_positions.data()),
@@ -271,6 +286,9 @@ void Mesh::meshletizeMeshoptimizer()
     indices_mapping.resize(max_meshlets * m_MeshletMaxVerts);
     std::vector<unsigned char> meshlet_triangles(max_meshlets * m_MeshletMaxPrims * 3);
 
+
+    auto benchmark = MeshletBenchmark::getInstance();
+    benchmark->startMeshletizing();
     size_t meshlet_count = meshopt_buildMeshlets(
         meshlets.data(),
         indices_mapping.data(),
@@ -283,7 +301,7 @@ void Mesh::meshletizeMeshoptimizer()
         m_MeshletMaxVerts,
         m_MeshletMaxPrims,
         cone_weight);
-
+    benchmark->endMeshletizing();
     m_meshlets.clear();
     m_meshlets.resize(meshlet_count);
     int addedElements = 0;
@@ -360,7 +378,10 @@ void Mesh::meshletizeGreedy()
     m_indices = newIndices;
     std::vector<uint32_t> uniqueVertexIndices;
     std::vector<uint32_t> indicesMapping;
+    auto benchmark = MeshletBenchmark::getInstance();
+    benchmark->startMeshletizing();
     greedy::meshletize(m_MeshletMaxVerts, m_MeshletMaxPrims, m_indices, m_vertices, m_meshlets, uniqueVertexIndices, m_meshletTriangles);
+    benchmark->endMeshletizing();
     m_indices = uniqueVertexIndices;
 
 
