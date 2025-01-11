@@ -7,7 +7,7 @@ void Game::init()
 {
     auto entity1 = Entity::create("Model");
     //auto model = Model::create("./res/models/plane.obj");
-    auto model = Model::create("./res/models/bunny/bunny_normals.fbx");
+    auto model = Model::create("./res/models/bunny/bunny.fbx");
     entity1->add_component(model);
     entity1->transform->set_rotation(hlsl::float3(90.0f, 0.0f, 0.0f));
 
