@@ -30,6 +30,10 @@ public:
 private:
     void run(uint32_t numberOfFrames);
     bool saveLogToFile();
+
+    bool savePositionSequenceToFile();
+    bool loadPositionSequenceFromFile();
+
     static MeshletBenchmark* m_instance;
 
     float m_outerRadius = 40.0f;
@@ -38,8 +42,6 @@ private:
     char m_filename[128] = "";
     char m_notes[1024] = "";
 
-    // This should stay at 0,0,0. But I added it if there are some special cases.
-    hlsl::float3 m_center = hlsl::float3(0.0f, 0.0f, 0.0f);
 
     bool m_running = false;
     bool m_saveNow = false;

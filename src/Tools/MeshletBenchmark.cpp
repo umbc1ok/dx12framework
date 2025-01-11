@@ -10,6 +10,7 @@
 #include "Renderer.h"
 #include "debugGeometry/DebugDrawer.h"
 #include "debugGeometry/VisualiserGeometry.h"
+#include "Serialization/MeshSerializer.h"
 
 
 MeshletBenchmark* MeshletBenchmark::m_instance;
@@ -47,6 +48,32 @@ bool MeshletBenchmark::saveLogToFile()
     }
 
     printf("Could not open file %s\n", path.c_str());
+    return false;
+}
+
+bool MeshletBenchmark::savePositionSequenceToFile()
+{
+    std::ofstream file(m_path + "BENCHMARK_SEQUENCE.DATA", std::ios::binary);
+    if(file.is_open())
+    {
+        serializers::serializeVector(file, m_positions);
+        serializers::serializeVector(file, m_lookAts);
+        file.close();
+        return true;
+    }
+    return false;
+}
+
+bool MeshletBenchmark::loadPositionSequenceFromFile()
+{
+    std::ifstream file(m_path + "BENCHMARK_SEQUENCE.DATA", std::ios::binary);
+    if (file.is_open())
+    {
+        serializers::deserializeVector(file, m_positions);
+        serializers::deserializeVector(file, m_lookAts);
+        file.close();
+        return true;
+    }
     return false;
 }
 
@@ -120,6 +147,11 @@ void MeshletBenchmark::drawEditor()
     {
         generateBenchmarkPositions();
     }
+    if (ImGui::Button("Load positions"))
+    {
+        loadPositionSequenceFromFile();
+    }
+
     if (ImGui::Button("Start Recording"))
     {
         m_accumulatedTime = 0;
@@ -211,4 +243,5 @@ void MeshletBenchmark::generateBenchmarkPositions()
         m_lookAts.push_back(lookAt);
         m_positions.push_back(position);
     }
+    savePositionSequenceToFile();
 }
