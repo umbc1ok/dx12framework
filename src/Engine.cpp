@@ -12,12 +12,14 @@
 #include "Game.h"
 #include "Input.h"
 #include "Tools/GPUProfiler.h"
+#include "Tools/MeshletBenchmark.h"
 
 
 void Engine::setup()
 {
     Window::create();
     GPUProfiler::create();
+    MeshletBenchmark::create();
     Renderer::create();
     Editor::create();
     Input::create();

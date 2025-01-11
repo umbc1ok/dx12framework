@@ -39,8 +39,32 @@ class ConstantBuffer;
 class Mesh
 {
 public:
-    Mesh(std::vector<Vertex> const& vertices, std::vector<uint32_t> const&  indices, std::vector<Texture*> const& textures, std::vector<hlsl::float3> const& positions, std::vector<hlsl::float3> const& normals, std::vector<hlsl::float2> const& UVS, std::vector<uint32_t> const& attributes, MeshletizerType meshletizerType);
-    Mesh(std::vector<Vertex> const& vertices, std::vector<uint32_t> const&  indices, std::vector<Texture*> const& textures, std::vector<hlsl::float3> const& positions, std::vector<hlsl::float3> const& normals, std::vector<hlsl::float2> const& UVS, std::vector<uint32_t> const& attributes, MeshletizerType meshletizerType, std::vector<Meshlet> const& meshlets, std::vector<uint32_t> const& meshletTriangles, std::vector<CullData> const&  cullData);
+    Mesh(std::vector<Vertex> const& vertices,
+        std::vector<uint32_t> const&  indices,
+        std::vector<Texture*> const& textures,
+        std::vector<hlsl::float3> const& positions,
+        std::vector<hlsl::float3> const& normals,
+        std::vector<hlsl::float2> const& UVS,
+        std::vector<uint32_t> const& attributes,
+        MeshletizerType meshletizerType,
+        int32_t maxVerts,
+        int32_t maxPrims);
+
+
+    Mesh(std::vector<Vertex> const& vertices, 
+        std::vector<uint32_t> const&  indices,
+        std::vector<Texture*> const& textures,
+        std::vector<hlsl::float3> const& positions,
+        std::vector<hlsl::float3> const& normals,
+        std::vector<hlsl::float2> const& UVS,
+        std::vector<uint32_t> const& attributes,
+        MeshletizerType meshletizerType,
+        int32_t maxVerts,
+        int32_t maxPrims,
+        std::vector<Meshlet> const& meshlets,
+        std::vector<uint32_t> const& meshletTriangles,
+        std::vector<CullData> const&  cullData);
+
     ~Mesh() = default;
 
     void draw();

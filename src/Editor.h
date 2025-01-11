@@ -14,7 +14,8 @@ enum class EditorWindowType
     Game,
     Inspector,
     Hierarchy,
-    Profiler
+    Profiler,
+    MeshletBenchmark
 };
 
 struct LockData
@@ -51,6 +52,9 @@ public:
             break;
         case EditorWindowType::Profiler:
             m_name = "Profiler##" + std::to_string(m_id);
+            break;
+        case EditorWindowType::MeshletBenchmark:
+            m_name = "MeshletBenchmark##" + std::to_string(m_id);
             break;
         case EditorWindowType::Custom:
             m_name = "Custom##" + std::to_string(m_id);
@@ -148,6 +152,7 @@ public:
     void addSceneHierarchy();
     void addDebugWindow();
     void addProfilerWindow();
+    void addMeshletBenchmarkWindow();
     void setDockingSpace();
 
 
@@ -158,6 +163,7 @@ private:
     void drawEntityRecursively(Transform* const& transform);
     void drawWindowMenuBar(EditorWindow* const& window);
     void drawProfiler(EditorWindow* const& window);
+    void drawMeshletBenchmark(EditorWindow* const& window);
 
     void addChildEntity() const;
     // todo: implement

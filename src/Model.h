@@ -55,7 +55,8 @@ private:
 
     std::string m_path;
 
-    bool freezeCamera = false;
+    int32_t m_MeshletMaxVerts = 128;
+    int32_t m_MeshletMaxPrims = 256;
 
 
     PipelineState* m_pipelineState;

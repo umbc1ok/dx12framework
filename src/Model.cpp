@@ -23,6 +23,7 @@
 
 #include "DX12Wrappers/ConstantBuffer.h"
 #include "Tools/GPUProfiler.h"
+#include "Tools/MeshletBenchmark.h"
 
 using namespace Microsoft::WRL;
 
@@ -108,22 +109,10 @@ void Model::drawEditor()
     ImGui::Text("Vertex count: %i", m_vertexCount);
     ImGui::Text("Meshlet count: %i", m_meshletsCount);
 
-    ImGui::Checkbox("Freeze Camera", &freezeCamera);
-
     const char* items[] = { "MESHOPTIMIZER", "DXMESH", "GREEDY"};
     {
         ImGui::Separator();
         ImGui::Text("Meshletizer settings:");
-        if(ImGui::Button("FORCE RELOAD"))
-        {
-            m_meshes.clear();
-            m_vertexCount = 0;
-            m_triangleCount = 0;
-            m_meshletsCount = 0;
-            loadModel(m_path);
-            serializeMeshes();
-            uploadGPUResources();
-        }
 
         if (ImGui::Combo("MESHLET DEBUG MODE", &m_TypeIndex, items, IM_ARRAYSIZE(items)))
         {
@@ -140,6 +129,25 @@ void Model::drawEditor()
             uploadGPUResources();
         }
     }
+
+    if(ImGui::Button("Update meshlet benchmark with this Model's metadata"))
+    {
+        MeshletBenchmark::getInstance()->updateMeshletizerType(static_cast<MeshletizerType>(m_TypeIndex));
+        MeshletBenchmark::getInstance()->updateMeshletParameters(m_MeshletMaxVerts, m_MeshletMaxPrims);
+    }
+    ImGui::InputInt("Max meshlet vertices", &m_MeshletMaxVerts);
+    ImGui::InputInt("Max meshlet primitives", &m_MeshletMaxPrims);
+    if(ImGui::Button("RELOAD"))
+    {
+        m_meshes.clear();
+        m_vertexCount = 0;
+        m_triangleCount = 0;
+        m_meshletsCount = 0;
+        loadModel(m_path);
+        serializeMeshes();
+        uploadGPUResources();
+    }
+
 }
 
 void Model::serializeMeshes() const
@@ -205,7 +213,7 @@ bool Model::deserializeMeshes()
             type,
             path);
 
-        m_meshes.push_back(new Mesh(vertices, indices, {}, positions, normals, UVs, attributes, type, meshlets, meshletTriangles, cullData));
+        m_meshes.push_back(new Mesh(vertices, indices, {}, positions, normals, UVs, attributes, type, m_MeshletMaxVerts, m_MeshletMaxPrims, meshlets, meshletTriangles, cullData));
         index++;
     }
 
@@ -305,7 +313,7 @@ Mesh* Model::processMesh(aiMesh const* mesh, aiScene const* scene)
     m_vertexCount += vertices.size();
     m_triangleCount += indices.size() / 3;
     ///////////////////////////////////////
-    return new Mesh(vertices, indices, textures, positions, normals, UVs, attributes, static_cast<MeshletizerType>(m_TypeIndex));
+    return new Mesh(vertices, indices, textures, positions, normals, UVs, attributes, static_cast<MeshletizerType>(m_TypeIndex), m_MeshletMaxVerts, m_MeshletMaxPrims);
 }
 
 void Model::uploadGPUResources()

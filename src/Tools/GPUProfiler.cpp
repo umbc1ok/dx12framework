@@ -1,7 +1,12 @@
 #include "GPUProfiler.h"
+
+#include <imgui.h>
 #include <Renderer.h>
 #include <iostream>
 #include <utils/ErrorHandler.h>
+
+#include "Editor.h"
+#include "MeshletBenchmark.h"
 
 GPUProfiler* GPUProfiler::m_instance;
 
@@ -103,4 +108,47 @@ ResolvedProfilerEntry GPUProfiler::getEntryTime(uint32_t index) const
     entry.time = static_cast<float>(time);
     entry.nesting = entries[index]->nesting;
     return entry;
+}
+
+void GPUProfiler::drawEditor(EditorWindow* const& window)
+{
+    bool is_still_open = true;
+    auto profiler = GPUProfiler::getInstance();
+    ImGui::Begin(window->get_name().c_str(), &is_still_open, window->flags);
+    profiler->collectData();
+    bool useMicroSeconds = profiler->useMicroSeconds();
+    if (ImGui::Checkbox("Use Microseconds", &useMicroSeconds))
+    {
+        profiler->setDisplayMode(useMicroSeconds);
+    }
+
+    for (int i = 0; i < profiler->numEntries(); i++)
+    {
+        auto resolvedEntry = profiler->getEntryTime(i);
+        for (uint32_t j = 0; j < resolvedEntry.nesting; j++)
+        {
+            ImGui::Indent();
+        }
+        if (resolvedEntry.name.compare("Model Draw"))
+        {
+            MeshletBenchmark::getInstance()->update(resolvedEntry.time);
+        }
+
+
+
+        if (useMicroSeconds)
+            ImGui::Text("* %s: %.3f us", resolvedEntry.name.c_str(), resolvedEntry.time);
+        else
+            ImGui::Text("* %s: %.3f ms", resolvedEntry.name.c_str(), resolvedEntry.time);
+
+        for (uint32_t j = 0; j < resolvedEntry.nesting; j++)
+        {
+            ImGui::Unindent();
+        }
+    }
+
+
+
+    profiler->unmap();
+    ImGui::End();
 }

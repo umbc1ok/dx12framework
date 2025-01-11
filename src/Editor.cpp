@@ -10,6 +10,7 @@
 #include "Renderer.h"
 #include "Window.h"
 #include "Tools/GPUProfiler.h"
+#include "Tools/MeshletBenchmark.h"
 
 Editor* Editor::m_instance;
 
@@ -20,6 +21,7 @@ void Editor::create()
     m_instance->addInspector();
     m_instance->addDebugWindow();
     m_instance->addProfilerWindow();
+    m_instance->addMeshletBenchmarkWindow();
 }
 
 Editor::Editor()
@@ -96,6 +98,9 @@ void Editor::update()
             break;
         case EditorWindowType::Profiler:
             drawProfiler(window);
+            break;
+        case EditorWindowType::MeshletBenchmark:
+            drawMeshletBenchmark(window);
             break;
         case EditorWindowType::Custom:
             printf("Custom Editor windows are currently not supported.\n");
@@ -585,6 +590,12 @@ void Editor::addProfilerWindow()
     m_editorWindows.emplace_back(profiler_window);
 }
 
+void Editor::addMeshletBenchmarkWindow()
+{
+    auto benchmarkWindow = new EditorWindow(m_last_window_id, ImGuiWindowFlags_MenuBar, EditorWindowType::MeshletBenchmark);
+    m_editorWindows.emplace_back(benchmarkWindow);
+}
+
 void Editor::setDockingSpace()
 {
     ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
@@ -648,34 +659,14 @@ void Editor::drawWindowMenuBar(EditorWindow* const& window)
 // This should be implemented inside the profiler, and this function should just call the profiler's function
 void Editor::drawProfiler(EditorWindow* const& window)  
 {
+    GPUProfiler::getInstance()->drawEditor(window);
+}
+
+void Editor::drawMeshletBenchmark(EditorWindow* const& window)
+{
     bool is_still_open = true;
-    auto profiler = GPUProfiler::getInstance();
     ImGui::Begin(window->get_name().c_str(), &is_still_open, window->flags);
-    profiler->collectData();
-    bool useMicroSeconds = profiler->useMicroSeconds();
-    if (ImGui::Checkbox("Use Microseconds", &useMicroSeconds))
-    {
-        profiler->setDisplayMode(useMicroSeconds);
-    }
-
-    for (int i = 0; i < profiler->numEntries(); i++)
-    {
-        auto resolvedEntry = profiler->getEntryTime(i);
-        for (uint32_t j = 0; j < resolvedEntry.nesting; j++)
-        {
-            ImGui::Indent();
-        }
-        if (useMicroSeconds)
-            ImGui::Text("* %s: %.3f us", resolvedEntry.name.c_str(), resolvedEntry.time);
-        else 
-            ImGui::Text("* %s: %.3f ms", resolvedEntry.name.c_str(), resolvedEntry.time);
-
-        for (uint32_t j = 0; j < resolvedEntry.nesting; j++)
-        {
-            ImGui::Unindent();
-        }
-    }
-    profiler->unmap();
+    MeshletBenchmark::getInstance()->drawEditor();
     ImGui::End();
 }
 
