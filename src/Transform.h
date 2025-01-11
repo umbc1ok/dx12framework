@@ -11,6 +11,7 @@ class Transform
 {
 public:
     explicit Transform(Entity* const& t_entity);
+    Transform() = default;
     ~Transform();
 
     void set_parent(Transform* const& new_parent);
