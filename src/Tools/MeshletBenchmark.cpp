@@ -3,8 +3,13 @@
 #include <filesystem>
 #include <fstream>
 #include <imgui.h>
+#include <random>
 
+#include "Camera.h"
 #include "Mesh.h"
+#include "Renderer.h"
+#include "debugGeometry/DebugDrawer.h"
+#include "debugGeometry/VisualiserGeometry.h"
 
 
 MeshletBenchmark* MeshletBenchmark::m_instance;
@@ -56,6 +61,8 @@ void MeshletBenchmark::update(float time)
             m_running = false;
             m_saveNow = true;
         }
+        Camera::getMainCamera()->entity->transform->set_position(m_positions[m_framesLeft]);
+        Camera::getMainCamera()->setLookAt(m_lookAts[m_framesLeft]);
     }
 }
 
@@ -108,6 +115,11 @@ void MeshletBenchmark::drawEditor()
 
     ImGui::Separator();
     ImGui::Text("Meshletizing time: %f", m_meshletizingTime);
+
+    if (ImGui::Button("Randomize positions"))
+    {
+        generateBenchmarkPositions();
+    }
     if (ImGui::Button("Start Recording"))
     {
         m_accumulatedTime = 0;
@@ -123,6 +135,42 @@ void MeshletBenchmark::drawEditor()
         ImGui::Text("Average model render time: %f\n", averageTime);
         ImGui::Text("Not running...");
     }
+    
+    static DebugDrawing* innerSphere = nullptr;
+    static DebugDrawing* outerSphere = nullptr;
+    auto debugDrawer = Renderer::get_instance()->getDebugDrawer();
+    if(ImGui::InputFloat("Inner sphere radius", &m_innerRadius) || !innerSphere)
+    {
+        if (innerSphere)
+        {
+            debugDrawer->eraseDebugDrawing(innerSphere);
+        }
+        std::vector<Vertex> vertices;
+        std::vector<uint32_t> indices;
+        visualisers::generateSphereGeometry(m_innerRadius, vertices, indices);
+        innerSphere = debugDrawer->registerDebugDrawing(indices, vertices, DebugDrawingType::BENCHMARK_SPHERE);
+    }
+
+    if(ImGui::InputFloat("Outer sphere radius", &m_outerRadius) || !outerSphere)
+    {
+        if (outerSphere)
+        {
+            debugDrawer->eraseDebugDrawing(outerSphere);
+        }
+        std::vector<Vertex> vertices;
+        std::vector<uint32_t> indices;
+        visualisers::generateSphereGeometry(m_outerRadius, vertices, indices);
+        outerSphere = debugDrawer->registerDebugDrawing(indices, vertices, DebugDrawingType::BENCHMARK_SPHERE);
+    }
+
+    static bool showDebugDrawings = false;
+    if(ImGui::Checkbox("Show debug drawing", &showDebugDrawings))
+    {
+        outerSphere->active = showDebugDrawings;
+        innerSphere->active = showDebugDrawings;
+    }
+
+
 
     if(m_saveNow)
     {
@@ -140,4 +188,27 @@ void MeshletBenchmark::updateMeshletParameters(uint32_t maxVertices, uint32_t ma
 {
     m_maxVertices = maxVertices;
     m_maxPrimitives = maxPrimitives;
+}
+
+void MeshletBenchmark::generateBenchmarkPositions()
+{
+    m_positions.clear();
+    m_lookAts.clear();
+    std::random_device rd;
+    std::mt19937 randomEngine(rd()); // Mersenne Twister engine
+
+    std::uniform_real_distribution<> positionDistribution(m_innerRadius, m_outerRadius);
+    std::bernoulli_distribution randomBool(0.5);
+    std::uniform_real_distribution<> lookAtDistribution(-m_innerRadius, m_innerRadius);
+    for (int i = 0; i < 10000; i++)
+    {
+        hlsl::float3 position = hlsl::float3(
+            positionDistribution(randomEngine) * randomBool(randomEngine) * (-1.0f),
+            positionDistribution(randomEngine) * randomBool(randomEngine) * (-1.0f),
+            positionDistribution(randomEngine) * randomBool(randomEngine) * (-1.0f));
+
+        hlsl::float3 lookAt = hlsl::float3(lookAtDistribution(randomEngine), lookAtDistribution(randomEngine), lookAtDistribution(randomEngine));
+        m_lookAts.push_back(lookAt);
+        m_positions.push_back(position);
+    }
 }

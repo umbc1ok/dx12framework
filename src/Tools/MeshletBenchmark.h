@@ -25,13 +25,15 @@ public:
     void updateMeshletizerType(MeshletizerType type);
     void updateMeshletParameters(uint32_t maxVertices, uint32_t maxPrimitives);
 
+    void generateBenchmarkPositions();
+
 private:
     void run(uint32_t numberOfFrames);
     bool saveLogToFile();
     static MeshletBenchmark* m_instance;
 
-    float m_outerRadius = 2.0f;
-    float m_innerRadius = 0.5f;
+    float m_outerRadius = 40.0f;
+    float m_innerRadius = 12.0f;
 
     char m_filename[128] = "";
     char m_notes[1024] = "";
@@ -51,6 +53,10 @@ private:
     uint32_t m_maxPrimitives = 126;
     float m_meshletizingTime = 0.0f;
     std::chrono::high_resolution_clock::time_point m_meshletizingStart;
+
+    std::vector<hlsl::float3> m_positions;
+    std::vector<hlsl::float3> m_lookAts;
+
 
     std::string m_path = "../../cache/logs/";
 };
