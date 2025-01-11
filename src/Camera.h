@@ -30,6 +30,8 @@ public:
 	hlsl::float4x4 getViewMatrix() const;
 	hlsl::float4x4 getProjectionMatrix();
 	hlsl::float3 getCullingPosition();
+
+    void setLookAt(const hlsl::float3& lookAt);
 	void updateInternals();
 	void handleInput();
     const Frustum& getFrustum() const { return m_frustum; }

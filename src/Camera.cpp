@@ -45,6 +45,11 @@ hlsl::float3 Camera::getCullingPosition()
     return m_cachedPosition;
 }
 
+void Camera::setLookAt(const hlsl::float3& lookAt)
+{
+    entity->transform->orient_towards(lookAt);
+}
+
 void Camera::updateInternals()
 {
     if (m_dirty)
