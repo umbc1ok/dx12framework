@@ -69,4 +69,63 @@ namespace visualisers
             2, 3, 7, 2, 7, 6
         };
     }
+
+
+    void generateSphereGeometry(float radius, std::vector<Vertex>& vertices, std::vector<uint32_t>& indices)
+    {
+        vertices.clear();
+        indices.clear();
+
+        const int X_SEGMENTS = 64;
+        const int Y_SEGMENTS = 64;
+        const float PI = 3.14159265359f;
+
+        // Generate vertices
+        for (int y = 0; y <= Y_SEGMENTS; ++y)
+        {
+            for (int x = 0; x <= X_SEGMENTS; ++x)
+            {
+                float xSegment = static_cast<float>(x) / X_SEGMENTS;
+                float ySegment = static_cast<float>(y) / Y_SEGMENTS;
+                float theta = xSegment * 2.0f * PI; // Longitude
+                float phi = ySegment * PI;         // Latitude
+
+                // Spherical to Cartesian conversion
+                float xPos = radius * std::sin(phi) * std::cos(theta);
+                float yPos = radius * std::cos(phi);
+                float zPos = radius * std::sin(phi) * std::sin(theta);
+
+                vertices.push_back(Vertex(
+                    hlsl::float3(xPos, yPos, zPos),
+                    hlsl::float3(xPos / radius, yPos / radius, zPos / radius), // Normalized normal
+                    hlsl::float2(xSegment, ySegment)));
+            }
+        }
+
+        // Generate indices for the sphere
+        for (int y = 0; y < Y_SEGMENTS; ++y)
+        {
+            for (int x = 0; x < X_SEGMENTS; ++x)
+            {
+                // Calculate the indices of the four corners of a quad
+                int topLeft = y * (X_SEGMENTS + 1) + x;
+                int topRight = topLeft + 1;
+                int bottomLeft = (y + 1) * (X_SEGMENTS + 1) + x;
+                int bottomRight = bottomLeft + 1;
+
+                // Triangle 1
+                indices.push_back(topLeft);
+                indices.push_back(bottomLeft);
+                indices.push_back(topRight);
+
+                // Triangle 2
+                indices.push_back(topRight);
+                indices.push_back(bottomLeft);
+                indices.push_back(bottomRight);
+            }
+        }
+    }
+
+
+
 }
