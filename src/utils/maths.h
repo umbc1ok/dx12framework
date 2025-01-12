@@ -559,6 +559,9 @@ namespace hlsl
     {
         return float3(fabs(value.x), fabs(value.y), fabs(value.z));
     }
-
+    inline float length(const float3& value)
+    {
+        return sqrtf(value.x * value.x + value.y * value.y + value.z * value.z);
+    }
 
 } // namespace hlsl
