@@ -37,7 +37,7 @@ Model* Model::create(std::string const& model_path)
     if (!model->deserializeMeshes())
     {
         model->loadModel(model_path);
-        model->serializeMeshes();
+        //model->serializeMeshes();
     }
     model->set_can_tick(true);
     model->uploadGPUResources();
@@ -124,7 +124,7 @@ void Model::drawEditor()
             if (!deserializeMeshes())
             {
                 loadModel(m_path);
-                serializeMeshes();
+                //serializeMeshes();
             }
             uploadGPUResources();
         }
@@ -144,7 +144,7 @@ void Model::drawEditor()
         m_triangleCount = 0;
         m_meshletsCount = 0;
         loadModel(m_path);
-        serializeMeshes();
+        //serializeMeshes();
         uploadGPUResources();
     }
 

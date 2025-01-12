@@ -51,12 +51,12 @@ private:
     int m_triangleCount = 0;
     int m_meshletsCount = 0;
 
-    int m_TypeIndex = 0;
+    int m_TypeIndex = 2;
 
     std::string m_path;
 
-    int32_t m_MeshletMaxVerts = 128;
-    int32_t m_MeshletMaxPrims = 256;
+    int32_t m_MeshletMaxVerts = 64;
+    int32_t m_MeshletMaxPrims = 124;
 
 
     PipelineState* m_pipelineState;

@@ -9,6 +9,7 @@
 #include "utils/Utils.h"
 #include "DXMeshletGenerator/D3D12MeshletGenerator.h"
 #include "DX12Wrappers/ConstantBuffer.h"
+#include "GreedyMeshletizer/boundingSphereMeshletizer.h"
 #include "Tools/MeshletBenchmark.h"
 
 
@@ -380,7 +381,7 @@ void Mesh::meshletizeGreedy()
     std::vector<uint32_t> indicesMapping;
     auto benchmark = MeshletBenchmark::getInstance();
     benchmark->startMeshletizing();
-    greedy::meshletize(m_MeshletMaxVerts, m_MeshletMaxPrims, m_indices, m_vertices, m_meshlets, uniqueVertexIndices, m_meshletTriangles);
+    meshletizers::boundingSphere::meshletize(m_MeshletMaxVerts, m_MeshletMaxPrims, m_indices, m_vertices, m_meshlets, uniqueVertexIndices, m_meshletTriangles);
     benchmark->endMeshletizing();
     m_indices = uniqueVertexIndices;
 
@@ -392,7 +393,7 @@ void Mesh::meshletizeGreedy()
         auto packed = m_meshletTriangles[i];
         triangles[i].indices.i0 = static_cast<uint8_t>(packed);
         triangles[i].indices.i1 = static_cast<uint8_t>(packed >> 8);
-        triangles[i].indices.i2 = static_cast<uint8_t>(packed >> 16);
+        triangles[i].indices.i2 = static_cast<uint8_t>(packed >> 16); 
     }
 
 
