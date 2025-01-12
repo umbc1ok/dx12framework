@@ -32,7 +32,7 @@ namespace meshletizers
         std::vector<MeshletizerVertex*> vertices;
         std::vector<Triangle*> neighbours;
         uint32_t id;
-        uint32_t usedFlag = -1;
+        bool usedFlag = 0;
         uint32_t dist;
     };
 
