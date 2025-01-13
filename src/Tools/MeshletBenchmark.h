@@ -59,6 +59,7 @@ private:
     std::vector<hlsl::float3> m_positions;
     std::vector<hlsl::float3> m_lookAts;
 
+    int32_t m_noOfFrames = 100000;
 
     std::string m_path = "../../cache/logs/";
 };
