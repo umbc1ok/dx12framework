@@ -77,6 +77,7 @@ public:
     void meshletizeMeshoptimizer();
     void meshletizeGreedy();
     void meshletizeBoundingSphere();
+    void meshletizeNvidia();
 
 
 

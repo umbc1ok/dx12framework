@@ -109,7 +109,7 @@ void Model::drawEditor()
     ImGui::Text("Vertex count: %i", m_vertexCount);
     ImGui::Text("Meshlet count: %i", m_meshletsCount);
 
-    const char* items[] = { "MESHOPTIMIZER", "DXMESH", "GREEDY", "BoundingSphere"};
+    const char* items[] = { "MESHOPTIMIZER", "DXMESH", "GREEDY", "BoundingSphere", "NVIDIA"};
     {
         ImGui::Separator();
         ImGui::Text("Meshletizer settings:");
