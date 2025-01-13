@@ -4,5 +4,6 @@ enum MeshletizerType
     MESHOPT,
     DXMESH,
     GREEDY,
-    BSPHERE
+    BSPHERE,
+    NVIDIA
 };

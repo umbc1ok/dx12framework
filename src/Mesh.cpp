@@ -10,6 +10,7 @@
 #include "DXMeshletGenerator/D3D12MeshletGenerator.h"
 #include "DX12Wrappers/ConstantBuffer.h"
 #include "GreedyMeshletizer/boundingSphereMeshletizer.h"
+#include "GreedyMeshletizer/nvMeshletizer.h"
 #include "Tools/MeshletBenchmark.h"
 
 
@@ -34,6 +35,10 @@ Mesh::Mesh(std::vector<Vertex> const& vertices, std::vector<uint32_t> const& ind
         meshletizeGreedy();
     else if (m_type == BSPHERE)
         meshletizeBoundingSphere();
+    else if (m_type == NVIDIA)
+        meshletizeNvidia();
+
+
 
     generateSubsets();
 
@@ -452,6 +457,42 @@ void Mesh::meshletizeBoundingSphere()
     ));
 }
 
+void Mesh::meshletizeNvidia()
+{
+    std::vector<uint32_t> uniqueVertexIndices;
+    std::vector<uint32_t> indicesMapping;
+    auto benchmark = MeshletBenchmark::getInstance();
+    benchmark->startMeshletizing();
+    meshletizers::nvidia::meshletize(m_MeshletMaxVerts, m_MeshletMaxPrims, m_indices, m_vertices, m_meshlets, uniqueVertexIndices, m_meshletTriangles);
+    benchmark->endMeshletizing();
+    m_indices = uniqueVertexIndices;
+
+
+    // convert data so it can be fed into ComputeCullData()
+    std::vector<PackedTriangle> triangles(m_meshletTriangles.size());
+    for (int i = 0; i < triangles.size(); i++)
+    {
+        auto packed = m_meshletTriangles[i];
+        triangles[i].indices.i0 = static_cast<uint8_t>(packed);
+        triangles[i].indices.i1 = static_cast<uint8_t>(packed >> 8);
+        triangles[i].indices.i2 = static_cast<uint8_t>(packed >> 16);
+    }
+
+
+    m_cullData.resize(m_meshlets.size());
+
+    AssertFailed(ComputeCullData(
+        reinterpret_cast<const DirectX::XMFLOAT3*>(m_positions.data()),
+        m_positions.size(),
+        m_meshlets.data(),
+        m_meshlets.size(),
+        m_indices.data(),
+        triangles.data(),
+        DirectX::CNORM_DEFAULT,
+        m_cullData.data()
+    ));
+}
+
 
 void Mesh::changeMeshletizerType(MeshletizerType type)
 {
@@ -471,6 +512,8 @@ void Mesh::changeMeshletizerType(MeshletizerType type)
         meshletizeGreedy();
     else if (m_type == BSPHERE)
         meshletizeBoundingSphere();
+    else if (m_type == NVIDIA)
+        meshletizeNvidia();
 
     generateSubsets();
 }
