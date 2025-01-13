@@ -3,5 +3,6 @@ enum MeshletizerType
 {
     MESHOPT,
     DXMESH,
-    GREEDY
+    GREEDY,
+    BSPHERE
 };

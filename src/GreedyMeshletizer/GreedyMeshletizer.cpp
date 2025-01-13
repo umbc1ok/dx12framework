@@ -19,7 +19,7 @@ namespace meshletizers::greedy
     {
         std::queue<MeshletizerVertex*> priorityQueue;
         std::unordered_map<unsigned int, unsigned char> used;
-        PrimitiveCache cache;
+        PrimitiveCache cache(maxVerts, maxPrims);
         cache.reset();
 
         for (int i = 0; i < vertsVector.size(); ++i)
@@ -84,12 +84,12 @@ namespace meshletizers::greedy
                     }
                     cache.insert(candidateIndices);
 
-                    tri->usedFlag = 1;
+                    tri->usedFlag = true;
                 }
 
                 // TODO: CHeck why I had to comment it out
                 //priorityQueue.pop();
-                used[vert->index] = 1;
+                used[vert->index] = true;
             }
         }
         if (!cache.empty())

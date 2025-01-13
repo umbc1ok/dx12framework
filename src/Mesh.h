@@ -76,6 +76,7 @@ public:
     void meshletizeDXMESH();
     void meshletizeMeshoptimizer();
     void meshletizeGreedy();
+    void meshletizeBoundingSphere();
 
 
 

@@ -13,8 +13,8 @@ namespace meshletizers
 
     struct PrimitiveCache
     {
-        uint8_t primitives[MAX_PRIMITIVE_COUNT_LIMIT * 3];
-        uint32_t vertices[MAX_VERTEX_COUNT_LIMIT];
+        std::vector<uint8_t> primitives;
+        std::vector<uint32_t> vertices;
         uint32_t numPrimitives;
         uint32_t numVertices;
 
@@ -23,6 +23,14 @@ namespace meshletizers
         bool cannotInsert(const uint32_t* indices, uint32_t maxVertexSize, uint32_t maxPrimitiveSize) const;
         void insert(const uint32_t* indices);
         bool isInserted(uint32_t index);
+
+        PrimitiveCache(uint32_t maxVertices, uint32_t maxPrims)
+        {
+            vertices.resize(maxVertices);
+            primitives.resize(maxPrims * 3);
+            numVertices = 0;
+            numPrimitives = 0;
+        }
     };
 
 

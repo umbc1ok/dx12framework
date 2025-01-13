@@ -109,7 +109,7 @@ void Model::drawEditor()
     ImGui::Text("Vertex count: %i", m_vertexCount);
     ImGui::Text("Meshlet count: %i", m_meshletsCount);
 
-    const char* items[] = { "MESHOPTIMIZER", "DXMESH", "GREEDY"};
+    const char* items[] = { "MESHOPTIMIZER", "DXMESH", "GREEDY", "BoundingSphere"};
     {
         ImGui::Separator();
         ImGui::Text("Meshletizer settings:");
@@ -124,7 +124,7 @@ void Model::drawEditor()
             if (!deserializeMeshes())
             {
                 loadModel(m_path);
-                //serializeMeshes();
+                serializeMeshes();
             }
             uploadGPUResources();
         }
@@ -144,7 +144,7 @@ void Model::drawEditor()
         m_triangleCount = 0;
         m_meshletsCount = 0;
         loadModel(m_path);
-        //serializeMeshes();
+        serializeMeshes();
         uploadGPUResources();
     }
 
