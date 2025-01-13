@@ -122,22 +122,7 @@ void MeshletBenchmark::drawEditor()
     ImGui::Text("Max meshlet vertices: %i", m_maxVertices);
     static int current_item = 0; // Index of the selected item
     const char* items[] = { "DXMESH", "MESHOPTIMIZER", "GREEDY", "BoundingSphere" }; // Items in the combo box
-    if (ImGui::BeginCombo("Algorithm", items[current_item]))
-    {
-        for (int i = 0; i < IM_ARRAYSIZE(items); i++)
-        {
-            bool is_selected = (current_item == i);
-            if (ImGui::Selectable(items[i], is_selected))
-            {
-                current_item = i; // Update the selected item
-            }
-            if (is_selected)
-            {
-                ImGui::SetItemDefaultFocus(); // Ensure the selected item is focused
-            }
-        }
-        ImGui::EndCombo();
-    }
+    ImGui::Text("Meshletizer type: %s", items[static_cast<int>(m_meshletizerType)]);
 
 
     ImGui::Separator();
@@ -151,11 +136,11 @@ void MeshletBenchmark::drawEditor()
     {
         loadPositionSequenceFromFile();
     }
-
+    ImGui::InputInt("Number of frames to schedule:", &m_noOfFrames);
     if (ImGui::Button("Start Recording"))
     {
         m_accumulatedTime = 0;
-        run(10000);
+        run(m_noOfFrames);
     }
     if(m_running)
     {
@@ -232,7 +217,7 @@ void MeshletBenchmark::generateBenchmarkPositions()
     std::uniform_real_distribution<> positionDistribution(m_innerRadius, m_outerRadius);
     std::bernoulli_distribution randomBool(0.5);
     std::uniform_real_distribution<> lookAtDistribution(-m_innerRadius, m_innerRadius);
-    for (int i = 0; i < 10000; i++)
+    for (int i = 0; i < m_noOfFrames; i++)
     {
         hlsl::float3 position = hlsl::float3(
             positionDistribution(randomEngine) * randomBool(randomEngine) * (-1.0f),
