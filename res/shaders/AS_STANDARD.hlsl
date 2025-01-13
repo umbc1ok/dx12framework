@@ -124,7 +124,7 @@ void as_main(uint gtid : SV_GroupThreadID, uint dtid : SV_DispatchThreadID, uint
     {
         // Do visibility testing for this thread
         float scale = 1.0f;
-        visible = true;//IsVisible(meshletcullData[MeshInfo.MeshletOffset + dtid], InstanceData.World, scale, CameraData.CullViewPosition);
+        visible = IsVisible(meshletcullData[MeshInfo.MeshletOffset + dtid], InstanceData.World, scale, CameraData.CullViewPosition);
     }
     // Compact visible meshlets into the export payload array
     if (visible)
