@@ -98,12 +98,11 @@ void ms_main(
     out vertices VertexOut verts[128]
 )
 {
-    uint meshletIndex = payload.MeshletIndices[gid];
-
-    if (MeshInfo.MeshletOffset + meshletIndex >= MeshInfo.MeshletCount)
+    uint meshletIndex = MeshInfo.MeshletOffset + payload.MeshletIndices[gid];
+    if (meshletIndex >= MeshInfo.MeshletCount)
         return;
 
-    Meshlet m = Meshlets[MeshInfo.MeshletOffset + meshletIndex];
+    Meshlet m = Meshlets[meshletIndex];
 
     // Call SetMeshOutputCounts early on in the mesh shader.
     // This call will reserve output memory for storing vertex and primitive attributes (other than the vertex position). 
@@ -121,6 +120,6 @@ void ms_main(
     if (gtid < m.VertCount)
     {
         uint vertexIndex = m.VertOffset + gtid;
-        verts[gtid] = GetVertexAttributes(gid, vertexIndex);
+        verts[gtid] = GetVertexAttributes(meshletIndex, vertexIndex);
     }
 }
