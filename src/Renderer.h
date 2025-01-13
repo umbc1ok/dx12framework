@@ -58,6 +58,9 @@ public:
     void set_debug_mode(const u32& mode) { m_debug_mode = mode; }
     u32 get_debug_mode() const { return m_debug_mode; }
     DebugDrawer* getDebugDrawer() { return m_debugDrawer; }
+
+    void set_vsync(const bool& vsync) { m_vsync = vsync; }
+    bool vsync() const { return m_vsync; }
     void register_pipeline_state(PipelineState* pipeline_state);
 private:
 
@@ -111,6 +114,7 @@ private:
     DebugDrawer* m_debugDrawer;
 
     u32 m_debug_mode = 1;
+    bool m_vsync = true;
     static Renderer* m_instance;
 };
 

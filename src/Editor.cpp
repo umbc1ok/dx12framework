@@ -484,6 +484,12 @@ void Editor::drawDebugWindow(EditorWindow* const& window)
             Renderer::get_instance()->set_debug_mode(m_currentDebugMode);
         }
     }
+    static bool vsync = true;
+    if(ImGui::Checkbox("VSYNC:", &vsync))
+    {
+        Renderer::get_instance()->set_vsync(vsync);
+    }
+
     Renderer::get_instance()->getDebugDrawer()->drawEditor();
     // TODO: Implement scene saving
     //draw_scene_save();
