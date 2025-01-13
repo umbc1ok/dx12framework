@@ -18,8 +18,14 @@ namespace meshletizers
         numPrimitives = 0;
         numVertices = 0;
         // reset
-        memset(vertices, 0xFFFFFFFF, sizeof(vertices));
-        memset(primitives, 0xFFFFFFFF, sizeof(primitives));
+        for (int i = 0; i < vertices.size(); i++)
+        {
+            vertices[i] = UINT32_MAX;
+        }
+        for (int i = 0; i < primitives.size(); i++)
+        {
+            primitives[i] = UINT8_MAX;
+        }
     }
 
     bool PrimitiveCache::cannotInsert(const uint32_t* indices, uint32_t maxVertexSize, uint32_t maxPrimitiveSize) const
@@ -49,7 +55,7 @@ namespace meshletizers
 
     void PrimitiveCache::insert(const uint32_t* indices)
     {
-        uint32_t tri[3];
+        uint8_t tri[3];
 
         // skip degenerate
         if (indices[0] == indices[1] || indices[0] == indices[2] || indices[1] == indices[2])

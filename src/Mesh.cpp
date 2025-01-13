@@ -30,8 +30,10 @@ Mesh::Mesh(std::vector<Vertex> const& vertices, std::vector<uint32_t> const& ind
         meshletizeMeshoptimizer();
     else if (m_type == DXMESH)
         meshletizeDXMESH();
-    else
+    else if (m_type == GREEDY)
         meshletizeGreedy();
+    else if (m_type == BSPHERE)
+        meshletizeBoundingSphere();
 
     generateSubsets();
 
@@ -381,7 +383,7 @@ void Mesh::meshletizeGreedy()
     std::vector<uint32_t> indicesMapping;
     auto benchmark = MeshletBenchmark::getInstance();
     benchmark->startMeshletizing();
-    meshletizers::boundingSphere::meshletize(m_MeshletMaxVerts, m_MeshletMaxPrims, m_indices, m_vertices, m_meshlets, uniqueVertexIndices, m_meshletTriangles);
+    meshletizers::greedy::meshletize(m_MeshletMaxVerts, m_MeshletMaxPrims, m_indices, m_vertices, m_meshlets, uniqueVertexIndices, m_meshletTriangles);
     benchmark->endMeshletizing();
     m_indices = uniqueVertexIndices;
 
@@ -394,6 +396,45 @@ void Mesh::meshletizeGreedy()
         triangles[i].indices.i0 = static_cast<uint8_t>(packed);
         triangles[i].indices.i1 = static_cast<uint8_t>(packed >> 8);
         triangles[i].indices.i2 = static_cast<uint8_t>(packed >> 16); 
+    }
+
+
+    m_cullData.resize(m_meshlets.size());
+
+    AssertFailed(ComputeCullData(
+        reinterpret_cast<const DirectX::XMFLOAT3*>(m_positions.data()),
+        m_positions.size(),
+        m_meshlets.data(),
+        m_meshlets.size(),
+        m_indices.data(),
+        triangles.data(),
+        DirectX::CNORM_DEFAULT,
+        m_cullData.data()
+    ));
+}
+
+void Mesh::meshletizeBoundingSphere()
+{
+    std::vector<uint32_t> newIndices(m_indices.size());
+    meshopt_optimizeVertexCache(newIndices.data(), m_indices.data(), m_indices.size(), m_vertices.size());
+    m_indices = newIndices;
+    std::vector<uint32_t> uniqueVertexIndices;
+    std::vector<uint32_t> indicesMapping;
+    auto benchmark = MeshletBenchmark::getInstance();
+    benchmark->startMeshletizing();
+    meshletizers::boundingSphere::meshletize(m_MeshletMaxVerts, m_MeshletMaxPrims, m_indices, m_vertices, m_meshlets, uniqueVertexIndices, m_meshletTriangles);
+    benchmark->endMeshletizing();
+    m_indices = uniqueVertexIndices;
+
+
+    // convert data so it can be fed into ComputeCullData()
+    std::vector<PackedTriangle> triangles(m_meshletTriangles.size());
+    for (int i = 0; i < triangles.size(); i++)
+    {
+        auto packed = m_meshletTriangles[i];
+        triangles[i].indices.i0 = static_cast<uint8_t>(packed);
+        triangles[i].indices.i1 = static_cast<uint8_t>(packed >> 8);
+        triangles[i].indices.i2 = static_cast<uint8_t>(packed >> 16);
     }
 
 
@@ -426,8 +467,10 @@ void Mesh::changeMeshletizerType(MeshletizerType type)
         meshletizeMeshoptimizer();
     else if (type == DXMESH)
         meshletizeDXMESH();
-    else
+    else if (m_type == GREEDY)
         meshletizeGreedy();
+    else if (m_type == BSPHERE)
+        meshletizeBoundingSphere();
 
     generateSubsets();
 }
