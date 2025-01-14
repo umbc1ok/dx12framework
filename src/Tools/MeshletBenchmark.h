@@ -40,6 +40,7 @@ private:
     float m_innerRadius = 12.0f;
 
     char m_filename[128] = "";
+    char m_positionsFilename[128] = "";
     char m_notes[1024] = "";
 
 
@@ -62,6 +63,7 @@ private:
     int32_t m_noOfFrames = 100000;
 
     std::string m_path = "../../cache/logs/";
+    std::string m_sequencesPath = "../../cache/sequences/";
 };
 
 

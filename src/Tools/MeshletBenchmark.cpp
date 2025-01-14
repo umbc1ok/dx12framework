@@ -53,7 +53,8 @@ bool MeshletBenchmark::saveLogToFile()
 
 bool MeshletBenchmark::savePositionSequenceToFile()
 {
-    std::ofstream file(m_path + "BENCHMARK_SEQUENCE.DATA", std::ios::binary);
+    std::ofstream file(m_sequencesPath
+        + m_positionsFilename, std::ios::binary);
     if(file.is_open())
     {
         serializers::serializeVector(file, m_positions);
@@ -66,7 +67,7 @@ bool MeshletBenchmark::savePositionSequenceToFile()
 
 bool MeshletBenchmark::loadPositionSequenceFromFile()
 {
-    std::ifstream file(m_path + "BENCHMARK_SEQUENCE.DATA", std::ios::binary);
+    std::ifstream file(m_sequencesPath + m_positionsFilename, std::ios::binary);
     if (file.is_open())
     {
         serializers::deserializeVector(file, m_positions);
@@ -128,20 +129,63 @@ void MeshletBenchmark::drawEditor()
     ImGui::Separator();
     ImGui::Text("Meshletizing time: %f", m_meshletizingTime);
 
+
+    static std::vector<std::string> fileNames;
+    static std::string inputFileName;
+    static bool isLoaded = false;
+    if (!isLoaded) {
+        fileNames.clear();
+        try {
+            for (const auto& entry : std::filesystem::directory_iterator(m_sequencesPath)) {
+                if (entry.is_regular_file()) {
+                    fileNames.push_back(entry.path().filename().string());
+                }
+            }
+        }
+        catch (const std::filesystem::filesystem_error& e) {
+            ImGui::Text("Error accessing directory: %s", e.what());
+            return;
+        }
+        isLoaded = true;
+    }
+
+
+    // Input box for entering file name
+    ImGui::InputText("File Name", m_positionsFilename, IM_ARRAYSIZE(m_positionsFilename));
+
+    // Display file list
+    if (ImGui::BeginListBox("File List", ImVec2(-FLT_MIN, 10 * ImGui::GetTextLineHeightWithSpacing())))
+    {
+        for (const auto& fileName : fileNames)
+        {
+            if (ImGui::Selectable(fileName.c_str())) 
+            {
+                memset(m_positionsFilename, 0, IM_ARRAYSIZE(m_positionsFilename));
+                fileName.copy(m_positionsFilename, fileName.size());
+            }
+        }
+        ImGui::EndListBox();
+    }
+
     if (ImGui::Button("Randomize positions"))
     {
+        isLoaded = false;
         generateBenchmarkPositions();
     }
     if (ImGui::Button("Load positions"))
     {
         loadPositionSequenceFromFile();
     }
+
+    ImGui::Separator();
+
     ImGui::InputInt("Number of frames to schedule:", &m_noOfFrames);
     if (ImGui::Button("Start Recording"))
     {
         m_accumulatedTime = 0;
         run(m_noOfFrames);
     }
+
     if(m_running)
     {
         ImGui::Text("Running... \%i frames left", m_framesLeft);
