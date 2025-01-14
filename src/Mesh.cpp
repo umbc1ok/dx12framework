@@ -309,6 +309,10 @@ void Mesh::meshletizeMeshoptimizer()
         m_MeshletMaxVerts,
         m_MeshletMaxPrims,
         cone_weight);
+    for(int i = 0; i < meshlets.size(); i++)
+    {
+        meshopt_optimizeMeshlet(indices_mapping.data() + meshlets[i].vertex_offset, meshlet_triangles.data() + meshlets[i].triangle_offset, meshlets[i].triangle_count, meshlets[i].vertex_count);
+    }
     benchmark->endMeshletizing();
     m_meshlets.clear();
     m_meshlets.resize(meshlet_count);
