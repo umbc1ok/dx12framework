@@ -249,9 +249,9 @@ bool Model::deserializeMeshes()
         m_meshes.push_back(new Mesh(vertices, indices, {}, positions, normals, UVs, attributes, type, MeshletMaxVerts, MeshletMaxPrims, meshlets, meshletTriangles, cullData));
         m_vertexCount += vertices.size();
         m_triangleCount += indices.size() / 3;
+        m_meshletsCount += meshlets.size();
         index++;
     }
-
     if (m_meshes.empty())
         return false;
     return true;
