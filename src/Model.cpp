@@ -22,6 +22,7 @@
 #include "utils/Utils.h"
 
 #include "DX12Wrappers/ConstantBuffer.h"
+#include "ResourceLoaders/ResourceManager.h"
 #include "Tools/GPUProfiler.h"
 #include "Tools/MeshletBenchmark.h"
 
@@ -148,6 +149,10 @@ void Model::drawEditor()
     ImGui::InputInt("Max meshlet primitives", &m_MeshletMaxPrims);
     if (ImGui::Button("RELOAD"))
     {
+        for (auto& mesh : m_meshes)
+        {
+            ResourceManager::getInstance()->scheduleMeshForDeletion(mesh);
+        }
         m_meshes.clear();
         m_vertexCount = 0;
         m_triangleCount = 0;

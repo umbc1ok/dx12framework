@@ -5,7 +5,7 @@ class Resource
 {
 public:
     Resource() = default;
-    ~Resource() = default;
+    ~Resource();
 
     void create(uint64_t size, void* data);
     D3D12_GPU_VIRTUAL_ADDRESS getGPUVirtualAddress() const { return m_dx12Resource->GetGPUVirtualAddress(); }

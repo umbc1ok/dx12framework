@@ -87,6 +87,8 @@ void GPUProfiler::endRecording(ID3D12GraphicsCommandList6* cmdList)
         readbackBuffer,
         0 // Destination buffer offset
     );
+    for (auto& entry : entries)
+        delete entry;
     entries.clear();
 }
 

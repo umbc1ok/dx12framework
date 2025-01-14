@@ -12,7 +12,7 @@ class ConstantBuffer
 {
 public:
     ConstantBuffer();
-    ~ConstantBuffer() = default;
+    ~ConstantBuffer();
 
     void setConstantBuffer(uint32_t rootParameterIndex) const;
     void uploadData(const T& data);
@@ -45,6 +45,14 @@ ConstantBuffer<T>::ConstantBuffer()
     CD3DX12_RANGE readRange(0, 0);        // We do not intend to read from this resource on the CPU.
 
     AssertFailed(m_d3d12_constant_buffer->Map(0, &readRange, reinterpret_cast<void**>(&m_cbv_data_begin)));
+}
+
+template <typename T>
+ConstantBuffer<T>::~ConstantBuffer()
+{
+    m_d3d12_constant_buffer->Unmap(0, nullptr);
+    m_cbv_data_begin = nullptr;
+    m_d3d12_constant_buffer->Release();
 }
 
 template <typename T>

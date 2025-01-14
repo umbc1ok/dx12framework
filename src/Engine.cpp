@@ -11,6 +11,7 @@
 
 #include "Game.h"
 #include "Input.h"
+#include "ResourceLoaders/ResourceManager.h"
 #include "Tools/GPUProfiler.h"
 #include "Tools/MeshletBenchmark.h"
 
@@ -29,6 +30,7 @@ void Engine::setup()
     Renderer::get_instance()->camera_entity->add_component(Camera::getMainCamera());
     Game::init();
     Renderer::get_instance()->initDebugDrawings();
+    ResourceManager::create();
 }
 
 void Engine::run()
@@ -42,6 +44,7 @@ void Engine::run()
         Renderer::get_instance()->render();
         Editor::get_instance()->update();
         Renderer::get_instance()->end_frame();
+        ResourceManager::getInstance()->deleteScheduled();
         MSG msg;
 
         // Poll events after running engine to prevent exceptions when closing the window

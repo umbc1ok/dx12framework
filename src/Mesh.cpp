@@ -72,6 +72,20 @@ Mesh::Mesh(std::vector<Vertex> const& vertices, std::vector<uint32_t> const& ind
 
 }
 
+Mesh::~Mesh()
+{
+    delete m_meshInfoBuffer;
+    delete VertexResource;
+    delete IndexResource;
+    delete MeshletResource;
+    delete MeshletTriangleIndicesResource;
+    delete CullDataResource;
+    for (auto& texture : m_textures)
+    {
+        delete texture;
+    }
+}
+
 void Mesh::draw()
 {
     dispatch();

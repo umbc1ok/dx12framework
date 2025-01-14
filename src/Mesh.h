@@ -65,7 +65,7 @@ public:
         std::vector<uint32_t> const& meshletTriangles,
         std::vector<CullData> const&  cullData);
 
-    ~Mesh() = default;
+    ~Mesh();
 
     void draw();
     void bindTextures();

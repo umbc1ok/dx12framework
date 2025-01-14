@@ -5,6 +5,11 @@
 #include "Renderer.h"
 #include "utils/ErrorHandler.h"
 
+Resource::~Resource()
+{
+    m_dx12Resource->Release();
+}
+
 void Resource::create(uint64_t size, void* data)
 {
     auto device = Renderer::get_instance()->get_device();
