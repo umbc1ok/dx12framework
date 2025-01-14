@@ -127,11 +127,12 @@ void Shader::loadShader()
         {
             IDxcBlobEncoding* errorsBlob;
             hr = compileResult->GetErrorBuffer(&errorsBlob);
-            if (errorsBlob != nullptr)
+            if (errorsBlob->GetBufferPointer() != nullptr)
             {
                 wprintf(L"Compilation failed with errors:\n%hs\n",
                     (const char*)errorsBlob->GetBufferPointer());
             }
+            std::cout << "Shader succesfully compiled" << std::endl;
         }
     }
 
