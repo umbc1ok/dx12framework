@@ -121,7 +121,7 @@ void MeshletBenchmark::drawEditor()
     ImGui::Text("Max meshlet primitives: %i", m_maxPrimitives);
     ImGui::Text("Max meshlet vertices: %i", m_maxVertices);
     static int current_item = 0; // Index of the selected item
-    const char* items[] = { "DXMESH", "MESHOPTIMIZER", "GREEDY", "BoundingSphere" }; // Items in the combo box
+    const char* items[] = { "DXMESH", "MESHOPTIMIZER", "GREEDY", "BoundingSphere", "NVIDIA" }; // Items in the combo box
     ImGui::Text("Meshletizer type: %s", items[static_cast<int>(m_meshletizerType)]);
 
 
