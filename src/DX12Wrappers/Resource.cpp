@@ -44,4 +44,5 @@ void Resource::create(uint64_t size, void* data)
 
     auto fence_value = cmdQueue->signal();
     cmdQueue->wait_for_fence_value(fence_value);
+    uploadResource->Release();
 }
