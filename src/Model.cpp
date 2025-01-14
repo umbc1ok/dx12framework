@@ -41,7 +41,8 @@ Model* Model::create(std::string const& model_path)
     }
     model->set_can_tick(true);
     model->uploadGPUResources();
-    model->m_pipelineState = new PipelineState(L"AS_STANDARD.hlsl", L"MS_STANDARD.hlsl", L"PS_BASIC.hlsl");
+    model->m_smallMeshletPipelineState = new PipelineState(L"AS_STANDARD.hlsl", L"MS_STANDARD.hlsl", L"PS_BASIC.hlsl");
+    model->m_bigMeshletPipelineState = new PipelineState(L"AS_STANDARD.hlsl", L"MS_BIG.hlsl", L"PS_BASIC.hlsl");
     model->m_sceneConstantBuffer = new ConstantBuffer<SceneConstantBuffer>();
     model->m_cameraConstantBuffer = new ConstantBuffer<CameraConstants>();
     return model;
@@ -85,8 +86,16 @@ void Model::draw()
 
     auto const entry = profiler->startEntry(cmd_list, "Model Draw");
     {
-        cmd_list->SetGraphicsRootSignature(m_pipelineState->dx12RootSignature());
-        cmd_list->SetPipelineState(m_pipelineState->PSO());
+        if(m_MeshletMaxVerts > 128 || m_MeshletMaxPrims > 128)
+        {
+            cmd_list->SetGraphicsRootSignature(m_bigMeshletPipelineState->dx12RootSignature());
+            cmd_list->SetPipelineState(m_bigMeshletPipelineState->PSO());
+        }
+        else
+        {
+            cmd_list->SetGraphicsRootSignature(m_smallMeshletPipelineState->dx12RootSignature());
+            cmd_list->SetPipelineState(m_smallMeshletPipelineState->PSO());
+        }
         setConstantBuffer();
         for (auto& mesh : m_meshes)
         {

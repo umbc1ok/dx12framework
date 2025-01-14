@@ -113,7 +113,8 @@ void ms_main(
 
     if(gtid < m.PrimCount)
     {
-        tris[gtid] = GetPrimitive(m, gtid);
+        tris[gtid * 2] = GetPrimitive(m, gtid * 2);
+        tris[gtid * 2 + 1] = GetPrimitive(m, gtid * 2 + 1);
     }
 
     if (gtid < m.VertCount)

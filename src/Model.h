@@ -59,6 +59,7 @@ private:
     int32_t m_MeshletMaxPrims = 124;
 
 
-    PipelineState* m_pipelineState;
+    PipelineState* m_smallMeshletPipelineState;
+    PipelineState* m_bigMeshletPipelineState;
 };
 
