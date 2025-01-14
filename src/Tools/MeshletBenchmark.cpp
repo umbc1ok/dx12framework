@@ -6,6 +6,7 @@
 #include <random>
 
 #include "Camera.h"
+#include "GPUProfiler.h"
 #include "Mesh.h"
 #include "Renderer.h"
 #include "debugGeometry/DebugDrawer.h"
@@ -36,12 +37,13 @@ bool MeshletBenchmark::saveLogToFile()
     if (file.is_open())
     {
         file << "Meshlet Benchmark\n";
-        file << "Meshletizer type: " << m_meshletizerType << "\n";
+        const char* items[] = { "MESHOPTIMIZER","DXMESH", "GREEDY", "BoundingSphere", "NVIDIA" };
+        file << "Meshletizer type: " << items[m_meshletizerType] << "\n";
         file << "Max vertices: " << m_maxVertices << "\n";
         file << "Max primitives: " << m_maxPrimitives << "\n";
-        file << "Meshletizing time: " << m_meshletizingTime << "\n";
+        file << "Meshletizing time: " << m_meshletizingTime << "s" << "\n";
         file << "Frames: " << m_scheduledFrames << "\n";
-        file << "Average render time: " << m_accumulatedTime / m_scheduledFrames << "\n";
+        file << "Average render time: " << m_accumulatedTime / m_scheduledFrames << (GPUProfiler::getInstance()->useMicroSeconds() ? "us" : "ms") << "\n";
         file << "Notes: " << m_notes << "\n";
         file.close();
         return true;
@@ -122,7 +124,7 @@ void MeshletBenchmark::drawEditor()
     ImGui::Text("Max meshlet primitives: %i", m_maxPrimitives);
     ImGui::Text("Max meshlet vertices: %i", m_maxVertices);
     static int current_item = 0; // Index of the selected item
-    const char* items[] = { "DXMESH", "MESHOPTIMIZER", "GREEDY", "BoundingSphere", "NVIDIA" }; // Items in the combo box
+    const char* items[] = { "MESHOPTIMIZER","DXMESH", "GREEDY", "BoundingSphere", "NVIDIA" }; // Items in the combo box
     ImGui::Text("Meshletizer type: %s", items[static_cast<int>(m_meshletizerType)]);
 
 
