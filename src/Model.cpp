@@ -37,7 +37,7 @@ Model* Model::create(std::string const& model_path)
     if (!model->deserializeMeshes())
     {
         model->loadModel(model_path);
-        //model->serializeMeshes();
+        model->serializeMeshes();
     }
     model->set_can_tick(true);
     model->uploadGPUResources();
@@ -146,7 +146,26 @@ void Model::drawEditor()
     }
     ImGui::InputInt("Max meshlet vertices", &m_MeshletMaxVerts);
     ImGui::InputInt("Max meshlet primitives", &m_MeshletMaxPrims);
-    if(ImGui::Button("RELOAD"))
+    if (ImGui::Button("RELOAD"))
+    {
+        m_meshes.clear();
+        m_vertexCount = 0;
+        m_triangleCount = 0;
+        m_meshletsCount = 0;
+        if (!deserializeMeshes())
+        {
+            loadModel(m_path);
+            serializeMeshes();
+        }
+        uploadGPUResources();
+    }
+    if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+    {
+        ImGui::SetTooltip("Tries to reload meshletized model from disk. If not found, loads model and meshletizes it.");
+    }
+
+    ImGui::SameLine();
+    if(ImGui::Button("FORCE RELOAD"))
     {
         m_meshes.clear();
         m_vertexCount = 0;
@@ -156,7 +175,10 @@ void Model::drawEditor()
         serializeMeshes();
         uploadGPUResources();
     }
-
+    if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+    {
+        ImGui::SetTooltip("Loads model and meshletizes it even if there is a meshletized version on disk.");
+    }
 }
 
 void Model::serializeMeshes() const
@@ -179,7 +201,7 @@ void Model::serializeMeshes() const
             mesh->m_MeshletMaxVerts,
             mesh->m_MeshletMaxPrims,
             mesh->m_type,
-            "../../cache/mesh/" + std::to_string(hash) + "_" + std::to_string(m_TypeIndex) +"_" + std::to_string(index) +  ".mesh");
+            "../../cache/mesh/" + std::to_string(hash) + "_" + std::to_string(m_TypeIndex) + "_" + std::to_string(mesh->m_MeshletMaxVerts) + "_" + std::to_string(mesh->m_MeshletMaxPrims) + "_" + std::to_string(index) +  ".mesh");
         index++;
     }
 }
@@ -190,7 +212,7 @@ bool Model::deserializeMeshes()
     int index = 0;
     for(;;)
     {
-        std::string path = "../../cache/mesh/" + std::to_string(hash) + "_" + std::to_string(m_TypeIndex) + "_" + std::to_string(index) + ".mesh";
+        std::string path = "../../cache/mesh/" + std::to_string(hash) + "_" + std::to_string(m_TypeIndex) + "_" + std::to_string(m_MeshletMaxVerts) + "_" + std::to_string(m_MeshletMaxPrims) + "_" +  std::to_string(index) + ".mesh";
         if (!std::filesystem::exists(path))
         {
             break;
@@ -222,7 +244,11 @@ bool Model::deserializeMeshes()
             type,
             path);
 
-        m_meshes.push_back(new Mesh(vertices, indices, {}, positions, normals, UVs, attributes, type, m_MeshletMaxVerts, m_MeshletMaxPrims, meshlets, meshletTriangles, cullData));
+        m_MeshletMaxPrims = MeshletMaxPrims;
+        m_MeshletMaxVerts = MeshletMaxVerts;
+        m_meshes.push_back(new Mesh(vertices, indices, {}, positions, normals, UVs, attributes, type, MeshletMaxVerts, MeshletMaxPrims, meshlets, meshletTriangles, cullData));
+        m_vertexCount += vertices.size();
+        m_triangleCount += indices.size() / 3;
         index++;
     }
 

@@ -48,8 +48,8 @@ void serializers::deserializeMesh(
     std::vector<hlsl::float3>& normals,
     std::vector<hlsl::float2>& UVs,
     std::vector<CullData>& cullData,
-    int32_t MeshletMaxVerts,
-    int32_t MeshletMaxPrims,
+    int32_t& MeshletMaxVerts,
+    int32_t& MeshletMaxPrims,
     MeshletizerType& type,
     const std::string& fileName)
 {
