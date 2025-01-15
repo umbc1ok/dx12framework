@@ -62,8 +62,8 @@ private:
 
     int32_t m_noOfFrames = 100000;
 
-    std::string m_path = "../../cache/logs/";
-    std::string m_sequencesPath = "../../cache/sequences/";
+    const std::string m_path = "../../cache/logs/";
+    const std::string m_sequencesPath = "../../cache/sequences/";
 };
 
 

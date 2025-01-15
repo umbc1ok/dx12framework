@@ -135,19 +135,17 @@ void MeshletBenchmark::drawEditor()
     static std::vector<std::string> fileNames;
     static std::string inputFileName;
     static bool isLoaded = false;
-    if (!isLoaded) {
+    if (!isLoaded)
+    {
         fileNames.clear();
-        try {
-            for (const auto& entry : std::filesystem::directory_iterator(m_sequencesPath)) {
-                if (entry.is_regular_file()) {
-                    fileNames.push_back(entry.path().filename().string());
-                }
+
+        for (const auto& entry : std::filesystem::directory_iterator(m_sequencesPath))
+        {
+            if (entry.is_regular_file()) {
+                fileNames.push_back(entry.path().filename().string());
             }
         }
-        catch (const std::filesystem::filesystem_error& e) {
-            ImGui::Text("Error accessing directory: %s", e.what());
-            return;
-        }
+
         isLoaded = true;
     }
 
