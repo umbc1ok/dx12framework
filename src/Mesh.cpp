@@ -11,6 +11,7 @@
 #include "DX12Wrappers/ConstantBuffer.h"
 #include "GreedyMeshletizer/boundingSphereMeshletizer.h"
 #include "GreedyMeshletizer/nvMeshletizer.h"
+#include "Tools/GPUProfiler.h"
 #include "Tools/MeshletBenchmark.h"
 
 
@@ -130,11 +131,14 @@ void Mesh::dispatch()
     // TODO: Bind Cull Data below
     cmd_list->SetGraphicsRootShaderResourceView(7, CullDataResource->getGPUVirtualAddress());
 
-    for (auto& subset : m_subsets)
+    auto profilerEntry = GPUProfiler::getInstance()->startEntry(cmd_list, "Dispatch Mesh");
     {
-        bindMeshInfo(subset.size, subset.offset);
-        cmd_list->DispatchMesh(subset.size, 1, 1);
-    }
+        for (auto& subset : m_subsets)
+        {
+            bindMeshInfo(subset.size, subset.offset);
+            cmd_list->DispatchMesh(subset.size, 1, 1);
+        }
+    } GPUProfiler::getInstance()->endEntry(cmd_list, profilerEntry);
     
 }
 
