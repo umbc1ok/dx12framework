@@ -564,4 +564,9 @@ namespace hlsl
         return sqrtf(value.x * value.x + value.y * value.y + value.z * value.z);
     }
 
+    inline uint32_t divRoundUp(uint32_t numerator, uint32_t denominator)
+    {
+        return (numerator + denominator - 1) / denominator;
+    }
+
 } // namespace hlsl
