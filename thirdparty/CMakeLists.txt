@@ -30,7 +30,7 @@ target_include_directories(dx12 INTERFACE ${dx12dir})
 
 # assimp settings
 SET (ASSIMP_BUILD_PLY_IMPORTER ON)
-
+SET (ASSIMP_BUILD_STL_IMPORTER ON)
 # other
 CPMAddPackage("gh:assimp/assimp@5.2.5")
 CPMAddPackage("gh:ocornut/imgui#v1.90.9-docking")
