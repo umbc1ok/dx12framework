@@ -60,7 +60,7 @@ private:
 	float m_pitch = 10.0f;
 
 	float m_nearPlane = 0.1f;
-	float m_farPlane = 1000.0f;
+	float m_farPlane = 1000000.0f;
 
 	bool m_dirty = true;
     bool m_RMBPressed = false;
