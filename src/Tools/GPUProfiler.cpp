@@ -131,7 +131,7 @@ void GPUProfiler::drawEditor(EditorWindow* const& window)
         {
             ImGui::Indent();
         }
-        if (resolvedEntry.name.compare("Model Draw"))
+        if (resolvedEntry.name.compare("Dispatch Mesh"))
         {
             MeshletBenchmark::getInstance()->update(resolvedEntry.time);
         }
