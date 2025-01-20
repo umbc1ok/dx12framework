@@ -7,6 +7,7 @@
 #include <imgui_impl/imgui_impl_win32.h>
 #include <imgui_internal.h>
 #include "Entity.h"
+#include "Keyboard.h"
 #include "Renderer.h"
 #include "Window.h"
 #include "Tools/GPUProfiler.h"
@@ -74,40 +75,47 @@ void Editor::update()
     ImGui::NewFrame();
     setDockingSpace();
     ImGuiIO& m_io = ImGui::GetIO();
-
-    auto const windows_copy = m_editorWindows;
-    for (auto& window : windows_copy)
+    static bool show = true;
+    if(ImGui::IsKeyPressed(ImGuiKey_F1))
     {
-        switch (window->type)
+        show = !show;
+    }
+    if (show)
+    {
+            
+        auto const windows_copy = m_editorWindows;
+        for (auto& window : windows_copy)
         {
-        case EditorWindowType::Debug:
-            drawDebugWindow(window);
-            break;
-        case EditorWindowType::Content:
-            drawContentBrowser(window);
-            break;
-        case EditorWindowType::Hierarchy:
-            drawSceneHierarchy(window);
-            break;
-        case EditorWindowType::Game:
-            // TODO: Rendering to texture currently not supported
-            //draw_game(window);
-            break;
-        case EditorWindowType::Inspector:
-            drawInspector(window);
-            break;
-        case EditorWindowType::Profiler:
-            drawProfiler(window);
-            break;
-        case EditorWindowType::MeshletBenchmark:
-            drawMeshletBenchmark(window);
-            break;
-        case EditorWindowType::Custom:
-            printf("Custom Editor windows are currently not supported.\n");
-            break;
+            switch (window->type)
+            {
+            case EditorWindowType::Debug:
+                drawDebugWindow(window);
+                    break;
+            case EditorWindowType::Content:
+                drawContentBrowser(window);
+                break;
+            case EditorWindowType::Hierarchy:
+                drawSceneHierarchy(window);
+                break;
+            case EditorWindowType::Game:
+                // TODO: Rendering to texture currently not supported
+                //draw_game(window);
+                break;
+            case EditorWindowType::Inspector:
+                drawInspector(window);
+                break;
+            case EditorWindowType::Profiler:
+                drawProfiler(window);
+                break;
+            case EditorWindowType::MeshletBenchmark:
+                drawMeshletBenchmark(window);
+                break;
+            case EditorWindowType::Custom:
+                printf("Custom Editor windows are currently not supported.\n");
+                break;
+            }
         }
     }
-
     ImGui::Render();
     auto cmdlist = Renderer::get_instance()->g_pd3dCommandList;
     auto hp = Renderer::get_instance()->get_srv_desc_heap();
