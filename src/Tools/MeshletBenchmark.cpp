@@ -258,15 +258,16 @@ void MeshletBenchmark::generateBenchmarkPositions()
     std::random_device rd;
     std::mt19937 randomEngine(rd()); // Mersenne Twister engine
 
-    std::uniform_real_distribution<> positionDistribution(m_innerRadius, m_outerRadius);
-    std::bernoulli_distribution randomBool(0.5);
+    std::uniform_real_distribution<> positionDistribution(-m_outerRadius, m_outerRadius);
     std::uniform_real_distribution<> lookAtDistribution(-m_innerRadius, m_innerRadius);
     for (int i = 0; i < m_noOfFrames; i++)
     {
         hlsl::float3 position = hlsl::float3(
-            positionDistribution(randomEngine) * randomBool(randomEngine) * (-1.0f),
-            positionDistribution(randomEngine) * randomBool(randomEngine) * (-1.0f),
-            positionDistribution(randomEngine) * randomBool(randomEngine) * (-1.0f));
+            positionDistribution(randomEngine),
+            positionDistribution(randomEngine),
+            positionDistribution(randomEngine));
+        position = hlsl::normalizeSafe(position)* positionDistribution(randomEngine);
+
 
         hlsl::float3 lookAt = hlsl::float3(lookAtDistribution(randomEngine), lookAtDistribution(randomEngine), lookAtDistribution(randomEngine));
         m_lookAts.push_back(lookAt);
