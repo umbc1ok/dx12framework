@@ -116,10 +116,13 @@ void ms_main(
     SetMeshOutputCounts(m.VertCount, m.PrimCount);
 
 
-    if(gtid < m.PrimCount)
-    {
-        tris[gtid * 2] = GetPrimitive(m, gtid * 2);
-        tris[gtid * 2 + 1] = GetPrimitive(m, gtid * 2 + 1);
+    for (uint i = 0; i < 2; ++i)
+     {
+        const uint primitiveId = gtid + i * 128;
+        if(primitiveId < m.PrimCount)
+        {
+            tris[primitiveId] = GetPrimitive(m, primitiveId);
+        }
     }
 
     if (gtid < m.VertCount)
