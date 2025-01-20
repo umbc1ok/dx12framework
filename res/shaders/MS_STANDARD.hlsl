@@ -32,6 +32,7 @@ struct Meshlet
     uint PrimCount;
 };
 
+
 struct Payload
 {
     uint MeshletIndices[32];
@@ -46,8 +47,8 @@ ConstantBuffer<MeshInfo>  MeshInfo                : register(b1);
 
 StructuredBuffer<Vertex>  Vertices                : register(t0);
 StructuredBuffer<Meshlet> Meshlets                : register(t1);
-StructuredBuffer<uint>    MeshletIndexBuffer      : register(t2);
-StructuredBuffer<uint>    MeshletTriangleIndices  : register(t3);
+StructuredBuffer<uint>    IndexBuffer      : register(t2);
+StructuredBuffer<uint>    LocalIndexBuffer  : register(t3);
 //StructuredBuffer<CullData>              MeshletCullData         : register(t4);
 
 
@@ -66,7 +67,7 @@ StructuredBuffer<uint>    MeshletTriangleIndices  : register(t3);
 uint3 GetPrimitive(Meshlet m, uint index)
 {
     uint3 primitive;
-    uint packedPrimitive = MeshletTriangleIndices[m.PrimOffset + index];
+    uint packedPrimitive = LocalIndexBuffer[m.PrimOffset + index];
     primitive.x = (packedPrimitive >> 0) & 0xFF;
     primitive.y = (packedPrimitive >> 8) & 0xFF;
     primitive.z = (packedPrimitive >> 16) & 0xFF;
@@ -76,7 +77,7 @@ uint3 GetPrimitive(Meshlet m, uint index)
 
 VertexOut GetVertexAttributes(uint meshletIndex, uint vertexIndex)
 {
-    Vertex v = Vertices[MeshletIndexBuffer[vertexIndex]];
+    Vertex v = Vertices[IndexBuffer[vertexIndex]];
     
     VertexOut vout;
     vout.PositionVS = mul(float4(v.Position, 1), InstanceData.WorldView).xyz;
@@ -94,8 +95,8 @@ void ms_main(
     uint gtid : SV_GroupThreadID,
     uint gid : SV_GroupID,
     in payload Payload payload,
-    out indices uint3 tris[256],
-    out vertices VertexOut verts[128]
+    out indices uint3 tris[128],
+    out vertices VertexOut verts[64]
 )
 {
 #ifdef CULLING
