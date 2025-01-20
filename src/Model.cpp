@@ -42,8 +42,13 @@ Model* Model::create(std::string const& model_path)
     }
     model->set_can_tick(true);
     model->uploadGPUResources();
+#ifdef CULLING
     model->m_smallMeshletPipelineState = new PipelineState(L"AS_STANDARD.hlsl", L"MS_STANDARD.hlsl", L"PS_BASIC.hlsl");
     model->m_bigMeshletPipelineState = new PipelineState(L"AS_STANDARD.hlsl", L"MS_BIG.hlsl", L"PS_BASIC.hlsl");
+#else 
+    model->m_smallMeshletPipelineState = new PipelineState(L"MS_STANDARD.hlsl", L"PS_BASIC.hlsl", MESH);
+    model->m_bigMeshletPipelineState = new PipelineState(L"MS_BIG.hlsl", L"PS_BASIC.hlsl", MESH);
+#endif
     model->m_sceneConstantBuffer = new ConstantBuffer<SceneConstantBuffer>();
     model->m_cameraConstantBuffer = new ConstantBuffer<CameraConstants>();
     return model;
@@ -85,19 +90,19 @@ void Model::draw()
     auto cmd_list = Renderer::get_instance()->g_pd3dCommandList;
     auto profiler = GPUProfiler::getInstance();
 
+    if(m_MeshletMaxVerts > 128 || m_MeshletMaxPrims > 128)
+    {
+        cmd_list->SetGraphicsRootSignature(m_bigMeshletPipelineState->dx12RootSignature());
+        cmd_list->SetPipelineState(m_bigMeshletPipelineState->PSO());
+    }
+    else
+    {
+        cmd_list->SetGraphicsRootSignature(m_smallMeshletPipelineState->dx12RootSignature());
+        cmd_list->SetPipelineState(m_smallMeshletPipelineState->PSO());
+    }
+    setConstantBuffer();
     auto const entry = profiler->startEntry(cmd_list, "Model Draw");
     {
-        if(m_MeshletMaxVerts > 128 || m_MeshletMaxPrims > 128)
-        {
-            cmd_list->SetGraphicsRootSignature(m_bigMeshletPipelineState->dx12RootSignature());
-            cmd_list->SetPipelineState(m_bigMeshletPipelineState->PSO());
-        }
-        else
-        {
-            cmd_list->SetGraphicsRootSignature(m_smallMeshletPipelineState->dx12RootSignature());
-            cmd_list->SetPipelineState(m_smallMeshletPipelineState->PSO());
-        }
-        setConstantBuffer();
         for (auto& mesh : m_meshes)
         {
             mesh->dispatch();

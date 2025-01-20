@@ -56,7 +56,7 @@ private:
     std::string m_path;
 
     int32_t m_MeshletMaxVerts = 64;
-    int32_t m_MeshletMaxPrims = 124;
+    int32_t m_MeshletMaxPrims = 126;
 
 
     PipelineState* m_smallMeshletPipelineState;
