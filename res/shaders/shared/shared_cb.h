@@ -1,4 +1,9 @@
 #pragma once
+
+//#define CULLING 1
+
+
+
 #ifdef __cplusplus
 using float4x4 = hlsl::float4x4;
 using float3 = hlsl::float3;

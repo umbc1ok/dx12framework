@@ -98,7 +98,12 @@ void ms_main(
     out vertices VertexOut verts[128]
 )
 {
+
+#ifdef CULLING
     uint meshletIndex = MeshInfo.MeshletOffset + payload.MeshletIndices[gid];
+#else
+    uint meshletIndex = MeshInfo.MeshletOffset + gid;
+#endif
     if (meshletIndex >= MeshInfo.MeshletCount)
         return;
 
