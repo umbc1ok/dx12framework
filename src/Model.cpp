@@ -132,6 +132,10 @@ void Model::drawEditor()
         if (ImGui::Combo("MESHLET DEBUG MODE", &m_TypeIndex, items, IM_ARRAYSIZE(items)))
         {
             MeshletizerType type = static_cast<MeshletizerType>(m_TypeIndex);
+            for (int j = 0; j < m_meshes.size(); j++)
+            {
+                ResourceManager::getInstance()->scheduleMeshForDeletion(m_meshes[j]);
+            }
             m_meshes.clear();
             m_vertexCount = 0;
             m_triangleCount = 0;
