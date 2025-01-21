@@ -175,7 +175,7 @@ namespace meshletizers::boundingSphere
             }
 
             radius = bestNewRadius;
-            if (numNewVerts = 1)
+            if (numNewVerts == 1)
             {
                 // get all vertices of current triangle
                 const hlsl::float3 position = bestTri->vertices[newVert]->position;
