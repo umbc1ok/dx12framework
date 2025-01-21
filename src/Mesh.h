@@ -69,7 +69,7 @@ public:
 
     void draw();
     void bindTextures();
-    void bindMeshInfo(uint32_t meshletCount, uint32_t meshletOffset);
+    void bindMeshInfo(uint32_t meshletCount, uint32_t meshletOffset, uint32_t subsetIndex);
 
     void dispatch();
 
@@ -106,7 +106,7 @@ public:
     Resource*              MeshletTriangleIndicesResource;
     Resource*              CullDataResource;
 
-    ConstantBuffer<MeshInfo>* m_meshInfoBuffer;
+    std::vector<ConstantBuffer<MeshInfo>*> m_meshInfoBuffers;
 
     int32_t m_MeshletMaxVerts = 64;
     int32_t m_MeshletMaxPrims = 124;

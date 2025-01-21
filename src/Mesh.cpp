@@ -43,7 +43,10 @@ Mesh::Mesh(std::vector<Vertex> const& vertices, std::vector<uint32_t> const& ind
 
     generateSubsets();
 
-    m_meshInfoBuffer = new ConstantBuffer<MeshInfo>();
+    for (int i = 0; i < m_subsets.size(); i++)
+    {
+        m_meshInfoBuffers.push_back(new ConstantBuffer<MeshInfo>());
+    }
 
 
 }
@@ -65,17 +68,23 @@ Mesh::Mesh(std::vector<Vertex> const& vertices, std::vector<uint32_t> const& ind
     m_type = meshletizerType;
     m_meshletTriangles = meshletTriangles;
     m_cullData = cullData;
-    m_meshInfoBuffer = new ConstantBuffer<MeshInfo>();
     m_MeshletMaxPrims = maxPrims;
     m_MeshletMaxVerts = maxVerts;
 
     generateSubsets();
-
+    for (int i = 0; i < m_subsets.size(); i++)
+    {
+        m_meshInfoBuffers.push_back(new ConstantBuffer<MeshInfo>());
+    }
 }
 
 Mesh::~Mesh()
 {
-    delete m_meshInfoBuffer;
+    for (int i = 0; i < m_meshInfoBuffers.size(); i++)
+    {
+        delete m_meshInfoBuffers[i];
+    }
+    m_meshInfoBuffers.clear();
     delete VertexResource;
     delete IndexResource;
     delete MeshletResource;
@@ -111,14 +120,14 @@ void Mesh::bindTextures()
     }
 }
 
-void Mesh::bindMeshInfo(uint32_t meshletCount, uint32_t meshletOffset)
+void Mesh::bindMeshInfo(uint32_t meshletCount, uint32_t meshletOffset, uint32_t subsetIndex)
 {
     MeshInfo info;
     info.IndexBytes = sizeof(uint32_t);
     info.MeshletCount = meshletCount;
     info.MeshletOffset = meshletOffset;
-    m_meshInfoBuffer->uploadData(info);
-    m_meshInfoBuffer->setConstantBuffer(1);
+    m_meshInfoBuffers[subsetIndex]->uploadData(info);
+    m_meshInfoBuffers[subsetIndex]->setConstantBuffer(1);
 }
 
 void Mesh::dispatch()
@@ -133,11 +142,24 @@ void Mesh::dispatch()
 
     auto profilerEntry = GPUProfiler::getInstance()->startEntry(cmd_list, "Dispatch Mesh");
     {
+#ifdef CULLING
+        // We don't really need subsets in case we have culling, as throught AS we can dispatch at most 32 * 65535 meshlets, so about 2 milions
+        // if we ever have more than 2 milions meshlets I suppose we can start praying
+        bindMeshInfo(m_meshlets.size(), 0, 0);
+        cmd_list->DispatchMesh(hlsl::divRoundUp(m_meshlets.size(), 32), 1, 1);
+
+#else
+        int i = 0;
         for (auto& subset : m_subsets)
         {
-            bindMeshInfo(subset.size, subset.offset);
+            
+            bindMeshInfo(subset.size, subset.offset, i);
+
             cmd_list->DispatchMesh(subset.size, 1, 1);
+
+            i++;
         }
+#endif
     } GPUProfiler::getInstance()->endEntry(cmd_list, profilerEntry);
     
 }
@@ -544,12 +566,12 @@ void Mesh::changeMeshletizerType(MeshletizerType type)
 void Mesh::generateSubsets()
 {
     int meshletsNumber = m_meshlets.size();
-    int subsetsNumber = (meshletsNumber / 65535) + 1;
+    int subsetsNumber = hlsl::divRoundUp(meshletsNumber, 65535);
     for (int i = 0; i < subsetsNumber; i++)
     {
         MeshSubset subset;
         subset.offset = i * 65535;
-        subset.size = subset.offset + 65535 > meshletsNumber ? meshletsNumber - subset.offset : 65535;
+        subset.size = ((subset.offset + 65535) > meshletsNumber) ? meshletsNumber - subset.offset : 65535;
         m_subsets.push_back(subset);
     }
 }

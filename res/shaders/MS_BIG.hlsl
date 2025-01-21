@@ -104,7 +104,7 @@ void ms_main(
 #else
     uint meshletIndex = MeshInfo.MeshletOffset + gid;
 #endif
-    if (meshletIndex >= MeshInfo.MeshletCount)
+    if (meshletIndex >= MeshInfo.MeshletOffset + MeshInfo.MeshletCount)
         return;
 
     Meshlet m = Meshlets[meshletIndex];
