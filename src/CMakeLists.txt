@@ -34,6 +34,7 @@ target_link_libraries(${PROJECT_NAME} DirectXTex)
 target_link_libraries(${PROJECT_NAME} dxcompiler)
 target_link_libraries(${PROJECT_NAME} DirectXMesh)
 target_link_libraries(${PROJECT_NAME} meshoptimizer)
+target_link_libraries (${PROJECT_NAME} TracyClient )
 
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD 
 				   COMMAND ${CMAKE_COMMAND} -E create_symlink 

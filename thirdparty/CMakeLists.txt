@@ -31,6 +31,12 @@ target_include_directories(dx12 INTERFACE ${dx12dir})
 # assimp settings
 SET (ASSIMP_BUILD_PLY_IMPORTER ON)
 SET (ASSIMP_BUILD_STL_IMPORTER ON)
+
+
+# tracy settings
+option ( TRACY_ENABLE "" ON )
+option ( TRACY_ON_DEMAND "" ON )
+
 # other
 CPMAddPackage("gh:assimp/assimp@5.2.5")
 CPMAddPackage("gh:ocornut/imgui#v1.90.9-docking")
@@ -39,6 +45,7 @@ CPMAddPackage("gh:microsoft/DirectXTK12#sep2024")
 CPMAddPackage("gh:microsoft/DirectXTex#sep2024")
 CPMAddPackage("gh:microsoft/DirectXMesh#sep2024")
 CPMAddPackage("gh:zeux/meshoptimizer#v0.22")
+CPMAddPackage("gh:wolfpld/tracy#v0.11.1")
 
 set(imgui_SOURCE_DIR ${imgui_SOURCE_DIR} CACHE INTERNAL "")
 add_library(imgui STATIC ${imgui_SOURCE_DIR}/imgui.cpp
@@ -56,6 +63,7 @@ set_target_properties(stb_image
               DirectXTex
               DirectXMesh
               meshoptimizer
+              TracyClient
                       spdlog PROPERTIES FOLDER "thirdparty")
 
 if (TARGET zlibstatic)
