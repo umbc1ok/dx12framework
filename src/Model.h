@@ -26,6 +26,8 @@ public:
     void serializeMeshes() const;
     bool deserializeMeshes();
 
+    void sendDataToBenchmark();
+
     std::vector<Texture*> m_loaded_textures;
 private:
     void loadModel(std::string const& model_path);

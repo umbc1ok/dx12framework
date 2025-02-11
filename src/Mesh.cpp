@@ -14,6 +14,12 @@
 #include "Tools/GPUProfiler.h"
 #include "Tools/MeshletBenchmark.h"
 
+#define TRACY_NO_SAMPLE_BRANCH
+#define TRACY_NO_SAMPLE_RETIREMENT
+
+#include "tracy/Tracy.hpp"
+
+
 
 Mesh::Mesh(std::vector<Vertex> const& vertices, std::vector<uint32_t> const& indices, std::vector<Texture*> const& textures, std::vector<hlsl::float3> const& positions, std::vector<hlsl::float3> const& normals, std::vector<hlsl::float2> const& UVS, std::vector<uint32_t> const& attributes, MeshletizerType meshletizerType, int32_t maxVerts, int32_t maxPrims)
 {
@@ -76,6 +82,48 @@ Mesh::Mesh(std::vector<Vertex> const& vertices, std::vector<uint32_t> const& ind
     {
         m_meshInfoBuffers.push_back(new ConstantBuffer<MeshInfo>());
     }
+
+    float totalRadiuses = 0.0f;
+    float totalAngles = 0.0f;
+    float avgRadius = 0.0f;
+    float maxRadius = 0.0f;
+    float minRadius = 0.0f;
+    float avgAngle = 0.0f;
+    int degenerateConeCounter = 0;
+    for (int i = 0; i < m_cullData.size(); i++)
+    {
+        totalRadiuses += m_cullData[i].BoundingSphere.w;
+        if(m_cullData[i].NormalCone[3] == 0xff)
+        {
+            degenerateConeCounter++;
+        }
+        float angle = float((m_cullData[i].NormalCone[3] >> 24) & 0xFF);
+        totalAngles += acosf(angle);
+        if (m_cullData[i].BoundingSphere.w > maxRadius)
+        {
+            maxRadius = m_cullData[i].BoundingSphere.w;
+        }
+        if (m_cullData[i].BoundingSphere.w < minRadius)
+        {
+            minRadius = m_cullData[i].BoundingSphere.w;
+        }
+
+
+
+    }
+
+    avgRadius = totalRadiuses / m_cullData.size();
+    avgAngle = totalAngles / m_cullData.size();
+    //float vertFill = (float)totalVerts / (float)(m_MeshletMaxVerts * m_meshlets.size());
+    //float triFill = (float)totalTris / (float)(m_MeshletMaxPrims * m_meshlets.size());
+    printf("=========MESHLETIZER %i =========\n", static_cast<int>(m_type));
+    printf("Avg radius: %f \n", avgRadius);
+    printf("Avg angle: %f \n", avgAngle);
+    printf("Max radius: %f \n", maxRadius);
+    printf("Min radius: %f \n", minRadius);
+    printf("Meshlets: %i \n", m_meshlets.size());
+    printf("Degenerate cones: %i \n", degenerateConeCounter);
+
 }
 
 Mesh::~Mesh()
@@ -267,23 +315,24 @@ void Mesh::meshletizeDXMESH()
 
     auto benchmark = MeshletBenchmark::getInstance();
     benchmark->startMeshletizing();
-
-
-    AssertFailed(ComputeMeshlets(
-        m_MeshletMaxVerts,
-        m_MeshletMaxPrims,
-        m_indices.data(),
-        m_indices.size(),
-        indexSubsets.data(),
-        static_cast<uint32_t>(indexSubsets.size()),
-        reinterpret_cast<const DirectX::XMFLOAT3*>(m_positions.data()),
-        static_cast<uint32_t>(m_positions.size()),
-        meshlet_subsets,
-        m_meshlets,
-        unique_vertex_indices,
-        primitive_indices
-    ));
-    benchmark->endMeshletizing();
+    {
+        ZoneScopedN("DXMESH meshletizing");
+        AssertFailed(ComputeMeshlets(
+            m_MeshletMaxVerts,
+            m_MeshletMaxPrims,
+            m_indices.data(),
+            m_indices.size(),
+            indexSubsets.data(),
+            static_cast<uint32_t>(indexSubsets.size()),
+            reinterpret_cast<const DirectX::XMFLOAT3*>(m_positions.data()),
+            static_cast<uint32_t>(m_positions.size()),
+            meshlet_subsets,
+            m_meshlets,
+            unique_vertex_indices,
+            primitive_indices
+        ));
+        benchmark->endMeshletizing();
+    }
 
 
 
@@ -317,6 +366,7 @@ void Mesh::meshletizeDXMESH()
         indices_mapping.push_back(packed);
     }
     m_indices = indices_mapping;
+
     //m_cullData.resize(m_meshlets.size());
 
 
@@ -332,29 +382,32 @@ void Mesh::meshletizeMeshoptimizer()
     // vertex index data, so every entry in that vector is a global index of a vertex
 
     indices_mapping.resize(max_meshlets * m_MeshletMaxVerts);
-    std::vector<unsigned char> meshlet_triangles(max_meshlets * m_MeshletMaxPrims * 3);
+    std::vector<unsigned char> meshlet_triangles(max_meshlets * m_MeshletMaxPrims);
 
-
+    size_t meshlet_count;
     auto benchmark = MeshletBenchmark::getInstance();
-    benchmark->startMeshletizing();
-    size_t meshlet_count = meshopt_buildMeshlets(
-        meshlets.data(),
-        indices_mapping.data(),
-        meshlet_triangles.data(),
-        m_indices.data(),
-        m_indices.size(),
-        &m_positions[0].x,
-        m_positions.size(),
-        sizeof(hlsl::float3),
-        m_MeshletMaxVerts,
-        m_MeshletMaxPrims,
-        cone_weight);
-
-    for(int i = 0; i < meshlets.size(); i++)
     {
-        meshopt_optimizeMeshlet(indices_mapping.data() + meshlets[i].vertex_offset, meshlet_triangles.data() + meshlets[i].triangle_offset, meshlets[i].triangle_count, meshlets[i].vertex_count);
+        ZoneScopedN("Meshoptimizer meshletizing");
+        benchmark->startMeshletizing();
+            meshlet_count = meshopt_buildMeshlets(
+            meshlets.data(),
+            indices_mapping.data(),
+            meshlet_triangles.data(),
+            m_indices.data(),
+            m_indices.size(),
+            &m_positions[0].x,
+            m_positions.size(),
+            sizeof(hlsl::float3),
+            m_MeshletMaxVerts,
+            m_MeshletMaxPrims,
+            cone_weight);
+
+        for(int i = 0; i < meshlets.size(); i++)
+        {
+            meshopt_optimizeMeshlet(indices_mapping.data() + meshlets[i].vertex_offset, meshlet_triangles.data() + meshlets[i].triangle_offset, meshlets[i].triangle_count, meshlets[i].vertex_count);
+        }
+        benchmark->endMeshletizing();
     }
-    benchmark->endMeshletizing();
     m_meshlets.clear();
     m_meshlets.resize(meshlet_count);
     int addedElements = 0;
@@ -432,9 +485,12 @@ void Mesh::meshletizeGreedy()
     std::vector<uint32_t> uniqueVertexIndices;
     std::vector<uint32_t> indicesMapping;
     auto benchmark = MeshletBenchmark::getInstance();
-    benchmark->startMeshletizing();
-    meshletizers::greedy::meshletize(m_MeshletMaxVerts, m_MeshletMaxPrims, m_indices, m_vertices, m_meshlets, uniqueVertexIndices, m_meshletTriangles);
-    benchmark->endMeshletizing();
+    {
+        ZoneScopedN("Greedy meshletizing");
+        benchmark->startMeshletizing();
+        meshletizers::greedy::meshletize(m_MeshletMaxVerts, m_MeshletMaxPrims, m_indices, m_vertices, m_meshlets, uniqueVertexIndices, m_meshletTriangles);
+        benchmark->endMeshletizing();
+    }
     m_indices = uniqueVertexIndices;
 
 
@@ -472,8 +528,11 @@ void Mesh::meshletizeBoundingSphere()
     std::vector<uint32_t> indicesMapping;
     auto benchmark = MeshletBenchmark::getInstance();
     benchmark->startMeshletizing();
-    meshletizers::boundingSphere::meshletize(m_MeshletMaxVerts, m_MeshletMaxPrims, m_indices, m_vertices, m_meshlets, uniqueVertexIndices, m_meshletTriangles);
-    benchmark->endMeshletizing();
+    {
+        ZoneScopedN("BS meshletizing");
+        meshletizers::boundingSphere::meshletize(m_MeshletMaxVerts, m_MeshletMaxPrims, m_indices, m_vertices, m_meshlets, uniqueVertexIndices, m_meshletTriangles);
+        benchmark->endMeshletizing();
+    }
     m_indices = uniqueVertexIndices;
 
 
@@ -508,7 +567,10 @@ void Mesh::meshletizeNvidia()
     std::vector<uint32_t> indicesMapping;
     auto benchmark = MeshletBenchmark::getInstance();
     benchmark->startMeshletizing();
-    meshletizers::nvidia::meshletize(m_MeshletMaxVerts, m_MeshletMaxPrims, m_indices, m_vertices, m_meshlets, uniqueVertexIndices, m_meshletTriangles);
+    {
+        ZoneScopedN("NV meshletizing");
+        meshletizers::nvidia::meshletize(m_MeshletMaxVerts, m_MeshletMaxPrims, m_indices, m_vertices, m_meshlets, uniqueVertexIndices, m_meshletTriangles);
+    }
     benchmark->endMeshletizing();
     m_indices = uniqueVertexIndices;
 

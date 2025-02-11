@@ -3,6 +3,7 @@
 #include <string>
 
 #include "MeshletStructs.h"
+#include "Model.h"
 #include "utils/maths.h"
 
 class MeshletBenchmark
@@ -23,9 +24,17 @@ public:
     void drawEditor();
 
     void updateMeshletizerType(MeshletizerType type);
+    void updateMeshletSizeBool(bool isBig);
     void updateMeshletParameters(uint32_t maxVertices, uint32_t maxPrimitives);
+    void updateModelPath(std::string path);
+    void updateCulling(bool culling) { m_culling = culling; }
 
     void generateBenchmarkPositions();
+
+    void setModel(Model* model) { m_model = model; }
+
+
+    void saveMeshletizingTimeToFile(std::string filename);
 
 private:
     void run(uint32_t numberOfFrames);
@@ -36,12 +45,22 @@ private:
 
     static MeshletBenchmark* m_instance;
 
+    Model* m_model = nullptr;
+
     float m_outerRadius = 40.0f;
     float m_innerRadius = 12.0f;
 
     char m_filename[128] = "";
     char m_positionsFilename[128] = "";
     char m_notes[1024] = "";
+
+    std::string m_modelFileName = "";
+    MeshletizerType m_meshletizerType = DXMESH;
+    bool m_culling = true;
+    bool m_isBig = false;
+
+
+
 
 
     bool m_running = false;
@@ -51,7 +70,6 @@ private:
     float m_accumulatedTime = 0;
 
 
-    MeshletizerType m_meshletizerType = DXMESH;
     uint32_t m_maxVertices = 64;
     uint32_t m_maxPrimitives = 126;
     float m_meshletizingTime = 0.0f;

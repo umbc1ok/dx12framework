@@ -51,6 +51,7 @@ Model* Model::create(std::string const& model_path)
 #endif
     model->m_sceneConstantBuffer = new ConstantBuffer<SceneConstantBuffer>();
     model->m_cameraConstantBuffer = new ConstantBuffer<CameraConstants>();
+    MeshletBenchmark::getInstance()->setModel(model);
     return model;
 }
 
@@ -153,7 +154,9 @@ void Model::drawEditor()
     {
         MeshletBenchmark::getInstance()->updateMeshletizerType(static_cast<MeshletizerType>(m_TypeIndex));
         MeshletBenchmark::getInstance()->updateMeshletParameters(m_MeshletMaxVerts, m_MeshletMaxPrims);
+        MeshletBenchmark::getInstance()->updateModelPath(m_path);
     }
+
     ImGui::InputInt("Max meshlet vertices", &m_MeshletMaxVerts);
     ImGui::InputInt("Max meshlet primitives", &m_MeshletMaxPrims);
     if (ImGui::Button("RELOAD"))
@@ -269,6 +272,20 @@ bool Model::deserializeMeshes()
     if (m_meshes.empty())
         return false;
     return true;
+}
+
+void Model::sendDataToBenchmark()
+{
+    MeshletBenchmark::getInstance()->updateMeshletizerType(static_cast<MeshletizerType>(m_TypeIndex));
+    MeshletBenchmark::getInstance()->updateMeshletParameters(m_MeshletMaxVerts, m_MeshletMaxPrims);
+    MeshletBenchmark::getInstance()->updateModelPath(m_path);
+    bool isBig = m_MeshletMaxVerts > 128 || m_MeshletMaxPrims > 128;
+    MeshletBenchmark::getInstance()->updateMeshletSizeBool(isBig);
+#ifdef CULLING
+    MeshletBenchmark::getInstance()->updateCulling(true);
+#else
+    MeshletBenchmark::getInstance()->updateCulling(false);
+#endif
 }
 
 void Model::loadModel(std::string const& path)

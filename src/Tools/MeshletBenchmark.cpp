@@ -21,6 +21,20 @@ void MeshletBenchmark::create()
     m_instance = new MeshletBenchmark();
 }
 
+void MeshletBenchmark::saveMeshletizingTimeToFile(std::string filename)
+{
+    std::ofstream file(filename);
+    if (file.is_open())
+    {
+        file << m_meshletizingTime;
+        file.close();
+    }
+    else
+    {
+        printf("Could not open file %s\n", filename.c_str());
+    }
+}
+
 void MeshletBenchmark::run(uint32_t numberOfFrames)
 {
     m_framesLeft = numberOfFrames;
@@ -32,19 +46,25 @@ bool MeshletBenchmark::saveLogToFile()
 {
     // Save the log to a file
     std::filesystem::path cwd = std::filesystem::current_path();
-    std::string path = m_path + m_filename + ".log";
+
+    size_t lastSlashPos = m_modelFileName.find_last_of("/\\"); // Handles both '/' and '\'
+
+    // Extract the substring after the last slash
+    std::string meshName = m_modelFileName.substr(lastSlashPos + 1);
+    const char* items[] = { "MESHOPTIMIZER","DXMESH", "GREEDY", "BoundingSphere", "NVIDIA" };
+    std::string path = m_path + meshName + "_" + (m_isBig ? "BIG" : "SMALL") + "_" + (m_culling ? "CULL" : "NOCULL") + "_" + items[m_meshletizerType] + ".log";
     std::ofstream file(path);
     if (file.is_open())
     {
-        file << "Meshlet Benchmark\n";
-        const char* items[] = { "MESHOPTIMIZER","DXMESH", "GREEDY", "BoundingSphere", "NVIDIA" };
-        file << "Meshletizer type: " << items[m_meshletizerType] << "\n";
-        file << "Max vertices: " << m_maxVertices << "\n";
-        file << "Max primitives: " << m_maxPrimitives << "\n";
-        file << "Meshletizing time: " << m_meshletizingTime << "s" << "\n";
-        file << "Frames: " << m_scheduledFrames << "\n";
-        file << "Average render time: " << m_accumulatedTime / m_scheduledFrames << (GPUProfiler::getInstance()->useMicroSeconds() ? "us" : "ms") << "\n";
-        file << "Notes: " << m_notes << "\n";
+        file << m_accumulatedTime / m_scheduledFrames;
+        //file << "Meshletizer type: " << items[m_meshletizerType] << "\n";
+        //file << "Max vertices: " << m_maxVertices << "\n";
+        //file << "Max primitives: " << m_maxPrimitives << "\n";
+        //file << "Meshletizing time: " << m_meshletizingTime << "s" << "\n";
+        //file << "Frames: " << m_scheduledFrames << "\n";
+        //file << "Average render time: " << m_accumulatedTime / m_scheduledFrames << (GPUProfiler::getInstance()->useMicroSeconds() ? "us" : "ms") << "\n";
+        //file << "Model: " << m_modelFileName << "\n";
+        //file << "Notes: " << m_notes << "\n";
         file.close();
         return true;
     }
@@ -115,8 +135,8 @@ MeshletBenchmark* MeshletBenchmark::getInstance()
 
 void MeshletBenchmark::drawEditor()
 {
-    ImGui::InputText("Log file name:", m_filename, IM_ARRAYSIZE(m_filename));
-    ImGui::InputTextMultiline("Additional notes:", m_notes, IM_ARRAYSIZE(m_notes));
+   /* ImGui::InputText("Log file name:", m_filename, IM_ARRAYSIZE(m_filename));
+    ImGui::InputTextMultiline("Additional notes:", m_notes, IM_ARRAYSIZE(m_notes));*/
 
 
     ImGui::Separator();
@@ -182,6 +202,7 @@ void MeshletBenchmark::drawEditor()
     ImGui::InputInt("Number of frames to schedule:", &m_noOfFrames);
     if (ImGui::Button("Start Recording"))
     {
+        m_model->sendDataToBenchmark();
         m_accumulatedTime = 0;
         run(m_noOfFrames);
     }
@@ -245,10 +266,20 @@ void MeshletBenchmark::updateMeshletizerType(MeshletizerType type)
     m_meshletizerType = type;
 }
 
+void MeshletBenchmark::updateMeshletSizeBool(bool isBig)
+{
+    m_isBig = isBig;
+}
+
 void MeshletBenchmark::updateMeshletParameters(uint32_t maxVertices, uint32_t maxPrimitives)
 {
     m_maxVertices = maxVertices;
     m_maxPrimitives = maxPrimitives;
+}
+
+void MeshletBenchmark::updateModelPath(std::string path)
+{
+    m_modelFileName = path;
 }
 
 void MeshletBenchmark::generateBenchmarkPositions()
