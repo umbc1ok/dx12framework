@@ -23,6 +23,11 @@ Renderer::Renderer()
 void Renderer::create()
 {
     m_instance = new Renderer();
+    m_instance->m_render_resources_manager = new RenderResourcesManager();
+    m_instance->m_render_resources_manager->createResources();
+    // HACK: ImGui was blurry until first window resize
+    // This gets rid of that problem, I dont know why
+    m_instance->on_window_resize();
     RECT rect;
     int width, height;
     if (GetWindowRect(Window::get_hwnd(), &rect))
@@ -56,7 +61,7 @@ void Renderer::start_frame()
     auto cmdqueue = get_cmd_queue(D3D12_COMMAND_LIST_TYPE_DIRECT);
     auto command_list = cmdqueue->get_command_list();
 	g_pd3dCommandList = command_list;
-    transition_resource(command_list, get_current_back_buffer(),
+    transition_resource(command_list, m_render_resources_manager->getCurrentBackbuffer(),
         D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
 }
@@ -66,15 +71,13 @@ void Renderer::render()
     auto cmd_list = g_pd3dCommandList;
     auto profiler = GPUProfiler::getInstance();
     profiler->startFrame();
-    auto rtv = get_current_rtv();
+    auto rtv = m_render_resources_manager->getCurrentRTV();
+    auto dsv = m_render_resources_manager->getDSVHandle();
     ProfilerEntry* const profilerEntry = profiler->startEntry(cmd_list, "Frame");
     {
         ProfilerEntry* const profilerEntrySettingFrameSettings = profiler->startEntry(cmd_list, "Setup frame");
         {
-            auto dsv = get_dsv_heap()->GetCPUDescriptorHandleForHeapStart();
-            FLOAT clearColor[] = { 0.4f, 0.6f, 0.9f, 1.0f };
-            clear_rtv(cmd_list, rtv, clearColor);
-            clear_depth(cmd_list, dsv, 1.0f);
+            m_render_resources_manager->clearRenderTargets();
 
             cmd_list->RSSetViewports(1, &m_Viewport);
             cmd_list->RSSetScissorRects(1, &m_ScissorRect);
@@ -105,7 +108,7 @@ void Renderer::end_frame()
 {
     auto command_list = g_pd3dCommandList;
     auto profiler = GPUProfiler::getInstance();
-    transition_resource(command_list, get_current_back_buffer(),
+    transition_resource(command_list, m_render_resources_manager->getCurrentBackbuffer(),
         D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 
     profiler->endRecording(command_list);
@@ -124,56 +127,6 @@ void Renderer::cleanup()
 
 void Renderer::create_depth_stencil()
 {
-    if (m_dsv_heap != nullptr)
-    {
-        m_dsv_heap->Release();
-        m_dsv_heap = nullptr;
-    }
-    D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
-    dsvHeapDesc.NumDescriptors = 1;
-    dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-    dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-    AssertFailed(g_pd3dDevice->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_dsv_heap)));
-
-
-    D3D12_DEPTH_STENCIL_VIEW_DESC dsv = {};
-    dsv.Format = DXGI_FORMAT_D32_FLOAT;
-    dsv.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-    dsv.Texture2D.MipSlice = 0;
-    dsv.Flags = D3D12_DSV_FLAG_NONE;
-
-    D3D12_CLEAR_VALUE optimizedClearValue = {};
-    optimizedClearValue.Format = DXGI_FORMAT_D32_FLOAT;
-    optimizedClearValue.DepthStencil = { 1.0f, 0 };
-
-    if (m_depth_buffer != nullptr)
-    {
-        m_depth_buffer->Release();
-        m_depth_buffer = nullptr;
-    }
-
-    RECT rect;
-    int width, height;
-    if (GetWindowRect(Window::get_hwnd(), &rect))
-    {
-        width = rect.right - rect.left;
-        height = rect.bottom - rect.top;
-    }
-
-    auto heaptype = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-    auto rsrc_desc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT,width, height,
-        1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
-    AssertFailed(g_pd3dDevice->CreateCommittedResource(
-        &heaptype,
-        D3D12_HEAP_FLAG_NONE,
-        &rsrc_desc,
-        D3D12_RESOURCE_STATE_DEPTH_WRITE,
-        &optimizedClearValue,
-        IID_PPV_ARGS(&m_depth_buffer)
-    ));
-
-    g_pd3dDevice->CreateDepthStencilView(m_depth_buffer, &dsv,
-        m_dsv_heap->GetCPUDescriptorHandleForHeapStart());
 }
 
 void Renderer::on_window_resize()
@@ -185,14 +138,15 @@ void Renderer::on_window_resize()
         width = rect.right - rect.left;
         height = rect.bottom - rect.top;
     }
-    cleanup_render_targets();
 
+    m_render_resources_manager->releaseResources();
 	m_DirectCommandQueue->flush();
+
 
     HRESULT result = g_pSwapChain->ResizeBuffers(0, (UINT)LOWORD(width), (UINT)HIWORD(height), DXGI_FORMAT_UNKNOWN, DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT);
     assert(SUCCEEDED(result) && "Failed to resize swapchain.");
-    create_render_targets();
-    create_depth_stencil();
+    m_render_resources_manager->createResources();
+
     m_Viewport = CD3DX12_VIEWPORT(0.0f, 0.0f,
         static_cast<float>(width), static_cast<float>(height));
 }
@@ -318,11 +272,6 @@ bool Renderer::create_device_d3d(HWND hWnd)
         g_pSwapChain->SetMaximumFrameLatency(NUM_BACK_BUFFERS);
         //g_hSwapChainWaitableObject = g_pSwapChain->GetFrameLatencyWaitableObject();
     }
-    create_depth_stencil();
-    create_render_targets();
-    // HACK: ImGui was blurry until first window resize
-    // This gets rid of that problem, I dont know why
-    on_window_resize();
     return true;
 }
 
@@ -485,12 +434,7 @@ ID3D12Resource* Renderer::get_current_back_buffer() const
     return g_mainRenderTargetResource[g_pSwapChain->GetCurrentBackBufferIndex()];
 }
 
-D3D12_CPU_DESCRIPTOR_HANDLE Renderer::get_current_rtv() const
-{
 
-    return CD3DX12_CPU_DESCRIPTOR_HANDLE(g_pd3dRtvDescHeap->GetCPUDescriptorHandleForHeapStart(),
-        g_pSwapChain->GetCurrentBackBufferIndex(), g_pd3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV));
-}
 
 ID3D12DescriptorHeap* Renderer::get_dsv_heap() const
 {

@@ -3,6 +3,7 @@
 #include <dxgidebug.h>
 
 #include "debugGeometry/DebugDrawer.h"
+#include "DX12Resource/RenderResourcesManager.h"
 #include "DX12Wrappers/CommandQueue.h"
 #include "utils/Types.h"
 #define DX12_ENABLE_DEBUG_LAYER 
@@ -39,7 +40,6 @@ public:
 
     CommandQueue* get_cmd_queue(D3D12_COMMAND_LIST_TYPE type) const;
     ID3D12Resource* get_current_back_buffer() const;
-    D3D12_CPU_DESCRIPTOR_HANDLE get_current_rtv() const;
     ID3D12DescriptorHeap* get_dsv_heap() const;
     ID3D12DescriptorHeap* get_srv_desc_heap() const { return g_pd3dSrvDescHeap; }
 
@@ -62,8 +62,11 @@ public:
     void set_vsync(const bool& vsync) { m_vsync = vsync; }
     bool vsync() const { return m_vsync; }
     void register_pipeline_state(PipelineState* pipeline_state);
-private:
 
+
+    IDXGISwapChain3* getSwapChain() const { return g_pSwapChain; }
+private:
+    RenderResourcesManager* m_render_resources_manager;
     // Create
     bool create_device_d3d(HWND hWnd);
     void create_render_targets();
