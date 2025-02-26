@@ -2,7 +2,7 @@
 
 #include "Entity.h"
 #include "Model.h"
-#include "Grass.h"
+
 void Game::init()
 {
     auto entity1 = Entity::create("Bunny");
