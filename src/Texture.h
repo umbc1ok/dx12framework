@@ -2,6 +2,8 @@
 #include <d3d12.h>
 #include <string>
 
+#include "DX12Wrappers/Resource.h"
+
 enum class TextureType
 {
     None,
@@ -27,7 +29,7 @@ enum class TextureFiltering
 
 struct Texture
 {
-    ID3D12Resource* resource;
+    Resource* resource;
     ID3D12DescriptorHeap* heap;
     D3D12_CPU_DESCRIPTOR_HANDLE SRV_CPU;
     D3D12_GPU_DESCRIPTOR_HANDLE SRV_GPU;
@@ -36,7 +38,7 @@ struct Texture
 
     ~Texture()
     {
-        resource->Release();
+        delete resource;
         heap->Release();
     }
 };

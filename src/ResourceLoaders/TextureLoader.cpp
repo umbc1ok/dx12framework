@@ -45,7 +45,7 @@ Texture* TextureLoader::texture_from_file(std::string const& path)
 
 	Texture* texture = new Texture();
     texture->path = path;
-
+    ID3D12Resource* texture_resource;
 	CD3DX12_HEAP_PROPERTIES default_heap_properties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 	device->CreateCommittedResource(
 		&default_heap_properties,
@@ -53,7 +53,8 @@ Texture* TextureLoader::texture_from_file(std::string const& path)
 		&texture_desc,
 		D3D12_RESOURCE_STATE_COPY_DEST,
 		nullptr,
-		IID_PPV_ARGS(&texture->resource));
+		IID_PPV_ARGS(&texture_resource));
+    texture->resource = new Resource(texture_resource);
 
 	std::vector<D3D12_SUBRESOURCE_DATA> subresources(scratchImage.GetImageCount());
 	const DirectX::Image* pImages = scratchImage.GetImages();
@@ -66,7 +67,7 @@ Texture* TextureLoader::texture_from_file(std::string const& path)
 		subresource.pData = pImages[i].pixels;
 	}
 
-	u64 requiredSize = GetRequiredIntermediateSize(texture->resource, 0, subresources.size());
+	u64 requiredSize = GetRequiredIntermediateSize(texture->resource->getDx12Resource(), 0, subresources.size());
 
 	ID3D12Resource* intermediate_resource;
 	CD3DX12_HEAP_PROPERTIES upload_heap_properties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
@@ -81,8 +82,9 @@ Texture* TextureLoader::texture_from_file(std::string const& path)
 		IID_PPV_ARGS(&intermediate_resource));
 	AssertFailed(hr);
 
-	UpdateSubresources(cmdlist, texture->resource, intermediate_resource, 0, 0, subresources.size(), subresources.data());
-	Renderer::transition_resource(cmdlist, texture->resource, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	UpdateSubresources(cmdlist, texture->resource->getDx12Resource(), intermediate_resource, 0, 0, subresources.size(), subresources.data());
+	// TODO: Add some transition logic to Resource
+	texture->resource->transitionResource(D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC srv_desc = {};
@@ -101,7 +103,7 @@ Texture* TextureLoader::texture_from_file(std::string const& path)
 	texture->SRV_CPU = texture->heap->GetCPUDescriptorHandleForHeapStart();
 	texture->SRV_GPU = texture->heap->GetGPUDescriptorHandleForHeapStart();
 
-	device->CreateShaderResourceView(texture->resource, &srv_desc, texture->SRV_CPU);
+	device->CreateShaderResourceView(texture->resource->getDx12Resource(), &srv_desc, texture->SRV_CPU);
 	auto fenceValue = cmdqueue->execute_command_list(cmdlist);
 	cmdqueue->wait_for_fence_value(fenceValue);
 
