@@ -5,7 +5,6 @@
 #include "Shader.h"
 #include "Window.h"
 #include "utils/ErrorHandler.h"
-#include "utils/maths.h"
 
 PipelineState::PipelineState(std::wstring ms_or_vs_name, std::wstring ps_name, PipelineType type)
 {
@@ -74,12 +73,7 @@ void PipelineState::compilePSO()
     rasterizer_desc.DepthClipEnable = TRUE;
     rasterizer_desc.MultisampleEnable = FALSE;
     rasterizer_desc.AntialiasedLineEnable = TRUE;
-
-    //rasterizer_desc.ForcedSampleCount = 0;
-    if (m_wireframeActive)
-        rasterizer_desc.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
-    else
-        rasterizer_desc.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
+    rasterizer_desc.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
 
     CD3DX12_BLEND_DESC blend_desc;
     blend_desc = CD3DX12_BLEND_DESC(CD3DX12_DEFAULT());
