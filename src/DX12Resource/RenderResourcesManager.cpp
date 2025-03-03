@@ -60,11 +60,11 @@ D3D12_CPU_DESCRIPTOR_HANDLE RenderResourcesManager::getCurrentRTV()
         swapChain->GetCurrentBackBufferIndex(), device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV));
 }
 
-ID3D12Resource* RenderResourcesManager::getCurrentBackbuffer()
+RenderTarget* RenderResourcesManager::getCurrentBackbufferRenderTarget()
 {
     auto swapChain = Renderer::get_instance()->getSwapChain();
     auto index = swapChain->GetCurrentBackBufferIndex();
-    return m_mainRenderTarget[index]->resource();
+    return m_mainRenderTarget[index];
 }
 
 

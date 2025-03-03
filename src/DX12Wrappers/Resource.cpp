@@ -5,9 +5,26 @@
 #include "Renderer.h"
 #include "utils/ErrorHandler.h"
 
+Resource::Resource(ID3D12Resource* dx12Resource)
+{
+    m_dx12Resource = dx12Resource;
+}
+
 Resource::~Resource()
 {
     m_dx12Resource->Release();
+}
+
+
+void Resource::transitionResource(D3D12_RESOURCE_STATES newState)
+{
+    CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+        m_dx12Resource,
+        m_currentState, newState);
+    m_currentState = newState;
+
+    auto commandList = Renderer::get_instance()->g_pd3dCommandList;
+    commandList->ResourceBarrier(1, &barrier);
 }
 
 void Resource::create(uint64_t size, void* data)

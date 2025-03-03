@@ -11,7 +11,7 @@
 #include "Input.h"
 #include "Keyboard.h"
 #include "Tools/GPUProfiler.h"
-
+#include "DX12Resource/RenderTarget.h"
 
 Renderer* Renderer::m_instance;
 
@@ -61,8 +61,7 @@ void Renderer::start_frame()
     auto cmdqueue = get_cmd_queue(D3D12_COMMAND_LIST_TYPE_DIRECT);
     auto command_list = cmdqueue->get_command_list();
 	g_pd3dCommandList = command_list;
-    transition_resource(command_list, m_render_resources_manager->getCurrentBackbuffer(),
-        D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_RENDER_TARGET);
+    m_render_resources_manager->getCurrentBackbufferRenderTarget()->setResourceStateToRenderTarget();
 
 }
 
@@ -108,8 +107,9 @@ void Renderer::end_frame()
 {
     auto command_list = g_pd3dCommandList;
     auto profiler = GPUProfiler::getInstance();
-    transition_resource(command_list, m_render_resources_manager->getCurrentBackbuffer(),
-        D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+
+    m_render_resources_manager->getCurrentBackbufferRenderTarget()->setResourceStateToPresent();
+
 
     profiler->endRecording(command_list);
     auto index = g_pSwapChain->GetCurrentBackBufferIndex();
@@ -383,17 +383,6 @@ void Renderer::update_buffer_resource(ID3D12GraphicsCommandList2* commandList,
 Renderer* Renderer::get_instance()
 {
     return m_instance;
-}
-
-void Renderer::transition_resource(ID3D12GraphicsCommandList2* commandList,
-    ID3D12Resource* resource,
-    D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState)
-{
-    CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-        resource,
-        beforeState, afterState);
-
-    commandList->ResourceBarrier(1, &barrier);
 }
 
 void Renderer::clear_rtv(ID3D12GraphicsCommandList2* commandList,
