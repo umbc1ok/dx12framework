@@ -42,14 +42,10 @@ ConstantBuffer<SceneConstantBuffer> InstanceData       : register(b0);
 ConstantBuffer<MeshInfo>  MeshInfo                : register(b1);
 
 
-//ConstantBuffer<CameraConstants>         CameraData              : register(b2);
-
-
 StructuredBuffer<Vertex>  Vertices                : register(t0);
 StructuredBuffer<Meshlet> Meshlets                : register(t1);
 StructuredBuffer<uint>    IndexBuffer      : register(t2);
 StructuredBuffer<uint>    LocalIndexBuffer  : register(t3);
-//StructuredBuffer<CullData>              MeshletCullData         : register(t4);
 
 
 #define ROOT_SIG "CBV(b0), \
