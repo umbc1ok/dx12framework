@@ -16,7 +16,7 @@ public:
     void releaseResources();
     void clearRenderTargets();
     D3D12_CPU_DESCRIPTOR_HANDLE getCurrentRTV();
-    ID3D12Resource* getCurrentBackbuffer();
+    RenderTarget* getCurrentBackbufferRenderTarget();
 
     D3D12_CPU_DESCRIPTOR_HANDLE getDSVHandle();
 
