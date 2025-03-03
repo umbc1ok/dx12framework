@@ -9,15 +9,26 @@ RenderTarget::RenderTarget()
 
 RenderTarget::RenderTarget(ID3D12Resource* resource, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle)
 {
-    m_resource = resource;
+    m_resource = new Resource(resource);
     m_rtvHandle = rtvHandle;
     Renderer::get_instance()->get_device()->CreateRenderTargetView(resource, nullptr, rtvHandle);
 }
 
 RenderTarget::~RenderTarget()
 {
-    m_resource->Release();
+    delete m_resource;
 }
+
+void RenderTarget::setResourceStateToRenderTarget()
+{
+    m_resource->transitionResource(D3D12_RESOURCE_STATE_RENDER_TARGET);
+}
+
+void RenderTarget::setResourceStateToPresent()
+{
+    m_resource->transitionResource(D3D12_RESOURCE_STATE_PRESENT);
+}
+
 
 void RenderTarget::clear()
 {

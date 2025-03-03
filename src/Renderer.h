@@ -35,9 +35,6 @@ public:
         size_t numElements, size_t elementSize, const void* bufferData,
         D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE);
 
-    static void transition_resource(ID3D12GraphicsCommandList2* commandList, ID3D12Resource* resource,
-        D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState);
-
     CommandQueue* get_cmd_queue(D3D12_COMMAND_LIST_TYPE type) const;
     ID3D12Resource* get_current_back_buffer() const;
     ID3D12DescriptorHeap* get_dsv_heap() const;
