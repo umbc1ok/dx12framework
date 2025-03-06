@@ -19,6 +19,20 @@ struct VertexOut
     uint   TriangleIndex : COLOR1;
 };
 
+#ifdef SETTINGS
+RasterizerDescriptor
+{
+    FillMode = FILL;
+	CullMode = BACK;
+	FrontCounterClockwise = TRUE;
+	MSEnable = TRUE;
+	AntialiasedLineEnable = TRUE;
+	ConservativeRaster = FALSE;
+}
+#endif
+
+
+
 ConstantBuffer<SceneConstantBuffer> InstanceData : register(b0);
 
 float4 ps_main(VertexOut input) : SV_TARGET
