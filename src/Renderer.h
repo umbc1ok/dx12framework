@@ -36,8 +36,7 @@ public:
         D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE);
 
     CommandQueue* get_cmd_queue(D3D12_COMMAND_LIST_TYPE type) const;
-    ID3D12Resource* get_current_back_buffer() const;
-    ID3D12DescriptorHeap* get_dsv_heap() const;
+
     ID3D12DescriptorHeap* get_srv_desc_heap() const { return g_pd3dSrvDescHeap; }
 
     static constexpr int NUM_BACK_BUFFERS = 3;
@@ -66,15 +65,10 @@ private:
     RenderResourcesManager* m_render_resources_manager;
     // Create
     bool create_device_d3d(HWND hWnd);
-    void create_render_targets();
 
     // Cleanup
     void cleanup_device_d3d();
-    void cleanup_render_targets();
 
-    // Clear resources
-    void clear_rtv(ID3D12GraphicsCommandList2* commandList, D3D12_CPU_DESCRIPTOR_HANDLE rtv, FLOAT* clearColor);
-    void clear_depth(ID3D12GraphicsCommandList2* commandList, D3D12_CPU_DESCRIPTOR_HANDLE dsv, FLOAT depth = 0.1f);
 
     // Basic DX12 stuff
     ID3D12Device2* g_pd3dDevice = nullptr;
@@ -84,8 +78,6 @@ private:
     uint64_t* g_fencevalues = new uint64_t[NUM_FRAMES_IN_FLIGHT];
 
     // Resources
-    ID3D12Resource* g_mainRenderTargetResource[NUM_BACK_BUFFERS] = {};
-    ID3D12Resource* m_depth_buffer = nullptr;
 
 
     // Descriptor heaps
@@ -93,15 +85,11 @@ private:
     ID3D12DescriptorHeap* g_pd3dRtvDescHeap = nullptr;
     ID3D12DescriptorHeap* g_pd3dSrvDescHeap = nullptr;
 
-    // Handles
-    D3D12_CPU_DESCRIPTOR_HANDLE  g_mainRenderTargetDescriptor[NUM_BACK_BUFFERS] = {};
-
     // Command queues
     CommandQueue* m_DirectCommandQueue;
     CommandQueue* m_ComputeCommandQueue;
     CommandQueue* m_CopyCommandQueue;
 
-    PipelineState* m_pipeline_state;
 
     // Previously used ID3D12Debug6, but it's available in Agility SDK 1.7+ (which for now is in preview)
     // For multiplatform use, let's downgrade it to ID3D12Debug3

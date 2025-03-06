@@ -223,24 +223,6 @@ bool Renderer::create_device_d3d(HWND hWnd)
 
     {
         D3D12_DESCRIPTOR_HEAP_DESC desc = {};
-        desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-        desc.NumDescriptors = NUM_BACK_BUFFERS;
-        desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-        desc.NodeMask = 1;
-        if (g_pd3dDevice->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&g_pd3dRtvDescHeap)) != S_OK)
-            return false;
-
-        SIZE_T rtvDescriptorSize = g_pd3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-        D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = g_pd3dRtvDescHeap->GetCPUDescriptorHandleForHeapStart();
-        for (UINT i = 0; i < NUM_BACK_BUFFERS; i++)
-        {
-            g_mainRenderTargetDescriptor[i] = rtvHandle;
-            rtvHandle.ptr += rtvDescriptorSize;
-        }
-    }
-
-    {
-        D3D12_DESCRIPTOR_HEAP_DESC desc = {};
         desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
         desc.NumDescriptors = 1;
         desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
@@ -275,17 +257,6 @@ bool Renderer::create_device_d3d(HWND hWnd)
     return true;
 }
 
-void Renderer::create_render_targets()
-{
-    for (UINT i = 0; i < NUM_BACK_BUFFERS; i++)
-    {
-        ID3D12Resource* pBackBuffer = nullptr;
-        g_pSwapChain->GetBuffer(i, IID_PPV_ARGS(&pBackBuffer));
-        g_pd3dDevice->CreateRenderTargetView(pBackBuffer, nullptr, g_mainRenderTargetDescriptor[i]);
-        g_mainRenderTargetResource[i] = pBackBuffer;
-    }
-}
-
 void Renderer::cleanup_device_d3d()
 {
     // Command queues
@@ -301,14 +272,6 @@ void Renderer::cleanup_device_d3d()
     if (g_pd3dSrvDescHeap) { g_pd3dSrvDescHeap->Release(); g_pd3dSrvDescHeap = nullptr; }
     if (m_dsv_heap) { m_dsv_heap->Release(); m_dsv_heap = nullptr; }
 
-    // Resources
-    if (m_depth_buffer) { m_depth_buffer->Release(); m_depth_buffer = nullptr; }
-    cleanup_render_targets();
-    for(int i = 0; i < NUM_BACK_BUFFERS; i++)
-    {
-        if (g_mainRenderTargetResource[i]) { g_mainRenderTargetResource[i]->Release(); g_mainRenderTargetResource[i] = nullptr; }
-    }
-
 #ifdef DX12_ENABLE_DEBUG_LAYER
     if (pDXGIDebug != nullptr)
     {
@@ -320,16 +283,6 @@ void Renderer::cleanup_device_d3d()
     }
 #endif
 }
-
-void Renderer::cleanup_render_targets()
-{
-    // PROBABLY SHOULD WAIT FOR LAST FRAME TO FINISH RENDERING
-    for (UINT i = 0; i < NUM_BACK_BUFFERS; i++)
-        if (g_mainRenderTargetResource[i]) { g_mainRenderTargetResource[i]->Release(); g_mainRenderTargetResource[i] = nullptr; }
-}
-
-
-
 
 ID3D12Device2* Renderer::get_device() const
 {
@@ -385,17 +338,6 @@ Renderer* Renderer::get_instance()
     return m_instance;
 }
 
-void Renderer::clear_rtv(ID3D12GraphicsCommandList2* commandList,
-    D3D12_CPU_DESCRIPTOR_HANDLE rtv, FLOAT* clearColor)
-{
-    commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
-}
-
-void Renderer::clear_depth(ID3D12GraphicsCommandList2* commandList,
-    D3D12_CPU_DESCRIPTOR_HANDLE dsv, FLOAT depth)
-{
-    commandList->ClearDepthStencilView(dsv, D3D12_CLEAR_FLAG_DEPTH, depth, 0, 0, nullptr);
-}
 
 CommandQueue* Renderer::get_cmd_queue(D3D12_COMMAND_LIST_TYPE type) const
 {
@@ -418,15 +360,4 @@ CommandQueue* Renderer::get_cmd_queue(D3D12_COMMAND_LIST_TYPE type) const
     return command_queue;
 }
 
-ID3D12Resource* Renderer::get_current_back_buffer() const
-{
-    return g_mainRenderTargetResource[g_pSwapChain->GetCurrentBackBufferIndex()];
-}
-
-
-
-ID3D12DescriptorHeap* Renderer::get_dsv_heap() const
-{
-    return m_dsv_heap;
-}
 
