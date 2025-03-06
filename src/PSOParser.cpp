@@ -202,3 +202,122 @@ namespace PSOParser
         return rootSignature;
     }
 
+    CD3DX12_RASTERIZER_DESC parseRasterizerSettings(Shader* pixelShader)
+    {
+        assert(pixelShader->getType() == ShaderType::PIXEL);
+
+        std::ifstream file(pixelShader->getFullPath());
+        if (!file) {
+            std::cerr << "While parsing rasterizer settings, an error opening file: " << std::string(pixelShader->getFullPath().begin(), pixelShader->getFullPath().end()) << std::endl;
+            return CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+        }
+
+        std::string line;
+        bool inSettings = false;
+        bool inRasterizer = false;
+        std::regex settingPattern(R"((\w+)\s*=\s*([\w]+);)");
+        CD3DX12_RASTERIZER_DESC rasterizerDesc(D3D12_DEFAULT);
+        while (std::getline(file, line))
+        {
+            line.erase(0, line.find_first_not_of(" \t")); // Trim leading spaces
+
+            if (line == "#ifdef SETTINGS")
+            {
+                inSettings = true;
+            }
+            else if (line == "#endif")
+            {
+                inSettings = false;
+                inRasterizer = false;
+            }
+            else if (inSettings)
+            {
+                if (line == "RasterizerDescriptor")
+                {
+                    inRasterizer = true;
+                }
+                else if (inRasterizer)
+                {
+                    std::smatch match;
+                    if (std::regex_search(line, match, settingPattern))
+                    {
+                        std::string setting = match[1];
+                        std::string value = match[2];
+                        if (setting == "FillMode")
+                        {
+                            if (value == "SOLID")
+                            {
+                                rasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;
+                            }
+                            else if (value == "WIREFRAME")
+                            {
+                                rasterizerDesc.FillMode = D3D12_FILL_MODE_WIREFRAME;
+                            }
+                        }
+                        else if (setting == "CullMode")
+                        {
+                            if (value == "NONE")
+                            {
+                                rasterizerDesc.CullMode = D3D12_CULL_MODE_NONE;
+                            }
+                            else if (value == "FRONT")
+                            {
+                                rasterizerDesc.CullMode = D3D12_CULL_MODE_FRONT;
+                            }
+                            else if (value == "BACK")
+                            {
+                                rasterizerDesc.CullMode = D3D12_CULL_MODE_BACK;
+                            }
+                        }
+                        else if (setting == "FrontCounterClockwise")
+                        {
+                            rasterizerDesc.FrontCounterClockwise = value == "TRUE";
+                        }
+                        else if (setting == "DepthBias")
+                        {
+                            rasterizerDesc.DepthBias = std::stoi(value);
+                        }
+                        else if (setting == "DepthBiasClamp")
+                        {
+                            rasterizerDesc.DepthBiasClamp = std::stof(value);
+                        }
+                        else if (setting == "SlopeScaledDepthBias")
+                        {
+                            rasterizerDesc.SlopeScaledDepthBias = std::stof(value);
+                        }
+                        else if (setting == "DepthClipEnable")
+                        {
+                            rasterizerDesc.DepthClipEnable = value == "TRUE";
+                        }
+                        else if (setting == "MultisampleEnable")
+                        {
+                            rasterizerDesc.MultisampleEnable = value == "TRUE";
+                        }
+                        else if (setting == "AntialiasedLineEnable")
+                        {
+                            rasterizerDesc.AntialiasedLineEnable = value == "TRUE";
+                        }
+                        else if (setting == "ForcedSampleCount")
+                        {
+                            rasterizerDesc.ForcedSampleCount = std::stoi(value);
+                        }
+                        else if (setting == "ConservativeRaster")
+                        {
+                            if (value == "FALSE")
+                            {
+                                rasterizerDesc.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
+                            }
+                            else if (value == "TRUE")
+                            {
+                                rasterizerDesc.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_ON;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return rasterizerDesc;
+    }
+}
+

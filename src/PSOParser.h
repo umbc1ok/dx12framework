@@ -27,4 +27,14 @@ namespace PSOParser
 
     ID3D12RootSignature* parseRootSignature(std::vector<Shader*> const&  shaders, std::unordered_map<NameHash, RootParameterIndex>& descriptorRangeMap);
 
+    /*
+     * Parse rasterizer settings form a pixel shader.
+     * Return deafult settings if no settings are found.
+     */
+    CD3DX12_RASTERIZER_DESC parseRasterizerSettings(Shader* pixelShader);
+
+
+
 }
+
+
