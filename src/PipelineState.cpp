@@ -5,6 +5,7 @@
 #include "Shader.h"
 #include "Window.h"
 #include "utils/ErrorHandler.h"
+#include "PSOParser.h"
 #include "utils/Utils.h"
 
 PipelineState::PipelineState(std::wstring ms_or_vs_name, std::wstring ps_name, PipelineType type)

@@ -174,6 +174,7 @@ void Mesh::bindMeshInfo(uint32_t meshletCount, uint32_t meshletOffset, uint32_t 
     m_meshInfoBuffers[subsetIndex]->setConstantBuffer(pso);
 }
 
+void Mesh::dispatch(PipelineState* pso)
 {
     auto cmd_list = Renderer::get_instance()->g_pd3dCommandList;
 
