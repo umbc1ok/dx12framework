@@ -63,3 +63,14 @@ void Resource::create(uint64_t size, void* data)
     cmdQueue->wait_for_fence_value(fence_value);
     uploadResource->Release();
 }
+
+void Resource::bindResource(PipelineState* pso, std::string variableName)
+{
+    int32_t index = pso->getRootParameterIndex(variableName);
+
+    if (index == -1)
+        return;
+
+    auto cmd_list = Renderer::get_instance()->g_pd3dCommandList;
+    cmd_list->SetGraphicsRootShaderResourceView(index, m_dx12Resource->GetGPUVirtualAddress());
+}

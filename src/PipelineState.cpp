@@ -5,6 +5,8 @@
 #include "Shader.h"
 #include "Window.h"
 #include "utils/ErrorHandler.h"
+#include "PSOParser.h"
+#include "utils/Utils.h"
 
 PipelineState::PipelineState(std::wstring ms_or_vs_name, std::wstring ps_name, PipelineType type)
 {
@@ -162,6 +164,17 @@ ID3D12PipelineState* PipelineState::PSO() const
     return m_pipelineState;
 }
 
+int32_t PipelineState::getRootParameterIndex(std::string name) const
+{
+    PSOParser::NameHash hash = olej_utils::murmurHash(reinterpret_cast<const u8*>(name.data()), name.size(), 69);
+    if(m_rootParameterMap.find(hash) != m_rootParameterMap.end())
+        return m_rootParameterMap.at(hash);
+
+    return -1;
+}
+
+
+
 void PipelineState::setWireframe(const bool& wireframe)
 {
     if(wireframe != m_wireframeActive)
@@ -171,80 +184,18 @@ void PipelineState::setWireframe(const bool& wireframe)
     }
 }
 
-// This is very basic, using it only to render a cube for now
 void PipelineState::createRootSignature()
 {
-    auto device = Renderer::get_instance()->get_device();
-    // Create a root signature.
-    D3D12_FEATURE_DATA_ROOT_SIGNATURE feature_data = {};
-    feature_data.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
-
-    if (FAILED(device->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &feature_data, sizeof(feature_data))))
-    {
-        feature_data.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
-    }
-
-    // Allow input layout and deny unnecessary access to certain pipeline stages.
-    D3D12_ROOT_SIGNATURE_FLAGS root_signature_flags =
-        D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+    std::vector<Shader*> usedShaders;
+    if(m_vertexShader != nullptr)
+        usedShaders.push_back(m_vertexShader);
+    if (m_pixelShader != nullptr)
+        usedShaders.push_back(m_pixelShader);
+    if (m_meshShader != nullptr)
+        usedShaders.push_back(m_meshShader);
+    if (m_amplificationShader != nullptr)
+        usedShaders.push_back(m_amplificationShader);
 
 
-    CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC root_signature_description;
-
-    // TODO: This isn't very beatiful, needs to be refactored later
-    if (m_msName == L"MS_GRASS.hlsl")
-    {
-        CD3DX12_ROOT_PARAMETER1 root_parameters[3];
-        root_parameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_ALL);
-        root_parameters[1].InitAsConstantBufferView(1, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_ALL);
-        root_parameters[2].InitAsUnorderedAccessView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_ALL);
-
-
-        CD3DX12_STATIC_SAMPLER_DESC static_samplers[1];
-        static_samplers[0].Init(0, D3D12_FILTER_ANISOTROPIC); // s3
-
-        root_signature_description.Init_1_1(_countof(root_parameters), root_parameters, 1, static_samplers, root_signature_flags);
-    }
-    else if(!m_vsName.empty())
-    {
-        CD3DX12_ROOT_PARAMETER1 root_parameters[1];
-        root_parameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_ALL);
-        CD3DX12_STATIC_SAMPLER_DESC static_samplers[1];
-        static_samplers[0].Init(0, D3D12_FILTER_ANISOTROPIC); // s3
-
-        root_signature_description.Init_1_1(_countof(root_parameters), root_parameters, 1, static_samplers, root_signature_flags);
-    }
-    else
-    {
-        
-        CD3DX12_ROOT_PARAMETER1 root_parameters[8];
-        //
-        root_parameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_ALL);
-        root_parameters[1].InitAsConstantBufferView(1, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC,  D3D12_SHADER_VISIBILITY_ALL);
-        root_parameters[2].InitAsConstantBufferView(2, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC,  D3D12_SHADER_VISIBILITY_ALL);
-        root_parameters[3].InitAsShaderResourceView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_ALL);
-        root_parameters[4].InitAsShaderResourceView(1, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_ALL);
-        root_parameters[5].InitAsShaderResourceView(2, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_ALL);
-        root_parameters[6].InitAsShaderResourceView(3, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_ALL);
-        root_parameters[7].InitAsShaderResourceView(4, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY_ALL);
-
-        CD3DX12_STATIC_SAMPLER_DESC static_samplers[1];
-        static_samplers[0].Init(0, D3D12_FILTER_ANISOTROPIC); // s3
-
-        root_signature_description.Init_1_1(_countof(root_parameters), root_parameters, 1, static_samplers, root_signature_flags);
-    }
-
-
-
-    // Serialize the root signature.
-    ID3DBlob* root_signature_blob;
-    ID3DBlob* error_blob;
-    AssertFailed(D3DX12SerializeVersionedRootSignature(&root_signature_description,
-        feature_data.HighestVersion, &root_signature_blob, &error_blob));
-
-    // Create the root signature.
-    AssertFailed(device->CreateRootSignature(0, root_signature_blob->GetBufferPointer(),
-        root_signature_blob->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)));
-
-    root_signature_blob->Release();
+    m_rootSignature = PSOParser::parseRootSignature(usedShaders, m_rootParameterMap);
 }

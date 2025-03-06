@@ -1,5 +1,8 @@
 #pragma once
 #include "DXMeshletGenerator/D3D12MeshletGenerator.h"
+#include <string>
+
+class PipelineState;
 
 class Resource
 {
@@ -15,6 +18,8 @@ public:
     ID3D12Resource* getDx12Resource() { return m_dx12Resource; }
 
     D3D12_GPU_VIRTUAL_ADDRESS getGPUVirtualAddress() const { return m_dx12Resource->GetGPUVirtualAddress(); }
+
+    void bindResource(PipelineState* pso, std::string variableName);
 
 private:
     ID3D12Resource* m_dx12Resource;
