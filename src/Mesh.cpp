@@ -51,7 +51,7 @@ Mesh::Mesh(std::vector<Vertex> const& vertices, std::vector<uint32_t> const& ind
 
     for (int i = 0; i < m_subsets.size(); i++)
     {
-        m_meshInfoBuffers.push_back(new ConstantBuffer<MeshInfo>());
+        m_meshInfoBuffers.push_back(new ConstantBuffer<MeshInfo>("MeshInfo"));
     }
 
 
@@ -80,7 +80,7 @@ Mesh::Mesh(std::vector<Vertex> const& vertices, std::vector<uint32_t> const& ind
     generateSubsets();
     for (int i = 0; i < m_subsets.size(); i++)
     {
-        m_meshInfoBuffers.push_back(new ConstantBuffer<MeshInfo>());
+        m_meshInfoBuffers.push_back(new ConstantBuffer<MeshInfo>("MeshInfo"));
     }
 
     float totalRadiuses = 0.0f;
@@ -144,10 +144,6 @@ Mesh::~Mesh()
     }
 }
 
-void Mesh::draw()
-{
-    dispatch();
-}
 
 void Mesh::bindTextures()
 {
@@ -168,25 +164,25 @@ void Mesh::bindTextures()
     }
 }
 
-void Mesh::bindMeshInfo(uint32_t meshletCount, uint32_t meshletOffset, uint32_t subsetIndex)
+void Mesh::bindMeshInfo(uint32_t meshletCount, uint32_t meshletOffset, uint32_t subsetIndex, PipelineState* pso)
 {
     MeshInfo info;
     info.IndexBytes = sizeof(uint32_t);
     info.MeshletCount = meshletCount;
     info.MeshletOffset = meshletOffset;
     m_meshInfoBuffers[subsetIndex]->uploadData(info);
-    m_meshInfoBuffers[subsetIndex]->setConstantBuffer(1);
+    m_meshInfoBuffers[subsetIndex]->setConstantBuffer(pso);
 }
 
-void Mesh::dispatch()
+void Mesh::dispatch(PipelineState* pso)
 {
     auto cmd_list = Renderer::get_instance()->g_pd3dCommandList;
-    cmd_list->SetGraphicsRootShaderResourceView(3, VertexResource->getGPUVirtualAddress());
-    cmd_list->SetGraphicsRootShaderResourceView(4, MeshletResource->getGPUVirtualAddress());
-    cmd_list->SetGraphicsRootShaderResourceView(5, IndexResource->getGPUVirtualAddress());
-    cmd_list->SetGraphicsRootShaderResourceView(6, MeshletTriangleIndicesResource->getGPUVirtualAddress());
-    // TODO: Bind Cull Data below
-    cmd_list->SetGraphicsRootShaderResourceView(7, CullDataResource->getGPUVirtualAddress());
+
+    VertexResource->bindResource(pso, "Vertices");
+    MeshletResource->bindResource(pso, "Meshlets");
+    IndexResource->bindResource(pso, "IndexBuffer");
+    MeshletTriangleIndicesResource->bindResource(pso, "LocalIndexBuffer");
+    CullDataResource->bindResource(pso, "meshletcullData");
 
     auto profilerEntry = GPUProfiler::getInstance()->startEntry(cmd_list, "Dispatch Mesh");
     {
@@ -201,7 +197,7 @@ void Mesh::dispatch()
         for (auto& subset : m_subsets)
         {
             
-            bindMeshInfo(subset.size, subset.offset, i);
+            bindMeshInfo(subset.size, subset.offset, i, pso);
 
             cmd_list->DispatchMesh(subset.size, 1, 1);
 

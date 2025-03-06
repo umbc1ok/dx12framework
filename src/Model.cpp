@@ -49,8 +49,8 @@ Model* Model::create(std::string const& model_path)
     model->m_smallMeshletPipelineState = new PipelineState(L"MS_STANDARD.hlsl", L"PS_BASIC.hlsl", MESH);
     model->m_bigMeshletPipelineState = new PipelineState(L"MS_BIG.hlsl", L"PS_BASIC.hlsl", MESH);
 #endif
-    model->m_sceneConstantBuffer = new ConstantBuffer<SceneConstantBuffer>();
-    model->m_cameraConstantBuffer = new ConstantBuffer<CameraConstants>();
+    model->m_sceneConstantBuffer = new ConstantBuffer<SceneConstantBuffer>("InstanceData");
+    model->m_cameraConstantBuffer = new ConstantBuffer<CameraConstants>("CameraData");
     MeshletBenchmark::getInstance()->setModel(model);
     return model;
 }
@@ -70,7 +70,12 @@ void Model::setConstantBuffer()
 
     m_sceneConstantBufferData.time = ImGui::GetTime();
     m_sceneConstantBuffer->uploadData(m_sceneConstantBufferData);
-    m_sceneConstantBuffer->setConstantBuffer(0);
+
+    if (m_MeshletMaxVerts > 128 || m_MeshletMaxPrims > 128)
+        m_sceneConstantBuffer->setConstantBuffer(m_bigMeshletPipelineState);
+    else
+        m_sceneConstantBuffer->setConstantBuffer(m_smallMeshletPipelineState);
+
 
     m_cameraConstants.CullViewPosition = Camera::getMainCamera()->getCullingPosition();
     auto const frustum = Camera::getMainCamera()->getFrustum();
@@ -81,7 +86,11 @@ void Model::setConstantBuffer()
     m_cameraConstants.Planes[4] = frustum.far_plane;
     m_cameraConstants.Planes[5] = frustum.near_plane;
     m_cameraConstantBuffer->uploadData(m_cameraConstants);
-    m_cameraConstantBuffer->setConstantBuffer(2);
+
+    if (m_MeshletMaxVerts > 128 || m_MeshletMaxPrims > 128)
+        m_cameraConstantBuffer->setConstantBuffer(m_bigMeshletPipelineState);
+    else
+        m_cameraConstantBuffer->setConstantBuffer(m_smallMeshletPipelineState);
 
 }
 
@@ -106,7 +115,14 @@ void Model::draw()
     {
         for (auto& mesh : m_meshes)
         {
-            mesh->dispatch();
+            if (m_MeshletMaxVerts > 128 || m_MeshletMaxPrims > 128)
+            {
+                mesh->dispatch(m_bigMeshletPipelineState);
+            }
+            else
+            {
+                mesh->dispatch(m_smallMeshletPipelineState);
+            }
         }
     } profiler->endEntry(cmd_list, entry);
 }

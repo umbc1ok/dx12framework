@@ -11,20 +11,23 @@ template <typename T>
 class ConstantBuffer
 {
 public:
-    ConstantBuffer();
+    ConstantBuffer() = delete;
+    ConstantBuffer(const std::string& name);
     ~ConstantBuffer();
 
-    void setConstantBuffer(uint32_t rootParameterIndex) const;
+    void setConstantBuffer(PipelineState* pso) const;
     void uploadData(const T& data);
 
 private:
     uint8_t* m_cbv_data_begin = nullptr;
     ID3D12Resource* m_d3d12_constant_buffer;
+
+    std::string m_name;
 };
 
 
 template <typename T>
-ConstantBuffer<T>::ConstantBuffer()
+ConstantBuffer<T>::ConstantBuffer(const std::string& name)
 {
     int frameCount = 3;
     const UINT64 constantBufferSize = sizeof(T) * frameCount;
@@ -45,6 +48,8 @@ ConstantBuffer<T>::ConstantBuffer()
     CD3DX12_RANGE readRange(0, 0);        // We do not intend to read from this resource on the CPU.
 
     AssertFailed(m_d3d12_constant_buffer->Map(0, &readRange, reinterpret_cast<void**>(&m_cbv_data_begin)));
+
+    m_name = name;
 }
 
 template <typename T>
@@ -56,10 +61,14 @@ ConstantBuffer<T>::~ConstantBuffer()
 }
 
 template <typename T>
-void ConstantBuffer<T>::setConstantBuffer(uint32_t rootParameterIndex) const
+void ConstantBuffer<T>::setConstantBuffer(PipelineState* pso) const
 {
     auto commandList = Renderer::get_instance()->g_pd3dCommandList;
-    commandList->SetGraphicsRootConstantBufferView(rootParameterIndex, m_d3d12_constant_buffer->GetGPUVirtualAddress() + sizeof(T) * Renderer::get_instance()->frame_index);
+    int32_t index = pso->getRootParameterIndex(m_name);
+    if (index == -1)
+        return;
+
+    commandList->SetGraphicsRootConstantBufferView(index, m_d3d12_constant_buffer->GetGPUVirtualAddress() + sizeof(T) * Renderer::get_instance()->frame_index);
 }
 
 template <typename T>
