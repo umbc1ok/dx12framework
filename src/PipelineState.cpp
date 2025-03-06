@@ -48,34 +48,14 @@ void PipelineState::compilePSO()
         m_vertexShader = new Shader(m_vsName, ShaderType::VERTEX);
     m_pixelShader = new Shader(m_psName, ShaderType::PIXEL);
 
-    const D3D12_INPUT_ELEMENT_DESC input_layout[3] =
-    {
-        { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-        { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 1, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-        { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 2, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-    };
 
 
     D3D12_RT_FORMAT_ARRAY rtv_formats = {};
     rtv_formats.NumRenderTargets = 1;
     rtv_formats.RTFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
 
-    CD3DX12_RASTERIZER_DESC rasterizer_desc = {};
+    CD3DX12_RASTERIZER_DESC rasterizer_desc = PSOParser::parseRasterizerSettings(m_pixelShader);
 
-    if (m_wireframeActive)
-        rasterizer_desc.FillMode = D3D12_FILL_MODE_WIREFRAME;
-    else
-        rasterizer_desc.FillMode = D3D12_FILL_MODE_SOLID; // Use D3D12_FILL_MODE_WIREFRAME for wireframe mode
-
-    rasterizer_desc.CullMode = D3D12_CULL_MODE_NONE;  // Use D3D12_CULL_MODE_NONE or D3D12_CULL_MODE_FRONT as needed
-    rasterizer_desc.FrontCounterClockwise = FALSE;
-    rasterizer_desc.DepthBias = D3D12_DEFAULT_DEPTH_BIAS;
-    rasterizer_desc.DepthBiasClamp = D3D12_DEFAULT_DEPTH_BIAS_CLAMP;
-    rasterizer_desc.SlopeScaledDepthBias = D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS;
-    rasterizer_desc.DepthClipEnable = TRUE;
-    rasterizer_desc.MultisampleEnable = FALSE;
-    rasterizer_desc.AntialiasedLineEnable = TRUE;
-    rasterizer_desc.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
 
     CD3DX12_BLEND_DESC blend_desc;
     blend_desc = CD3DX12_BLEND_DESC(CD3DX12_DEFAULT());
@@ -128,6 +108,13 @@ void PipelineState::compilePSO()
     }
     else if(m_type == TRADITIONAL)
     {
+        const D3D12_INPUT_ELEMENT_DESC input_layout[3] =
+        {
+            { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+            { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 1, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+            { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 2, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+        };
+
         D3D12_SHADER_BYTECODE* vs = new D3D12_SHADER_BYTECODE(m_vertexShader->getBlob()->GetBufferPointer(), m_vertexShader->getBlob()->GetBufferSize());
         D3D12_SHADER_BYTECODE* ps = new D3D12_SHADER_BYTECODE(m_pixelShader->getBlob()->GetBufferPointer(), m_pixelShader->getBlob()->GetBufferSize());
 

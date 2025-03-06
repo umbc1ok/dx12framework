@@ -74,7 +74,6 @@ private:
     std::wstring m_msName = L"";
     std::wstring m_psName = L"";
 
-    bool m_wireframeActive = false;
 
     Shader* m_amplificationShader = nullptr;
     Shader* m_meshShader = nullptr;
