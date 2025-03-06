@@ -1,6 +1,8 @@
 #pragma once
 #include <d3d12.h>
 
+#include "DX12Wrappers/Resource.h"
+
 class RenderTarget
 {
 public:
@@ -8,11 +10,14 @@ public:
     RenderTarget(ID3D12Resource* resource, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle);
     ~RenderTarget();
 
-    ID3D12Resource* resource() { return m_resource; }
+    void setResourceStateToRenderTarget();
+    void setResourceStateToPresent();
+
+    Resource* resource() { return m_resource; }
     void clear();
     
 private:
-    ID3D12Resource* m_resource;
+    Resource* m_resource;
     D3D12_CPU_DESCRIPTOR_HANDLE m_rtvHandle;
 };
 
