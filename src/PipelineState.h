@@ -1,6 +1,8 @@
 #pragma once
 #include <d3dx12.h>
 
+#include "PSOParser.h"
+
 
 class Shader;
 
@@ -55,6 +57,9 @@ public:
     ID3D12RootSignature* dx12RootSignature() const;
     ID3D12PipelineState* PSO() const;
 
+
+    int32_t getRootParameterIndex(std::string name) const;
+
     void reload() { compilePSO(); }
 
 private:
@@ -63,18 +68,20 @@ private:
     ID3D12RootSignature* m_rootSignature;
     ID3D12PipelineState* m_pipelineState;
 
+    std::unordered_map<PSOParser::NameHash, PSOParser::RootParameterIndex> m_rootParameterMap;
     std::wstring m_asName = L"";
-
     std::wstring m_vsName = L"";
     std::wstring m_msName = L"";
     std::wstring m_psName = L"";
 
     bool m_wireframeActive = false;
 
-    Shader* m_amplificationShader;
-    Shader* m_meshShader;
-    Shader* m_pixelShader;
-    Shader* m_vertexShader;
+    Shader* m_amplificationShader = nullptr;
+    Shader* m_meshShader = nullptr;
+    Shader* m_pixelShader = nullptr;
+    Shader* m_vertexShader = nullptr;
+
+    bool m_wireframeActive = false;
 
     PipelineType m_type;
 };

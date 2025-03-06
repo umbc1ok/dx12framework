@@ -25,6 +25,8 @@ public:
     char* readShaderBlobFromFile(std::wstring const& path, size_t* p_size);
     bool saveCompiledShaderBlob(std::wstring const& path, IDxcBlob* p_blob);
     IDxcBlob* getBlob() const;
+    std::wstring const& getFullPath() const;
+    ShaderType getType() const;
 
 private:
     std::wstring m_path = {};

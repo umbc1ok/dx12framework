@@ -10,6 +10,8 @@
 #include "../res/shaders/shared/shared_cb.h"
 
 
+class PipelineState;
+
 struct Attribute
 {
     enum EType : uint32_t
@@ -67,11 +69,10 @@ public:
 
     ~Mesh();
 
-    void draw();
     void bindTextures();
-    void bindMeshInfo(uint32_t meshletCount, uint32_t meshletOffset, uint32_t subsetIndex);
+    void bindMeshInfo(uint32_t meshletCount, uint32_t meshletOffset, uint32_t subsetIndex, PipelineState* pso);
 
-    void dispatch();
+    void dispatch(PipelineState* pso);
 
     void meshletizeDXMESH();
     void meshletizeMeshoptimizer();

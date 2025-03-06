@@ -217,3 +217,13 @@ IDxcBlob* Shader::getBlob() const
     return m_dxcBlob;
 }
 
+std::wstring const& Shader::getFullPath() const
+{
+    return m_path;
+}
+
+ShaderType Shader::getType() const
+{
+    return m_type;
+}
+

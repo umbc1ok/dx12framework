@@ -10,7 +10,7 @@
 
 DebugDrawing::DebugDrawing()
 {
-    m_transformationMatrices = new ConstantBuffer<TransformationMatrices>();
+    m_transformationMatrices = new ConstantBuffer<TransformationMatrices>("transforms");
     matrices = new TransformationMatrices();
 }
 
@@ -18,8 +18,6 @@ DebugDrawer::DebugDrawer()
 {
     m_pipelineState = new PipelineState(L"debug/VS_DEBUG.hlsl", L"debug/PS_DEBUG.hlsl", TRADITIONAL);
     m_pipelineState->setWireframe(true);
-
-
 }
     
 DebugDrawer::~DebugDrawer()
@@ -76,8 +74,6 @@ void DebugDrawer::eraseDebugDrawing(DebugDrawing* drawing)
 void DebugDrawer::draw()
 {
 
-
-
     auto cmd_list = Renderer::get_instance()->g_pd3dCommandList;
     cmd_list->SetPipelineState(m_pipelineState->PSO());
     cmd_list->SetGraphicsRootSignature(m_pipelineState->dx12RootSignature());
@@ -111,7 +107,7 @@ void DebugDrawer::draw()
             continue;
 
         m_debugDrawings[i]->m_transformationMatrices->uploadData(*m_debugDrawings[i]->matrices);
-        m_debugDrawings[i]->m_transformationMatrices->setConstantBuffer(0);
+        m_debugDrawings[i]->m_transformationMatrices->setConstantBuffer(m_pipelineState);
 
         cmd_list->IASetVertexBuffers(0, 1, m_debugDrawings[i]->vb->get_view());
         cmd_list->IASetIndexBuffer(m_debugDrawings[i]->ib->get_view());
