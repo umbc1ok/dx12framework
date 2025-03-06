@@ -48,17 +48,6 @@ StructuredBuffer<uint>    IndexBuffer      : register(t2);
 StructuredBuffer<uint>    LocalIndexBuffer  : register(t3);
 
 
-#define ROOT_SIG "CBV(b0), \
-                  CBV(b1), \
-                  CBV(b2), \
-                  SRV(t0), \
-                  SRV(t1), \
-                  SRV(t2), \
-                  SRV(t3), \
-                  SRV(t4) \
-                  "
-
-
 
 uint3 GetPrimitive(Meshlet m, uint index)
 {
@@ -84,7 +73,6 @@ VertexOut GetVertexAttributes(uint meshletIndex, uint vertexIndex)
     return vout;
 }
 
-[RootSignature(ROOT_SIG)]
 [OutputTopology("triangle")]
 [NumThreads(128, 1, 1)]
 void ms_main(
