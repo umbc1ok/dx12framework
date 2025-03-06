@@ -20,37 +20,35 @@ void RenderResourcesManager::createResources()
     SIZE_T rtvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
     D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_mainRTVDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
 
+    ID3D12Resource* backBuffers[3] = {};
     for (int i = 0; i < 3; i++)
     {
         ID3D12Resource* nBackBuffer = nullptr;
         Renderer::get_instance()->getSwapChain()->GetBuffer(i, IID_PPV_ARGS(&nBackBuffer));
-
-        m_mainRenderTarget[i] = new RenderTarget(nBackBuffer, rtvHandle);
-        rtvHandle.ptr += rtvDescriptorSize;
+        backBuffers[i] = nBackBuffer;
     }
+    m_mainRenderTarget = new RenderTarget(backBuffers, rtvHandle, rtvDescriptorSize);
 
     // Create depth stencil
     m_mainDepthStencil = new DepthStencil();
+
 }
 
 void RenderResourcesManager::releaseResources()
 {
     m_mainRTVDescriptorHeap->Release();
 
-    for (int i = 0; i < 3; i++)
-    {
-        delete m_mainRenderTarget[i];
-    }
+    delete m_mainRenderTarget;
     delete m_mainDepthStencil;
 }
 
 void RenderResourcesManager::clearRenderTargets()
 {
     auto swapChain = Renderer::get_instance()->getSwapChain();
-    m_mainRenderTarget[swapChain->GetCurrentBackBufferIndex()]->clear();
-
+    m_mainRenderTarget->clear();
     m_mainDepthStencil->clear();
 }
+
 
 D3D12_CPU_DESCRIPTOR_HANDLE RenderResourcesManager::getCurrentRTV()
 {
@@ -60,16 +58,8 @@ D3D12_CPU_DESCRIPTOR_HANDLE RenderResourcesManager::getCurrentRTV()
         swapChain->GetCurrentBackBufferIndex(), device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV));
 }
 
-RenderTarget* RenderResourcesManager::getCurrentBackbufferRenderTarget()
-{
-    auto swapChain = Renderer::get_instance()->getSwapChain();
-    auto index = swapChain->GetCurrentBackBufferIndex();
-    return m_mainRenderTarget[index];
-}
-
 
 D3D12_CPU_DESCRIPTOR_HANDLE RenderResourcesManager::getDSVHandle()
 {
-
     return m_mainDepthStencil->heap()->GetCPUDescriptorHandleForHeapStart();
 }

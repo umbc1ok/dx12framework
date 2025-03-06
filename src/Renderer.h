@@ -8,6 +8,7 @@
 #include "utils/Types.h"
 #define DX12_ENABLE_DEBUG_LAYER 
 
+class RenderTaskList;
 class PipelineState;
 class Entity;
 
@@ -26,8 +27,9 @@ public:
     void render();
     void initDebugDrawings();
 
-
+    RenderResourcesManager* get_render_resources_manager() const { return m_render_resources_manager; }
     ID3D12Device2* get_device() const;
+
 
     void update_buffer_resource(ID3D12GraphicsCommandList2* commandList,
         ID3D12Resource** pDestinationResource,
@@ -62,12 +64,14 @@ public:
 
     IDXGISwapChain3* getSwapChain() const { return g_pSwapChain; }
 private:
-    RenderResourcesManager* m_render_resources_manager;
     // Create
     bool create_device_d3d(HWND hWnd);
 
     // Cleanup
     void cleanup_device_d3d();
+
+    RenderResourcesManager* m_render_resources_manager;
+    RenderTaskList* m_render_task_list;
 
 
     // Basic DX12 stuff

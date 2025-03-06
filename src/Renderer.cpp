@@ -12,7 +12,7 @@
 #include "Keyboard.h"
 #include "Tools/GPUProfiler.h"
 #include "DX12Resource/RenderTarget.h"
-
+#include "RenderTaskList.h"
 Renderer* Renderer::m_instance;
 
 Renderer::Renderer()
@@ -25,6 +25,9 @@ void Renderer::create()
     m_instance = new Renderer();
     m_instance->m_render_resources_manager = new RenderResourcesManager();
     m_instance->m_render_resources_manager->createResources();
+
+    m_instance->m_render_task_list = new RenderTaskList();
+    m_instance->m_render_task_list->prepareMainList();
     // HACK: ImGui was blurry until first window resize
     // This gets rid of that problem, I dont know why
     m_instance->on_window_resize();
@@ -61,7 +64,9 @@ void Renderer::start_frame()
     auto cmdqueue = get_cmd_queue(D3D12_COMMAND_LIST_TYPE_DIRECT);
     auto command_list = cmdqueue->get_command_list();
 	g_pd3dCommandList = command_list;
-    m_render_resources_manager->getCurrentBackbufferRenderTarget()->setResourceStateToRenderTarget();
+
+    auto renderTarget = m_render_resources_manager->getMainRenderTarget();
+    renderTarget->setResourceStateToRenderTarget();
 
 }
 
@@ -70,24 +75,16 @@ void Renderer::render()
     auto cmd_list = g_pd3dCommandList;
     auto profiler = GPUProfiler::getInstance();
     profiler->startFrame();
-    auto rtv = m_render_resources_manager->getCurrentRTV();
-    auto dsv = m_render_resources_manager->getDSVHandle();
+
     ProfilerEntry* const profilerEntry = profiler->startEntry(cmd_list, "Frame");
     {
-        ProfilerEntry* const profilerEntrySettingFrameSettings = profiler->startEntry(cmd_list, "Setup frame");
-        {
-            m_render_resources_manager->clearRenderTargets();
+        m_render_resources_manager->clearRenderTargets();
 
-            cmd_list->RSSetViewports(1, &m_Viewport);
-            cmd_list->RSSetScissorRects(1, &m_ScissorRect);
+        cmd_list->RSSetViewports(1, &m_Viewport);
+        cmd_list->RSSetScissorRects(1, &m_ScissorRect);
 
-            cmd_list->OMSetRenderTargets(1, &rtv, FALSE, &dsv);
-        } profiler->endEntry(cmd_list, profilerEntrySettingFrameSettings);
+        m_render_task_list->renderMainList();
 
-        ProfilerEntry* const profilerEntryDrawAll = profiler->startEntry(cmd_list, "Draw all objects");
-        {
-            MainScene::get_instance()->runFrame();
-        } profiler->endEntry(cmd_list, profilerEntryDrawAll);
 
         ProfilerEntry* const profilerEntryDrawDebug = profiler->startEntry(cmd_list, "Draw debug geometry");
         {
@@ -108,7 +105,8 @@ void Renderer::end_frame()
     auto command_list = g_pd3dCommandList;
     auto profiler = GPUProfiler::getInstance();
 
-    m_render_resources_manager->getCurrentBackbufferRenderTarget()->setResourceStateToPresent();
+    auto renderTarget = m_render_resources_manager->getMainRenderTarget();
+    renderTarget->setResourceStateToPresent();
 
 
     profiler->endRecording(command_list);
@@ -139,14 +137,15 @@ void Renderer::on_window_resize()
         height = rect.bottom - rect.top;
     }
 
-    m_render_resources_manager->releaseResources();
 	m_DirectCommandQueue->flush();
+    m_render_resources_manager->releaseResources();
 
 
     HRESULT result = g_pSwapChain->ResizeBuffers(0, (UINT)LOWORD(width), (UINT)HIWORD(height), DXGI_FORMAT_UNKNOWN, DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT);
     assert(SUCCEEDED(result) && "Failed to resize swapchain.");
     m_render_resources_manager->createResources();
 
+    m_render_task_list->prepareMainList();
     m_Viewport = CD3DX12_VIEWPORT(0.0f, 0.0f,
         static_cast<float>(width), static_cast<float>(height));
 }
