@@ -32,6 +32,8 @@ void RenderResourcesManager::createResources()
     // Create depth stencil
     m_mainDepthStencil = new DepthStencil();
 
+    m_forwardRenderTarget = new RenderTarget(DXGI_FORMAT_R8G8B8A8_UNORM, false);
+
 }
 
 void RenderResourcesManager::releaseResources()
@@ -42,12 +44,7 @@ void RenderResourcesManager::releaseResources()
     delete m_mainDepthStencil;
 }
 
-void RenderResourcesManager::clearRenderTargets()
-{
-    auto swapChain = Renderer::get_instance()->getSwapChain();
-    m_mainRenderTarget->clear();
-    m_mainDepthStencil->clear();
-}
+
 
 
 D3D12_CPU_DESCRIPTOR_HANDLE RenderResourcesManager::getCurrentRTV()
