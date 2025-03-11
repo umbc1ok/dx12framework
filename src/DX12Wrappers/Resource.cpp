@@ -18,6 +18,8 @@ Resource::~Resource()
 
 void Resource::transitionResource(D3D12_RESOURCE_STATES newState)
 {
+    if (m_currentState == newState) return;
+
     CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
         m_dx12Resource,
         m_currentState, newState);
@@ -62,6 +64,34 @@ void Resource::create(uint64_t size, void* data)
     auto fence_value = cmdQueue->signal();
     cmdQueue->wait_for_fence_value(fence_value);
     uploadResource->Release();
+}
+
+void Resource::createTexture(D3D12_RESOURCE_DESC descriptor)
+{
+    auto device = Renderer::get_instance()->get_device();
+    auto cmdQueue = Renderer::get_instance()->get_cmd_queue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+    auto cmdList = cmdQueue->get_command_list();
+
+    auto defaultHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+
+
+    D3D12_CLEAR_VALUE clearValue = {};
+    clearValue.Format = descriptor.Format;
+    FLOAT clearColor[] = { 0.4f, 0.6f, 0.9f, 1.0f };
+    clearValue.Color[0] = clearColor[0];
+    clearValue.Color[1] = clearColor[1];
+    clearValue.Color[2] = clearColor[2];
+    clearValue.Color[3] = clearColor[3];
+
+    AssertFailed(device->CreateCommittedResource(&defaultHeapProperties, D3D12_HEAP_FLAG_NONE, &descriptor, D3D12_RESOURCE_STATE_COMMON, &clearValue, IID_PPV_ARGS(&m_dx12Resource)));
+
+    D3D12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_dx12Resource, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    cmdList->ResourceBarrier(1, &barrier);
+
+    cmdQueue->flush();
+
+    auto fence_value = cmdQueue->signal();
+    cmdQueue->wait_for_fence_value(fence_value);
 }
 
 void Resource::bindResource(PipelineState* pso, std::string variableName)
