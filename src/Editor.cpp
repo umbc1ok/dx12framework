@@ -680,7 +680,7 @@ void Editor::drawMeshletBenchmark(EditorWindow* const& window)
 {
     bool is_still_open = true;
     ImGui::Begin(window->get_name().c_str(), &is_still_open, window->flags);
-    MeshletBenchmark::getInstance()->drawEditor();
+    //MeshletBenchmark::getInstance()->drawEditor();
     ImGui::End();
 }
 
