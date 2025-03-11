@@ -78,13 +78,10 @@ void Renderer::render()
 
     ProfilerEntry* const profilerEntry = profiler->startEntry(cmd_list, "Frame");
     {
-        m_render_resources_manager->clearRenderTargets();
-
         cmd_list->RSSetViewports(1, &m_Viewport);
         cmd_list->RSSetScissorRects(1, &m_ScissorRect);
 
         m_render_task_list->renderMainList();
-
 
         ProfilerEntry* const profilerEntryDrawDebug = profiler->startEntry(cmd_list, "Draw debug geometry");
         {

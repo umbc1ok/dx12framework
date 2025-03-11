@@ -125,10 +125,15 @@ void PipelineState::compilePSO()
         pipeline_state_stream.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
         pipeline_state_stream.VS = *vs;
         pipeline_state_stream.PS = *ps;
-        pipeline_state_stream.DSVFormat = DXGI_FORMAT_D32_FLOAT;
+        pipeline_state_stream.DSVFormat = DXGI_FORMAT_UNKNOWN;
         pipeline_state_stream.RTVFormats = rtv_formats;
         pipeline_state_stream.RasterizerState = rasterizer_desc;
         pipeline_state_stream.blendDesc = blend_desc;
+
+
+        auto depthDesc = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+        depthDesc.DepthEnable = FALSE;
+        pipeline_state_stream.depthStencildesc = depthDesc;
 
 
         D3D12_PIPELINE_STATE_STREAM_DESC pipeline_state_stream_desc = {
