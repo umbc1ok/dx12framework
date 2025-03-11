@@ -87,7 +87,7 @@ namespace PSOParser
         auto device = Renderer::get_instance()->get_device();
         std::vector<CD3DX12_ROOT_PARAMETER> rootParameters;
         std::vector<CD3DX12_DESCRIPTOR_RANGE> descriptorRanges;
-
+        std::vector< D3D12_STATIC_SAMPLER_DESC> samplers;
 
 
         // Check for resources with the same name and register in different shader stages.
@@ -120,10 +120,20 @@ namespace PSOParser
                 param.InitAsConstantBufferView(res.registerIndex, 0, res.visibility);
                 rootParameters.push_back(param);
             }
-            else if (res.type == "Texture2D" || res.type == "StructuredBuffer")
+            else if (res.type == "StructuredBuffer")
             {
                 CD3DX12_ROOT_PARAMETER param;
                 param.InitAsShaderResourceView(res.registerIndex, 0, res.visibility);
+                rootParameters.push_back(param);
+            }
+            else if (res.type == "Texture2D")
+            {
+                CD3DX12_DESCRIPTOR_RANGE range;
+                range.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, res.registerIndex, 0);
+
+                CD3DX12_ROOT_PARAMETER param;
+                param.InitAsDescriptorTable(1, &range, res.visibility);
+
                 rootParameters.push_back(param);
             }
             else if (res.type == "RWTexture2D")
@@ -134,9 +144,20 @@ namespace PSOParser
             }
             else if (res.type == "SamplerState")
             {
-                CD3DX12_ROOT_PARAMETER param;
-                param.InitAsDescriptorTable(1, &descriptorRanges.back(), res.visibility);
-                rootParameters.push_back(param);
+                // yeah we probably should just parse the settings from hlsl file, but for now we will settle for a placeholder
+                CD3DX12_STATIC_SAMPLER_DESC desc;
+                desc.RegisterSpace = 0;
+                desc.ShaderRegister = res.registerIndex;
+                desc.ShaderVisibility = res.visibility;
+                desc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+                desc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+                desc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+                desc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+                desc.MipLODBias = 0;
+                desc.MaxAnisotropy = 0;
+                desc.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+                desc.BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+                samplers.push_back(desc);
             }
 
             NameHash hash = olej_utils::murmurHash(reinterpret_cast<const u8*>(res.name.data()), res.name.size(), 69);
@@ -145,10 +166,10 @@ namespace PSOParser
         }
 
 
-
+        
         CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc(
             static_cast<UINT>(rootParameters.size()), rootParameters.data(),
-            0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT
+            samplers.size(), samplers.data(), D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT
         );
 
         Microsoft::WRL::ComPtr<ID3DBlob> signature;
