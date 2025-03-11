@@ -1,4 +1,6 @@
 #pragma once
+#include <d3dx12.h>
+
 #include "DXMeshletGenerator/D3D12MeshletGenerator.h"
 #include <string>
 
@@ -14,6 +16,7 @@ public:
 
     void transitionResource(D3D12_RESOURCE_STATES newState);
     void create(uint64_t size, void* data);
+    void createTexture(D3D12_RESOURCE_DESC descriptor);
 
     ID3D12Resource* getDx12Resource() { return m_dx12Resource; }
 
