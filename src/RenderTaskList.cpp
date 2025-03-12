@@ -4,6 +4,7 @@
 #include "DX12Resource/RenderResourcesManager.h"
 #include "Tasks/ClearSurfaceTask.h"
 #include "Tasks/FullscreenPassTask.h"
+#include "Tasks/FXAATask.h"
 #include "Tasks/SimpleForwardRenderTask.h"
 #include "Tasks/IRenderTask.h"
 
@@ -15,6 +16,12 @@ void RenderTaskList::prepareMainList()
     {
         auto* task = new ClearSurfaceTask();
         task->m_renderTarget = Renderer::get_instance()->get_render_resources_manager()->m_forwardRenderTarget;
+        m_renderTasks.push_back(task);
+    }
+
+    {
+        auto* task = new ClearSurfaceTask();
+        task->m_renderTarget = Renderer::get_instance()->get_render_resources_manager()->m_nonAARenderTarget;
         m_renderTasks.push_back(task);
     }
 
@@ -37,12 +44,18 @@ void RenderTaskList::prepareMainList()
     {
         auto* task = new FullscreenPassTask();
         task->m_pipelineState = new PipelineState(L"ps_fullscreen_test.hlsl", L"ps_fullscreen_test.hlsl", TRADITIONAL);
-        task->m_renderTarget = Renderer::get_instance()->get_render_resources_manager()->getMainRenderTarget();
+        task->m_renderTarget = Renderer::get_instance()->get_render_resources_manager()->m_nonAARenderTarget;
         task->m_previousPassResult = Renderer::get_instance()->get_render_resources_manager()->m_forwardRenderTarget;
         m_renderTasks.push_back(task);
     }
 
-
+    {
+        auto* task = new FXAATask();
+        task->m_pipelineState = new PipelineState(L"fxaa.hlsl", L"fxaa.hlsl", TRADITIONAL);
+        task->m_renderTarget = Renderer::get_instance()->get_render_resources_manager()->getMainRenderTarget();
+        task->m_previousPassResult = Renderer::get_instance()->get_render_resources_manager()->m_nonAARenderTarget;
+        m_renderTasks.push_back(task);
+    }
 }
 
 void RenderTaskList::renderMainList()

@@ -98,6 +98,8 @@ namespace PSOParser
                                     samplerDesc.Filter = D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT;
                                 else if (value == "MIN_MAG_MIP_LINEAR")
                                     samplerDesc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+                                else if (value == "ANISOTROPIC")
+                                    samplerDesc.Filter = D3D12_FILTER_ANISOTROPIC;
                             }
                             else if (setting == "AddressU")
                             {

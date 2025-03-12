@@ -26,6 +26,7 @@ public:
 
 
     RenderTarget* m_forwardRenderTarget = nullptr;
+    RenderTarget* m_nonAARenderTarget = nullptr;
 
 private:
     ID3D12DescriptorHeap* m_mainRTVDescriptorHeap = nullptr;

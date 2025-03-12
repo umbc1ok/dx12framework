@@ -33,6 +33,7 @@ void RenderResourcesManager::createResources()
     m_mainDepthStencil = new DepthStencil();
 
     m_forwardRenderTarget = new RenderTarget(DXGI_FORMAT_R8G8B8A8_UNORM, false);
+    m_nonAARenderTarget = new RenderTarget(DXGI_FORMAT_R8G8B8A8_UNORM, false);
 
 }
 
