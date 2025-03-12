@@ -25,9 +25,6 @@ void RenderTaskList::prepareMainList()
         m_renderTasks.push_back(task);
     }
 
-
-
-
     {
         auto* task = new SimpleForwardRenderTask();
         task->m_pipelineState = new PipelineState(L"MS_STANDARD.hlsl", L"PS_BASIC.hlsl", MESH);

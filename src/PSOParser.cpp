@@ -5,6 +5,7 @@
 #include <iostream>
 #include <ostream>
 #include <regex>
+#include <set>
 #include <sstream>
 #include <unordered_map>
 
@@ -33,7 +34,169 @@ namespace PSOParser
         }
     }
 
-    std::vector<ShaderResource> ExtractResources(const std::string& hlslCode, int shaderTypeIndex, ShaderType type)
+
+
+    CD3DX12_STATIC_SAMPLER_DESC parseSamplerSettings(std::string code, std::string name)
+    {
+        std::istringstream stream(code);
+
+        std::string line;
+        bool inSettings = false;
+        bool inSampler = false;
+        bool foundSampler = false;
+        std::regex settingPattern(R"((\w+)\s*=\s*([\w\d\.-]+);)");
+        CD3DX12_STATIC_SAMPLER_DESC samplerDesc = {};
+
+        while (std::getline(stream, line))
+        {
+            line.erase(0, line.find_first_not_of(" \t")); // Trim leading spaces
+
+            if (line == "#ifdef SAMPLER_DESC")
+            {
+                inSettings = true;
+            }
+            else if (line == "#endif")
+            {
+                inSettings = false;
+                inSampler = false;
+            }
+            else if (inSettings)
+            {
+                if (line == "SamplerDescriptor")
+                {
+                    inSampler = true;
+                }
+                else if (inSampler)
+                {
+                    std::smatch match;
+                    if (std::regex_search(line, match, settingPattern))
+                    {
+                        std::string setting = match[1];
+                        std::string value = match[2];
+
+                        if (setting == "Name" && value == name)
+                        {
+                            foundSampler = true;
+                        }
+                        if (foundSampler)
+                        {
+                            if (setting == "Filter")
+                            {
+                                if (value == "MIN_MAG_MIP_POINT")
+                                    samplerDesc.Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
+                                else if (value == "MIN_MAG_POINT_MIP_LINEAR")
+                                    samplerDesc.Filter = D3D12_FILTER_MIN_MAG_POINT_MIP_LINEAR;
+                                else if (value == "MIN_POINT_MAG_LINEAR_MIP_POINT")
+                                    samplerDesc.Filter = D3D12_FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT;
+                                else if (value == "MIN_POINT_MAG_MIP_LINEAR")
+                                    samplerDesc.Filter = D3D12_FILTER_MIN_POINT_MAG_MIP_LINEAR;
+                                else if (value == "MIN_LINEAR_MAG_MIP_POINT")
+                                    samplerDesc.Filter = D3D12_FILTER_MIN_LINEAR_MAG_MIP_POINT;
+                                else if (value == "MIN_LINEAR_MAG_POINT_MIP_LINEAR")
+                                    samplerDesc.Filter = D3D12_FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR;
+                                else if (value == "MIN_MAG_LINEAR_MIP_POINT")
+                                    samplerDesc.Filter = D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT;
+                                else if (value == "MIN_MAG_MIP_LINEAR")
+                                    samplerDesc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+                            }
+                            else if (setting == "AddressU")
+                            {
+                                if (value == "WRAP")
+                                    samplerDesc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+                                else if (value == "MIRROR")
+                                    samplerDesc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+                                else if (value == "CLAMP")
+                                    samplerDesc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+                                else if (value == "BORDER")
+                                    samplerDesc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+                                else if (value == "MIRROR_ONCE")
+                                    samplerDesc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_MIRROR_ONCE;
+                            }
+                            else if (setting == "AddressV")
+                            {
+                                if (value == "WRAP")
+                                    samplerDesc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+                                else if (value == "MIRROR")
+                                    samplerDesc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+                                else if (value == "CLAMP")
+                                    samplerDesc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+                                else if (value == "BORDER")
+                                    samplerDesc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+                                else if (value == "MIRROR_ONCE")
+                                    samplerDesc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_MIRROR_ONCE;
+                            }
+                            else if (setting == "AddressW")
+                            {
+                                if (value == "WRAP")
+                                    samplerDesc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+                                else if (value == "MIRROR")
+                                    samplerDesc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+                                else if (value == "CLAMP")
+                                    samplerDesc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+                                else if (value == "BORDER")
+                                    samplerDesc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+                                else if (value == "MIRROR_ONCE")
+                                    samplerDesc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_MIRROR_ONCE;
+                            }
+                            else if (setting == "MipLODBias")
+                            {
+                                samplerDesc.MipLODBias = std::stof(value);
+                            }
+                            else if (setting == "MaxAnisotropy")
+                            {
+                                samplerDesc.MaxAnisotropy = std::stoi(value);
+                            }
+                            else if (setting == "ComparisonFunc")
+                            {
+                                if (value == "NEVER")
+                                    samplerDesc.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+                                else if (value == "LESS")
+                                    samplerDesc.ComparisonFunc = D3D12_COMPARISON_FUNC_LESS;
+                                else if (value == "EQUAL")
+                                    samplerDesc.ComparisonFunc = D3D12_COMPARISON_FUNC_EQUAL;
+                                else if (value == "LESS_EQUAL")
+                                    samplerDesc.ComparisonFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+                                else if (value == "GREATER")
+                                    samplerDesc.ComparisonFunc = D3D12_COMPARISON_FUNC_GREATER;
+                                else if (value == "NOT_EQUAL")
+                                    samplerDesc.ComparisonFunc = D3D12_COMPARISON_FUNC_NOT_EQUAL;
+                                else if (value == "GREATER_EQUAL")
+                                    samplerDesc.ComparisonFunc = D3D12_COMPARISON_FUNC_GREATER_EQUAL;
+                                else if (value == "ALWAYS")
+                                    samplerDesc.ComparisonFunc = D3D12_COMPARISON_FUNC_ALWAYS;
+                            }
+                            else if (setting == "BorderColor")
+                            {
+                                if (value == "TRANSPARENT_BLACK")
+                                {
+                                    samplerDesc.BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+                                }
+                                else if (value == "OPAQUE_WHITE")
+                                {
+                                    samplerDesc.BorderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
+                                }
+                            }
+                            else if (setting == "MinLOD")
+                            {
+                                samplerDesc.MinLOD = std::stof(value);
+                            }
+                            else if (setting == "MaxLOD")
+                            {
+                                samplerDesc.MaxLOD = std::stof(value);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return samplerDesc;
+    }
+
+
+
+
+    std::vector<ShaderResource> ExtractResources(const std::string& hlslCode, int shaderTypeIndex, ShaderType type, std::vector<CD3DX12_STATIC_SAMPLER_DESC>& samplers)
     {
         std::vector<ShaderResource> resources;
 
@@ -43,6 +206,14 @@ namespace PSOParser
 
         while (std::regex_search(searchStart, hlslCode.cend(), match, resourceRegex)) 
         {
+            if (match[1] == "SamplerState")
+            {
+                CD3DX12_STATIC_SAMPLER_DESC desc = parseSamplerSettings(hlslCode, match[2]);
+                desc.ShaderVisibility = mapShaderTypeToVisibility(type);
+                samplers.push_back(desc);
+                searchStart = match.suffix().first;
+                continue;
+            }
             ShaderResource res;
             res.type = match[1];  // Type (cbuffer, Texture2D, etc.)
             res.name = match[2];  // Name
@@ -82,12 +253,11 @@ namespace PSOParser
     }
 
 
-    ID3D12RootSignature* CreateRootSignature(std::vector<ShaderResource>& resources, std::unordered_map<NameHash, RootParameterIndex>& descriptorRangeMap)
+    ID3D12RootSignature* CreateRootSignature(std::vector<ShaderResource>& resources, std::vector<CD3DX12_STATIC_SAMPLER_DESC> samplers, std::unordered_map<NameHash, RootParameterIndex>& descriptorRangeMap)
     {
         auto device = Renderer::get_instance()->get_device();
         std::vector<CD3DX12_ROOT_PARAMETER> rootParameters;
         std::vector<CD3DX12_DESCRIPTOR_RANGE> descriptorRanges;
-        std::vector< D3D12_STATIC_SAMPLER_DESC> samplers;
 
 
         // Check for resources with the same name and register in different shader stages.
@@ -142,23 +312,6 @@ namespace PSOParser
                 param.InitAsUnorderedAccessView(res.registerIndex, 0, res.visibility);
                 rootParameters.push_back(param);
             }
-            else if (res.type == "SamplerState")
-            {
-                // yeah we probably should just parse the settings from hlsl file, but for now we will settle for a placeholder
-                CD3DX12_STATIC_SAMPLER_DESC desc;
-                desc.RegisterSpace = 0;
-                desc.ShaderRegister = res.registerIndex;
-                desc.ShaderVisibility = res.visibility;
-                desc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
-                desc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-                desc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-                desc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-                desc.MipLODBias = 0;
-                desc.MaxAnisotropy = 0;
-                desc.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
-                desc.BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
-                samplers.push_back(desc);
-            }
 
             NameHash hash = olej_utils::murmurHash(reinterpret_cast<const u8*>(res.name.data()), res.name.size(), 69);
 
@@ -210,16 +363,18 @@ namespace PSOParser
     ID3D12RootSignature* PSOParser::parseRootSignature(std::vector<Shader*> const& shaders, std::unordered_map<NameHash, RootParameterIndex>& descriptorRangeMap)
     {
         std::vector<ShaderResource> resources;
+        std::vector<CD3DX12_STATIC_SAMPLER_DESC> samplers;
         int i = 0;
         for (const auto& shader : shaders)
         {
             std::string hlslCode = ReadFileToString(std::string(shader->getFullPath().begin(), shader->getFullPath().end()));
-            std::vector<ShaderResource> shaderResources = ExtractResources(hlslCode, i, shader->getType());
+            
+            std::vector<ShaderResource> shaderResources = ExtractResources(hlslCode, i, shader->getType(), samplers);
             resources.insert(resources.end(), shaderResources.begin(), shaderResources.end());
             i++;
         }
 
-        auto rootSignature = CreateRootSignature(resources, descriptorRangeMap);
+        auto rootSignature = CreateRootSignature(resources, samplers, descriptorRangeMap);
         return rootSignature;
     }
 
