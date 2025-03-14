@@ -4,11 +4,8 @@
 struct Vertex
 {
     hlsl::float3 position;
-    float padding;
     hlsl::float3 normal;
-    float padding2;
     hlsl::float2 UV;
-    hlsl::float2 padding3;
 
     Vertex() {};
     Vertex(hlsl::float3 pos, hlsl::float3 norm, hlsl::float2 uv) : position(pos), normal(norm), UV(uv) {}

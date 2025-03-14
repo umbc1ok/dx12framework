@@ -7,12 +7,8 @@
 struct Vertex
 {
     float3 Position;
-    float padding;
     float3 Normal;
-    float padding2;
     float2 UV;
-    float pad;
-    float pad2;
 };
 
 struct VertexOut
