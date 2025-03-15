@@ -31,12 +31,11 @@ void Game::init()
 
 
     // bunny setup
-    auto model = Model::create("./res/models/bunny/bunny.fbx");
-    entity1->transform->set_rotation(hlsl::float3(90.0f, 0.0f, 0.0f));
+    //auto model = Model::create("./res/models/bunny/bunny.fbx");
+    //entity1->transform->set_rotation(hlsl::float3(90.0f, 0.0f, 0.0f));
 
 
-
-    //auto model = Model::create("./res/models/sponza/sponza-gltf-pbr/sponza.glb");
+    auto model = Model::create("./res/models/sponza/sponza-gltf-pbr/sponza.glb");
     //auto model = Model::create("./res/models/wing/wing.stl");
     entity1->add_component(model);
 

@@ -145,8 +145,10 @@ Mesh::~Mesh()
 }
 
 
-void Mesh::bindTextures()
+void Mesh::bindTextures(PipelineState* pso)
 {
+    if (m_textures.size() == 0) 
+        return;
     std::vector<ID3D12DescriptorHeap*> heaps = std::vector<ID3D12DescriptorHeap*>(m_textures.size());
     for (int i = 0; i < m_textures.size(); i++)
     {
@@ -154,13 +156,16 @@ void Mesh::bindTextures()
     }
 
     auto command_list = Renderer::get_instance()->g_pd3dCommandList;
+
     command_list->SetDescriptorHeaps(m_textures.size(), heaps.data());
 
-    // TODO: We are using just the first texture for now
-    // This will proooobably cause nasty crashes from time to time, we will see
-    if (m_textures.size() > 0)
+    for (int i = 0; i < m_textures.size(); i++)
     {
-        command_list->SetGraphicsRootDescriptorTable(1, m_textures[0]->SRV_GPU);
+        if (m_textures[i]->type == TextureType::Diffuse)
+        {
+            auto index = pso->getRootParameterIndex("DIFFUSE_TEX");
+            command_list->SetGraphicsRootDescriptorTable(index, m_textures[i]->heap->GetGPUDescriptorHandleForHeapStart());
+        }
     }
 }
 
@@ -177,7 +182,7 @@ void Mesh::bindMeshInfo(uint32_t meshletCount, uint32_t meshletOffset, uint32_t 
 void Mesh::dispatch(PipelineState* pso)
 {
     auto cmd_list = Renderer::get_instance()->g_pd3dCommandList;
-
+    bindTextures(pso);
     VertexResource->bindResource(pso, "Vertices");
     MeshletResource->bindResource(pso, "Meshlets");
     IndexResource->bindResource(pso, "IndexBuffer");

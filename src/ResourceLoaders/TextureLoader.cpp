@@ -20,6 +20,7 @@ Texture* TextureLoader::texture_from_file(std::string const& path)
 	auto device = Renderer::get_instance()->get_device();
 	auto cmdqueue = Renderer::get_instance()->get_cmd_queue(D3D12_COMMAND_LIST_TYPE_DIRECT);
 	auto cmdlist = cmdqueue->get_command_list();
+
 	HRESULT hr;
 
 	
@@ -45,7 +46,9 @@ Texture* TextureLoader::texture_from_file(std::string const& path)
 
 	Texture* texture = new Texture();
     texture->path = path;
+
     ID3D12Resource* texture_resource;
+
 	CD3DX12_HEAP_PROPERTIES default_heap_properties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 	device->CreateCommittedResource(
 		&default_heap_properties,
@@ -54,6 +57,7 @@ Texture* TextureLoader::texture_from_file(std::string const& path)
 		D3D12_RESOURCE_STATE_COPY_DEST,
 		nullptr,
 		IID_PPV_ARGS(&texture_resource));
+
     texture->resource = new Resource(texture_resource);
 
 	std::vector<D3D12_SUBRESOURCE_DATA> subresources(scratchImage.GetImageCount());

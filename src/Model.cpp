@@ -219,8 +219,17 @@ void Model::serializeMeshes() const
     int index = 0;
 
     u32 hash = olej_utils::murmurHash(reinterpret_cast<u8 const*>(m_path.data()), m_path.size(), 69);
+
     for (auto& mesh : m_meshes)
     {
+        std::vector<std::string> textureNames;
+        std::vector<TextureType> textureTypes;
+        for(int i = 0; i < mesh->m_textures.size(); i++)
+        {
+            textureNames.push_back(mesh->m_textures[i]->path);
+            textureTypes.push_back(mesh->m_textures[i]->type);
+        }
+
         serializers::serializeMesh(
             mesh->m_vertices,
             mesh->m_indices,
@@ -231,6 +240,8 @@ void Model::serializeMeshes() const
             mesh->m_normals,
             mesh->m_UVs,
             mesh->m_cullData,
+            textureNames,
+            textureTypes,
             mesh->m_MeshletMaxVerts,
             mesh->m_MeshletMaxPrims,
             mesh->m_type,
@@ -259,6 +270,10 @@ bool Model::deserializeMeshes()
         std::vector<hlsl::float3> normals;
         std::vector<hlsl::float2> UVs;
         std::vector<CullData> cullData;
+        std::vector<std::string> textureNames;
+        std::vector<TextureType> textureTypes;
+
+
         int32_t MeshletMaxVerts = 1;
         int32_t MeshletMaxPrims = 1;
         MeshletizerType type;
@@ -272,14 +287,25 @@ bool Model::deserializeMeshes()
             normals,
             UVs,
             cullData,
+            textureNames,
+            textureTypes,
             MeshletMaxVerts,
             MeshletMaxPrims,
             type,
             path);
 
+        std::vector<Texture*> textures;
+        for (int i = 0; i < textureNames.size(); i++)
+        {
+            Texture* texture = TextureLoader::texture_from_file(textureNames[i]);
+            texture->type = textureTypes[i];
+            m_loaded_textures.push_back(texture);
+            textures.push_back(texture);
+        }
+
         m_MeshletMaxPrims = MeshletMaxPrims;
         m_MeshletMaxVerts = MeshletMaxVerts;
-        m_meshes.push_back(new Mesh(vertices, indices, {}, positions, normals, UVs, attributes, type, MeshletMaxVerts, MeshletMaxPrims, meshlets, meshletTriangles, cullData));
+        m_meshes.push_back(new Mesh(vertices, indices, textures, positions, normals, UVs, attributes, type, MeshletMaxVerts, MeshletMaxPrims, meshlets, meshletTriangles, cullData));
         m_vertexCount += vertices.size();
         m_triangleCount += indices.size() / 3;
         m_meshletsCount += meshlets.size();
@@ -463,9 +489,10 @@ std::vector<Texture*> Model::loadMaterialTextures(aiMaterial const* material, ai
         file_path = m_directory + '/' + file_path;
 
 
-        //Texture* texture = TextureLoader::texture_from_file(file_path);
-        //textures.push_back(texture);
-        //m_loaded_textures.push_back(texture);
+        Texture* texture = TextureLoader::texture_from_file(file_path);
+        textures.push_back(texture);
+        texture->type = type_name;
+        m_loaded_textures.push_back(texture);
     }
 
     return textures;

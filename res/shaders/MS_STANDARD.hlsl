@@ -16,6 +16,7 @@ struct VertexOut
     float4 PositionHS   : SV_Position;
     float3 PositionVS   : POSITION0;
     float3 Normal       : NORMAL0;
+    float2 UV : TEXCOORD;
     uint   MeshletIndex : COLOR0;
     uint   TriangleIndex : COLOR1;
 };
@@ -66,6 +67,7 @@ VertexOut GetVertexAttributes(uint meshletIndex, uint vertexIndex)
     vout.Normal = mul(float4(v.Normal, 0), InstanceData.World).xyz;
     vout.MeshletIndex = meshletIndex;
     vout.TriangleIndex = vertexIndex / 3;
+    vout.UV = v.UV;
     return vout;
 }
 

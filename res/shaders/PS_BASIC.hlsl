@@ -15,6 +15,7 @@ struct VertexOut
     float4 PositionHS   : SV_Position;
     float3 PositionVS   : POSITION0;
     float3 Normal       : NORMAL0;
+    float2 UV : TEXCOORD0;
     uint   MeshletIndex : COLOR0;
     uint   TriangleIndex : COLOR1;
 };
@@ -31,18 +32,35 @@ RasterizerDescriptor
 }
 #endif
 
-
+SamplerState testSampler : register(s0);
+#ifdef SAMPLER_DESC
+SamplerDescriptor
+{
+    Name = testSampler;
+    AddressU = WRAP;
+    AddressV = WRAP;
+    AddressW = WRAP;
+    Filter = MIN_MAG_MIP_POINT;
+}
+#endif
 
 ConstantBuffer<SceneConstantBuffer> InstanceData : register(b0);
 
+Texture2D DIFFUSE_TEX : register(t0);
+
+
+
 float4 ps_main(VertexOut input) : SV_TARGET
 {
+    //return 1.0f.xxxx;
+    float4 tex =  DIFFUSE_TEX.Sample(testSampler, input.UV);
     float ambientIntensity = 0.1;
     float3 lightColor = float3(1, 1, 1);
     float3 lightDir = -normalize(float3(1, -1, 1));
 
     float3 diffuseColor;
     float shininess;
+    if(tex.a < 0.9) discard;
     if (InstanceData.DrawFlag == DRAW_MESHLETS)
     {
         uint index = input.MeshletIndex;
@@ -63,7 +81,7 @@ float4 ps_main(VertexOut input) : SV_TARGET
     }
     else
     {
-        diffuseColor = 0.8;
+        diffuseColor = tex.xyz;
         shininess = 64.0;
     }
     float3 finalColor;
@@ -87,5 +105,6 @@ float4 ps_main(VertexOut input) : SV_TARGET
         finalColor = diffuseColor;
     }
     //return float4(0.5f, 0.3f, 0.1f, 1);
+
     return float4(finalColor,1.0f);
 }

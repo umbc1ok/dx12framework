@@ -69,7 +69,7 @@ public:
 
     ~Mesh();
 
-    void bindTextures();
+    void bindTextures(PipelineState* pso);
     void bindMeshInfo(uint32_t meshletCount, uint32_t meshletOffset, uint32_t subsetIndex, PipelineState* pso);
 
     void dispatch(PipelineState* pso);

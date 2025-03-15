@@ -16,6 +16,7 @@ struct VertexOut
     float4 PositionHS   : SV_Position;
     float3 PositionVS   : POSITION0;
     float3 Normal       : NORMAL0;
+    float2 UV : TEXCOORD;
     uint   MeshletIndex : COLOR0;
     uint   TriangleIndex : COLOR1;
 };

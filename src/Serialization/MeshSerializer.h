@@ -2,6 +2,7 @@
 
 
 #include "MeshletStructs.h"
+#include "Texture.h"
 #include "DX12Wrappers/Vertex.h"
 #include "DXMeshletGenerator/D3D12MeshletGenerator.h"
 #include "types/VectorSerializer.h"
@@ -20,6 +21,8 @@ namespace serializers
         const std::vector<hlsl::float3>& normals,
         const std::vector<hlsl::float2>& UVs,
         const std::vector<CullData>& cullData,
+        const std::vector<std::string>& textureNames,
+        const std::vector<TextureType>& textureTypes,
         int32_t MeshletMaxVerts,
         int32_t MeshletMaxPrims,
         MeshletizerType type,
@@ -35,6 +38,8 @@ namespace serializers
          std::vector<hlsl::float3>& normals,
          std::vector<hlsl::float2>& UVs,
          std::vector<CullData>& cullData,
+         std::vector<std::string>& textureNames,
+         std::vector<TextureType>& textureTypes,
          int32_t & MeshletMaxVerts,
          int32_t & MeshletMaxPrims,
          MeshletizerType& type,

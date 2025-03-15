@@ -8,6 +8,7 @@
 Resource::Resource(ID3D12Resource* dx12Resource)
 {
     m_dx12Resource = dx12Resource;
+
 }
 
 Resource::~Resource()
@@ -26,6 +27,8 @@ void Resource::transitionResource(D3D12_RESOURCE_STATES newState)
     m_currentState = newState;
 
     auto commandList = Renderer::get_instance()->g_pd3dCommandList;
+    if (commandList == nullptr)
+        commandList = Renderer::get_instance()->get_cmd_queue(D3D12_COMMAND_LIST_TYPE_DIRECT)->get_command_list();
     commandList->ResourceBarrier(1, &barrier);
 }
 
